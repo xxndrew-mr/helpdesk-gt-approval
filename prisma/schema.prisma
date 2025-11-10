@@ -1,0 +1,105 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // Diambil dari file .env
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// === Model/Tabel Kita ===
+
+model Role {
+  role_id   Int    @id @default(autoincrement())
+  role_name String @unique
+  users     User[]
+}
+
+model Division {
+  division_id   Int    @id @default(autoincrement())
+  division_name String @unique
+  users         User[]
+}
+
+model User {
+  user_id     Int      @id @default(autoincrement())
+  name        String
+  email       String   @unique
+  password    String // Hash password
+  
+  role_id     Int?      // ? berarti "opsional" atau "nullable"
+  role        Role?     @relation(fields: [role_id], references: [role_id])
+  
+  division_id Int?
+  division    Division? @relation(fields: [division_id], references: [division_id])
+
+  // Relasi: "User ini telah..."
+  submittedTickets Ticket[] @relation("SubmittedBy")
+  logs             TicketLog[] @relation("Actor")
+  assignments      TicketAssignment[] @relation("AssignedTo")
+
+  @@index([role_id])
+  @@index([division_id])
+}
+
+model Ticket {
+  ticket_id            BigInt   @id @default(autoincrement())
+  title                String
+  submitted_by_user_id Int
+  type                 String   @default("Pending") // Pending, Request, Feedback
+  status               String   @default("Open")    // Open, Rejected, Done, Archived
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relasi: "Tiket ini dimiliki oleh..."
+  submittedBy User             @relation("SubmittedBy", fields: [submitted_by_user_id], references: [user_id])
+  detail      TicketDetail?    // Relasi satu-ke-satu
+  logs        TicketLog[]      // Relasi satu-ke-banyak
+  assignments TicketAssignment[] // Relasi satu-ke-banyak
+
+  @@index([submitted_by_user_id])
+  @@index([type])
+  @@index([status])
+}
+
+model TicketDetail {
+  ticket_id        BigInt   @id // Ini adalah Primary Key DAN Foreign Key
+  description      String   @db.Text
+  attachments_json Json? // Menyimpan data lampiran sbg JSON
+
+  // Relasi: "Detail ini milik..."
+  ticket           Ticket   @relation(fields: [ticket_id], references: [ticket_id], onDelete: Cascade)
+}
+
+model TicketLog {
+  log_id        BigInt   @id @default(autoincrement())
+  ticket_id     BigInt
+  actor_user_id Int
+  action_type   String   // Misal: "Submit", "Approve", "Return"
+  notes         String?  @db.Text
+  timestamp     DateTime @default(now())
+
+  // Relasi
+  ticket Ticket @relation(fields: [ticket_id], references: [ticket_id], onDelete: Cascade)
+  actor  User   @relation("Actor", fields: [actor_user_id], references: [user_id])
+
+  @@index([ticket_id])
+  @@index([actor_user_id])
+}
+
+model TicketAssignment {
+  // Ini adalah tabel "Antrian Saya"
+  assignment_id   BigInt   @id @default(autoincrement())
+  ticket_id       BigInt
+  user_id         Int      // User yang ditugaskan
+  assignment_type String   // Misal: 'Active' (Request) atau 'Feedback_Review'
+  status          String   @default("Pending") // Pending, Bookmarked, Archived
+  createdAt       DateTime @default(now())
+
+  // Relasi
+  ticket Ticket @relation(fields: [ticket_id], references: [ticket_id], onDelete: Cascade)
+  user   User   @relation("AssignedTo", fields: [user_id], references: [user_id])
+
+  // INDEX KUNCI PERFORMA: Agar pencarian "Antrian Saya" super cepat
+  @@index([user_id, status])
+}
