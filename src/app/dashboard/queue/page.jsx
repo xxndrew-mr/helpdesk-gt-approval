@@ -19,7 +19,7 @@ function TriageActions({ ticketId, onSuccess, onError }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          type: actionType, // 'Request' or 'Feedback'
+          type: actionType,
           notes: notes,
         }),
       });
@@ -68,7 +68,7 @@ function TriageActions({ ticketId, onSuccess, onError }) {
 }
 // ===================================================
 
-// === KOMPONEN BARU: Aksi Sales Manager ===
+// === Komponen Aksi Sales Manager ===
 function SalesManagerActions({ ticketId, onSuccess, onError }) {
   const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -78,7 +78,6 @@ function SalesManagerActions({ ticketId, onSuccess, onError }) {
       onError('Catatan wajib diisi untuk aksi ini.');
       return;
     }
-
     setIsLoading(true);
     onError(null);
 
@@ -87,7 +86,7 @@ function SalesManagerActions({ ticketId, onSuccess, onError }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: actionType, // 'approve', 'reject', 'complete'
+          action: actionType,
           notes: notes,
         }),
       });
@@ -136,6 +135,140 @@ function SalesManagerActions({ ticketId, onSuccess, onError }) {
           className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:bg-gray-400"
         >
           {isLoading ? 'Loading...' : 'Selesaikan (Complete)'}
+        </button>
+      </div>
+    </div>
+  );
+}
+// ===================================================
+
+// === Komponen Aksi Acting Manager ===
+function ActingManagerActions({ ticketId, onSuccess, onError }) {
+  const [notes, setNotes] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (actionType) => {
+    if (notes.trim() === '') {
+      onError('Catatan wajib diisi untuk aksi ini.');
+      return;
+    }
+    setIsLoading(true);
+    onError(null);
+
+    try {
+      const res = await fetch(`/api/tickets/${ticketId}/am-process`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: actionType, // 'approve', 'reject'
+          notes: notes,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Gagal melakukan aksi');
+      }
+      onSuccess(); // Refresh list
+    } catch (err) {
+      console.error(err);
+      onError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="mt-4 p-4 bg-green-50 rounded-md border border-green-200">
+      <h3 className="font-semibold text-gray-800">Aksi Acting Manager</h3>
+      <textarea
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        placeholder="Tambahkan catatan (wajib)..."
+        className="w-full px-3 py-2 mt-2 border rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500"
+        rows="2"
+      />
+      <div className="flex flex-wrap gap-3 mt-3">
+        <button
+          onClick={() => handleSubmit('approve')}
+          disabled={isLoading}
+          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400"
+        >
+          {isLoading ? 'Loading...' : 'Approve (ke Acting PIC)'}
+        </button>
+        <button
+          onClick={() => handleSubmit('reject')}
+          disabled={isLoading}
+          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-gray-400"
+        >
+          {isLoading ? 'Loading...' : 'Reject Tiket'}
+        </button>
+      </div>
+    </div>
+  );
+}
+// ===================================================
+
+// === KOMPONEN BARU: Aksi Acting PIC ===
+function ActingPicActions({ ticketId, onSuccess, onError }) {
+  const [notes, setNotes] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (actionType) => {
+    if (notes.trim() === '') {
+      onError('Catatan wajib diisi untuk aksi ini.');
+      return;
+    }
+    setIsLoading(true);
+    onError(null);
+
+    try {
+      const res = await fetch(`/api/tickets/${ticketId}/ap-process`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: actionType, // 'complete', 'return'
+          notes: notes,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Gagal melakukan aksi');
+      }
+      onSuccess(); // Refresh list
+    } catch (err) {
+      console.error(err);
+      onError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="mt-4 p-4 bg-purple-50 rounded-md border border-purple-200">
+      <h3 className="font-semibold text-gray-800">Aksi Acting PIC</h3>
+      <textarea
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        placeholder="Tambahkan catatan (wajib)..."
+        className="w-full px-3 py-2 mt-2 border rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+        rows="2"
+      />
+      <div className="flex flex-wrap gap-3 mt-3">
+        <button
+          onClick={() => handleSubmit('complete')}
+          disabled={isLoading}
+          className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-400"
+        >
+          {isLoading ? 'Loading...' : 'Selesaikan Tiket (Complete)'}
+        </button>
+        <button
+          onClick={() => handleSubmit('return')}
+          disabled={isLoading}
+          className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 disabled:bg-gray-400"
+        >
+          {isLoading ? 'Loading...' : 'Kembalikan (ke Acting Mgr)'}
         </button>
       </div>
     </div>
@@ -223,8 +356,7 @@ export default function QueuePage() {
                       />
                     )}
 
-                  {/* === PERUBAHAN DI SINI === */}
-                  {/* Tampilkan Aksi Sales Manager HANYA jika role-nya SM */}
+                  {/* Aksi Sales Manager */}
                   {session?.user?.role === 'Sales Manager' &&
                     assignment.ticket.type === 'Request' && (
                       <SalesManagerActions
@@ -233,21 +365,28 @@ export default function QueuePage() {
                         onError={setActionError}
                       />
                     )}
+
+                  {/* Aksi Acting Manager */}
+                  {session?.user?.role === 'Acting Manager' &&
+                    assignment.ticket.type === 'Request' && (
+                      <ActingManagerActions
+                        ticketId={assignment.ticket.ticket_id}
+                        onSuccess={loadQueue}
+                        onError={setActionError}
+                      />
+                    )}
+                  
+                  {/* === PERUBAHAN DI SINI === */}
+                  {/* Tampilkan Aksi Acting PIC HANYA jika role-nya AP */}
+                  {session?.user?.role === 'Acting PIC' &&
+                    assignment.ticket.type === 'Request' && (
+                      <ActingPicActions
+                        ticketId={assignment.ticket.ticket_id}
+                        onSuccess={loadQueue}
+                        onError={setActionError}
+                      />
+                    )}
                   {/* ======================= */}
-
-                  {/* (Tempat untuk Aksi Acting Manager nanti) */}
-                  {session?.user?.role === 'Acting Manager' && (
-                    <p className="text-xs text-gray-500">
-                      (Aksi Approve/Reject Acting Manager akan muncul di sini)
-                    </p>
-                  )}
-
-                  {/* (Tempat untuk Aksi Acting PIC nanti) */}
-                  {session?.user?.role === 'Acting PIC' && (
-                    <p className="text-xs text-gray-500">
-                      (Aksi Complete/Return Acting PIC akan muncul di sini)
-                    </p>
-                  )}
                 </div>
               </div>
             ))}
