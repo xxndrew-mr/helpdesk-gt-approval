@@ -1,4 +1,5 @@
 // Lokasi: src/app/api/tickets/[ticketId]/sm-process/route.js
+// Ini adalah KODE ASLI (BUKAN TES)
 
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
@@ -6,7 +7,8 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getServerSession } from 'next-auth/next';
 
 // FUNGSI: Sales Manager memproses tiket (Approve, Reject, Complete).
-export async function POST(request, { params }) {
+// === PERBAIKAN DI SINI (Parameter kedua adalah 'context') ===
+export async function POST(request, context) {
   // 1. Ambil session
   const session = await getServerSession(authOptions);
 
@@ -20,7 +22,11 @@ export async function POST(request, { params }) {
 
   // 3. Ambil data
   const salesManagerUser = session.user;
-  const { ticketId } = params;
+  
+  // === PERBAIKAN DI SINI (Ambil 'params' dari 'context') ===
+  const { params } = context;
+  const { ticketId } = params; // Ambil ticketId dari URL
+  
   const { action, notes } = await request.json(); // approve, reject, complete
 
   // 4. Validasi input
@@ -36,11 +42,21 @@ export async function POST(request, { params }) {
       { status: 400 }
     );
   }
+  
+  // === PENJAGA (SAFE-GUARD) UNTUK CRASH BIGINT ===
+  if (!ticketId) {
+    console.error("FATAL: 'ticketId' adalah undefined. Gagal membaca params dari URL.");
+    return NextResponse.json(
+      { message: "Server Error: Gagal membaca ID tiket dari URL." },
+      { status: 500 }
+    );
+  }
+  // ===============================================
 
   // 5. Verifikasi penugasan
   const currentAssignment = await prisma.ticketAssignment.findFirst({
     where: {
-      ticket_id: BigInt(ticketId),
+      ticket_id: BigInt(ticketId), // Baris ini sekarang AMAN
       user_id: salesManagerUser.id,
       assignment_type: 'Active',
       status: 'Pending',
