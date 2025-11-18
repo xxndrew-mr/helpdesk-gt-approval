@@ -22,6 +22,8 @@ CREATE TABLE "User" (
     "password" TEXT NOT NULL,
     "role_id" INTEGER,
     "division_id" INTEGER,
+    "jabatan" TEXT,
+    "toko" TEXT,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("user_id")
 );
@@ -35,6 +37,8 @@ CREATE TABLE "Ticket" (
     "status" TEXT NOT NULL DEFAULT 'Open',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "kategori" TEXT NOT NULL,
+    "sub_kategori" TEXT NOT NULL,
 
     CONSTRAINT "Ticket_pkey" PRIMARY KEY ("ticket_id")
 );
@@ -101,6 +105,9 @@ CREATE INDEX "TicketLog_ticket_id_idx" ON "TicketLog"("ticket_id");
 
 -- CreateIndex
 CREATE INDEX "TicketLog_actor_user_id_idx" ON "TicketLog"("actor_user_id");
+
+-- CreateIndex
+CREATE INDEX "TicketAssignment_ticket_id_idx" ON "TicketAssignment"("ticket_id");
 
 -- CreateIndex
 CREATE INDEX "TicketAssignment_user_id_status_idx" ON "TicketAssignment"("user_id", "status");

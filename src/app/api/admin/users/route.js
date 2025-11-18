@@ -1,34 +1,30 @@
+// Lokasi File: src/app/api/admin/users/route.js
+
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getServerSession } from 'next-auth/next';
 import bcrypt from 'bcryptjs';
 
-// FUNGSI: Mengambil semua user
+// FUNGSI: Mengambil daftar semua user
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== 'Administrator') {
-    return NextResponse.json(
-      { message: 'Anda tidak diizinkan.' },
-      { status: 403 }
-    );
+    return NextResponse.json({ message: 'Tidak diizinkan' }, { status: 403 });
   }
 
   try {
     const users = await prisma.user.findMany({
-      // Ambil juga relasi role dan division
       include: {
         role: true,
         division: true,
       },
-      orderBy: {
-        name: 'asc',
-      },
     });
     return NextResponse.json(users);
   } catch (error) {
+    console.error('Gagal mengambil data user (API):', error);
     return NextResponse.json(
-      { message: 'Terjadi kesalahan pada server.' },
+      { message: 'Gagal mengambil data user', error: error.message },
       { status: 500 }
     );
   }
@@ -38,30 +34,39 @@ export async function GET() {
 export async function POST(request) {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== 'Administrator') {
-    return NextResponse.json(
-      { message: 'Anda tidak diizinkan.' },
-      { status: 403 }
-    );
+    return NextResponse.json({ message: 'Tidak diizinkan' }, { status: 403 });
   }
 
   try {
     const body = await request.json();
-    const { name, email, password, role_id, division_id } = body;
+    
+    // --- PERUBAHAN DI SINI ---
+    // Hapus 'jabatan' dan 'toko' dari data yang diterima
+    const { 
+      name, 
+      email, 
+      password, 
+      role_id, 
+      division_id,
+    } = body;
+    // -------------------------
 
-    // Validasi input
+    // Validasi dasar
     if (!name || !email || !password || !role_id) {
       return NextResponse.json(
-        { message: 'Semua field wajib diisi (kecuali divisi).' },
+        { message: 'Nama, email, password, dan role wajib diisi' },
         { status: 400 }
       );
     }
-
-    // Cek jika email sudah ada
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
+    
+    // Cek jika user sudah ada
+    const userExists = await prisma.user.findUnique({
+      where: { email: email },
+    });
+    if (userExists) {
       return NextResponse.json(
-        { message: 'Email sudah terdaftar.' },
-        { status: 409 }
+        { message: 'Email sudah terdaftar' },
+        { status: 400 }
       );
     }
 
@@ -75,8 +80,10 @@ export async function POST(request) {
         email,
         password: hashedPassword,
         role_id: parseInt(role_id, 10),
-        // Set divisi HANYA jika diisi (bisa null)
         division_id: division_id ? parseInt(division_id, 10) : null,
+        // --- PERUBAHAN DI SINI ---
+        // 'jabatan' dan 'toko' DIHAPUS dari data pembuatan user
+        // -------------------------
       },
       include: {
         role: true,
@@ -84,11 +91,11 @@ export async function POST(request) {
       },
     });
 
-    return NextResponse.json(newUser, { status: 201 }); // 201 = Created
+    return NextResponse.json(newUser, { status: 201 });
   } catch (error) {
     console.error('Gagal membuat user:', error);
     return NextResponse.json(
-      { message: 'Terjadi kesalahan pada server.' },
+      { message: 'Gagal membuat user', error: error.message },
       { status: 500 }
     );
   }

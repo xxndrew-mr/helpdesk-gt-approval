@@ -1,9 +1,12 @@
 // Lokasi: src/app/dashboard/queue/page.jsx
 
-'use client'; // WAJIB, untuk fetch data dan state
+'use client'; 
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+
+// (Komponen TriageActions, SalesManagerActions, ActingManagerActions, ActingPicActions... 
+// ...semua kode komponen aksi Anda di atas sini tetap sama persis)
 
 // === Komponen Aksi Triase (Hanya untuk PIC OMI) ===
 function TriageActions({ ticketId, onSuccess, onError }) {
@@ -209,7 +212,7 @@ function ActingManagerActions({ ticketId, onSuccess, onError }) {
 }
 // ===================================================
 
-// === KOMPONEN BARU: Aksi Acting PIC ===
+// === Komponen Aksi Acting PIC ===
 function ActingPicActions({ ticketId, onSuccess, onError }) {
   const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -276,6 +279,7 @@ function ActingPicActions({ ticketId, onSuccess, onError }) {
 }
 // ===================================================
 
+
 export default function QueuePage() {
   const { data: session } = useSession();
   const [assignments, setAssignments] = useState([]);
@@ -336,9 +340,32 @@ export default function QueuePage() {
                 <h2 className="text-xl font-semibold text-blue-700">
                   {assignment.ticket.title}
                 </h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  Dikirim oleh: {assignment.ticket.submittedBy.name}
-                </p>
+                
+                {/* --- PERUBAHAN DI SINI --- */}
+                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
+                  <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-md">
+                    Oleh: {assignment.ticket.submittedBy.name}
+                  </span>
+                  <span className="px-2 py-1 text-xs font-medium bg-indigo-100 text-indigo-700 rounded-md">
+                    Kategori: {assignment.ticket.kategori}
+                  </span>
+                  <span className="px-2 py-1 text-xs font-medium bg-indigo-100 text-indigo-700 rounded-md">
+                    Sub: {assignment.ticket.sub_kategori}
+                  </span>
+                  {/* Tampilkan Toko/Jabatan jika ada */}
+                  {assignment.ticket.toko && (
+                    <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-md">
+                      Toko: {assignment.ticket.toko}
+                    </span>
+                  )}
+                  {assignment.ticket.jabatan && (
+                    <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-md">
+                      Jabatan: {assignment.ticket.jabatan}
+                    </span>
+                  )}
+                </div>
+                {/* ------------------------- */}
+                
                 <p className="mt-4 text-gray-800">
                   {assignment.ticket.detail?.description ||
                     '(Tidak ada deskripsi)'}
@@ -346,7 +373,8 @@ export default function QueuePage() {
 
                 {/* === Area Tombol Aksi === */}
                 <div className="mt-4 pt-4 border-t border-gray-200">
-                  {/* Aksi PIC OMI */}
+                  {/* (Semua logika tombol aksi Anda di sini tetap sama) */}
+                  
                   {session?.user?.role === 'PIC OMI' &&
                     assignment.ticket.type === 'Pending' && (
                       <TriageActions
@@ -356,7 +384,6 @@ export default function QueuePage() {
                       />
                     )}
 
-                  {/* Aksi Sales Manager */}
                   {session?.user?.role === 'Sales Manager' &&
                     assignment.ticket.type === 'Request' && (
                       <SalesManagerActions
@@ -366,7 +393,6 @@ export default function QueuePage() {
                       />
                     )}
 
-                  {/* Aksi Acting Manager */}
                   {session?.user?.role === 'Acting Manager' &&
                     assignment.ticket.type === 'Request' && (
                       <ActingManagerActions
@@ -376,8 +402,6 @@ export default function QueuePage() {
                       />
                     )}
                   
-                  {/* === PERUBAHAN DI SINI === */}
-                  {/* Tampilkan Aksi Acting PIC HANYA jika role-nya AP */}
                   {session?.user?.role === 'Acting PIC' &&
                     assignment.ticket.type === 'Request' && (
                       <ActingPicActions
@@ -386,7 +410,6 @@ export default function QueuePage() {
                         onError={setActionError}
                       />
                     )}
-                  {/* ======================= */}
                 </div>
               </div>
             ))}

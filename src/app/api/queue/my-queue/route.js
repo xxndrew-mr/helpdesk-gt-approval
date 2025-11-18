@@ -1,30 +1,20 @@
+// Lokasi: src/app/api/queue/my-queue/route.js
+
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getServerSession } from 'next-auth/next';
 
-/**
- * API untuk mengambil antrian tugas untuk user yang sedang login.
- * Menggunakan query param 'type' untuk membedakan:
- * ?type=Active -> (Request/Triase)
- * ?type=Feedback_Review -> (Feedback)
- */
 export async function GET(request) {
   const session = await getServerSession(authOptions);
 
-  // 1. Cek otentikasi
   if (!session) {
-    return NextResponse.json(
-      { message: 'Anda harus login' },
-      { status: 401 }
-    );
+    return NextResponse.json({ message: 'Anda harus login' }, { status: 401 });
   }
 
-  // 2. Ambil query parameter 'type'
   const { searchParams } = new URL(request.url);
-  const assignmentType = searchParams.get('type'); // 'Active' atau 'Feedback_Review'
+  const assignmentType = searchParams.get('type'); 
 
-  // 3. Validasi query parameter
   if (!assignmentType || !['Active', 'Feedback_Review'].includes(assignmentType)) {
     return NextResponse.json(
       { message: "Query parameter 'type' tidak valid." },
@@ -33,32 +23,46 @@ export async function GET(request) {
   }
 
   try {
-    // 4. Ambil data penugasan dari database
     const assignments = await prisma.ticketAssignment.findMany({
       where: {
-        user_id: session.user.id,        // Hanya untuk user yang login
-        assignment_type: assignmentType, // Hanya tipe yang diminta
-        status: 'Pending',               // Hanya yang masih 'Pending'
+        user_id: session.user.id,
+        assignment_type: assignmentType,
+        status: 'Pending',
       },
-      // Ambil juga data relasi (tiket, pengirim, detail)
+      // --- PERUBAHAN DI SINI ---
       include: {
         ticket: {
-          include: {
+          // Kita tidak lagi pakai 'include' di dalam 'ticket',
+          // kita pakai 'select' agar bisa mengambil
+          // SEMUA field scalar (termasuk kategori) DAN relasi
+          select: {
+            // Semua field scalar dari Ticket
+            ticket_id: true,
+            title: true,
+            type: true,
+            status: true,
+            createdAt: true,
+            kategori: true,       // <-- INI DIA
+            sub_kategori: true,  // <-- INI DIA
+            jabatan: true,
+            toko: true,
+            
+            // Relasi yang kita butuhkan
             submittedBy: {
-              select: { name: true }, // Hanya ambil nama pengirim
+              select: { name: true },
             },
             detail: {
-              select: { description: true }, // Hanya ambil deskripsi
+              select: { description: true },
             },
           },
         },
       },
+      // -------------------------
       orderBy: {
-        createdAt: 'asc', // Tampilkan yang paling lama di atas
+        createdAt: 'asc',
       },
     });
 
-    // 5. Kirim data
     return NextResponse.json(assignments);
   } catch (error) {
     console.error('Gagal mengambil antrian:', error);

@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react';
 
-// === KOMPONEN BARU: Aksi Feedback ===
+// === Komponen Aksi Feedback ===
 function FeedbackActions({ assignment, onSuccess, onError }) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -13,7 +13,6 @@ function FeedbackActions({ assignment, onSuccess, onError }) {
     onError(null);
 
     try {
-      // Panggil API baru kita menggunakan assignment_id
       const res = await fetch(
         `/api/assignments/${assignment.assignment_id}/feedback-process`,
         {
@@ -45,7 +44,6 @@ function FeedbackActions({ assignment, onSuccess, onError }) {
         Status Anda Saat Ini: <strong>{assignment.status}</strong>
       </p>
       <div className="flex flex-wrap gap-3 mt-3">
-        {/* Hanya tampilkan tombol jika status masih 'Pending' */}
         {assignment.status === 'Pending' && (
           <button
             onClick={() => handleSubmit('bookmark')}
@@ -56,7 +54,6 @@ function FeedbackActions({ assignment, onSuccess, onError }) {
           </button>
         )}
         
-        {/* Tampilkan tombol Archive jika status 'Pending' atau 'Bookmarked' */}
         {assignment.status !== 'Archived' && (
           <button
             onClick={() => handleSubmit('archive')}
@@ -130,9 +127,32 @@ export default function FeedbackQueuePage() {
                 <h2 className="text-xl font-semibold text-gray-800">
                   {assignment.ticket.title}
                 </h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  Dikirim oleh: {assignment.ticket.submittedBy.name}
-                </p>
+                
+                {/* --- PERUBAHAN DI SINI --- */}
+                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
+                  <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-md">
+                    Oleh: {assignment.ticket.submittedBy.name}
+                  </span>
+                  <span className="px-2 py-1 text-xs font-medium bg-indigo-100 text-indigo-700 rounded-md">
+                    Kategori: {assignment.ticket.kategori}
+                  </span>
+                  <span className="px-2 py-1 text-xs font-medium bg-indigo-100 text-indigo-700 rounded-md">
+                    Sub: {assignment.ticket.sub_kategori}
+                  </span>
+                  {/* Tampilkan Toko/Jabatan jika ada */}
+                  {assignment.ticket.toko && (
+                    <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-md">
+                      Toko: {assignment.ticket.toko}
+                    </span>
+                  )}
+                  {assignment.ticket.jabatan && (
+                    <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-md">
+                      Jabatan: {assignment.ticket.jabatan}
+                    </span>
+                  )}
+                </div>
+                {/* ------------------------- */}
+                
                 <p className="mt-4 text-gray-800">
                   {assignment.ticket.detail?.description ||
                     '(Tidak ada deskripsi)'}

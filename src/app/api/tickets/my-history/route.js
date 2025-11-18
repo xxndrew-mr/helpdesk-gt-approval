@@ -10,13 +10,15 @@ export async function GET(request) {
   // 1. Ambil session
   const session = await getServerSession(authOptions);
 
-  // 2. Cek otorisasi (Hanya Salesman)
-  if (!session || session.user.role !== 'Salesman') {
+  // === PERBAIKAN DI SINI ===
+  // 2. Cek otorisasi (Salesman ATAU Agen)
+  if (!session || !['Salesman', 'Agen'].includes(session.user.role)) {
     return NextResponse.json(
       { message: 'Anda tidak diizinkan.' },
       { status: 403 }
     );
   }
+  // =========================
 
   try {
     // 3. Ambil data tiket dari database
@@ -39,11 +41,11 @@ export async function GET(request) {
             timestamp: 'asc',
           },
         },
-        // Ambil penugasan yang masih 'Pending' (untuk tahu siapa PIC saat ini)
+        // Ambil penugasan yang still 'Pending' (untuk tahu siapa PIC saat ini)
         assignments: {
           where: { status: 'Pending' },
           include: {
-            // === PERBAIKAN DI SINI ===
+            // === PERBAIKAN DI SINI (dari bug sebelumnya) ===
             user: {
               select: {
                 name: true,
@@ -75,4 +77,4 @@ export async function GET(request) {
       { status: 500 }
     );
   }
-}
+}     

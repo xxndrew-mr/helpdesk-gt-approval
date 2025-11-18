@@ -1,180 +1,164 @@
-'use client'; // WAJIB, karena kita butuh hook (useSession, etc)
+// Lokasi: src/app/dashboard/layout.js
 
+'use client';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useEffect } from 'react';
 import Link from 'next/link';
+import { 
+  HomeIcon, 
+  ArrowLeftOnRectangleIcon, 
+  DocumentPlusIcon, 
+  TicketIcon, 
+  ClipboardDocumentListIcon, 
+  InboxStackIcon, 
+  UsersIcon 
+} from '@heroicons/react/24/outline'; // Pastikan Anda menginstal heroicons jika belum
+
+/* CATATAN: Jika Anda belum menginstal heroicons:
+  jalankan: npm install @heroicons/react 
+*/
 
 export default function DashboardLayout({ children }) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
 
-  // --- 1. Gerbang Keamanan (Perlindungan Sisi Klien) ---
-  useEffect(() => {
-    // Jika status BUKAN 'loading' DAN session-nya tidak ada (null)
-    if (status !== 'loading' && !session) {
-      // User tidak login, tendang ke halaman login
-      router.replace('/login');
-    }
-  }, [session, status, router]);
+  // Ambil role dari session
+  const userRole = session?.user?.role;
 
-  // --- 2. Tampilan Loading ---
-  // Tampilkan ini saat session sedang diverifikasi
   if (status === 'loading') {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        Memverifikasi sesi...
-      </div>
-    );
+    return <div className="flex items-center justify-center min-h-screen">Memuat sesi...</div>;
   }
 
-  // --- 3. Tampilan Halaman (Jika Sudah Login) ---
-  // Jika status BUKAN 'loading' DAN user ADA
-  if (status === 'authenticated' && session.user) {
-    const user = session.user; // Data user (termasuk role & division)
+  // Jika tidak ada sesi (meskipun middleware sudah ada, ini penjaga ganda)
+  if (status === 'unauthenticated') {
+    router.push('/login');
+    return <div className="flex items-center justify-center min-h-screen">Mengarahkan...</div>;
+  }
 
-    // Fungsi untuk Cek Link Aktif (untuk styling sidebar)
-    const isActive = (path) => pathname === path;
+  // Fungsi untuk mengecek link aktif
+  const isActive = (path) => pathname === path;
 
-    return (
-      <div className="flex h-screen bg-gray-100">
-        {/* === SIDEBAR (MENU KIRI) === */}
-        <div className="hidden md:flex w-64 flex-col bg-gray-800 text-white">
-          <div className="flex items-center justify-center h-16 bg-gray-900 shadow-md">
-            <span className="text-xl font-bold">Helpdesk GT</span>
-          </div>
-          <nav className="flex-1 p-4 space-y-2">
+  // Daftar menu dinamis
+  const menuItems = [
+    // Menu Umum
+    { 
+      href: '/dashboard', 
+      label: 'Dashboard', 
+      icon: HomeIcon, 
+      roles: ['Administrator', 'Salesman', 'Agen', 'PIC OMI', 'Sales Manager', 'Acting Manager', 'Acting PIC', 'User Feedback'] 
+    },
+    
+    // Menu untuk Submitter (Salesman & Agen)
+    { 
+      href: '/dashboard/submit', 
+      label: 'Submit Tiket Baru', 
+      icon: DocumentPlusIcon, 
+      roles: ['Salesman', 'Agen'] 
+    },
+    { 
+      href: '/dashboard/my-tickets', 
+      label: 'Riwayat Tiket Saya', 
+      icon: TicketIcon, 
+      roles: ['Salesman', 'Agen']
+    },
+
+    // Menu untuk Approver/Processor
+    { 
+      href: '/dashboard/queue', 
+      label: 'Antrian Tugas Saya', // Label default
+      icon: ClipboardDocumentListIcon, 
+      roles: ['PIC OMI', 'Sales Manager', 'Acting Manager', 'Acting PIC'] 
+    },
+    
+    // Menu untuk Feedback
+    { 
+      href: '/dashboard/feedback', 
+      label: 'Antrian Feedback', 
+      icon: InboxStackIcon, 
+      roles: ['PIC OMI', 'Sales Manager', 'User Feedback'] 
+    },
+    
+    // Menu untuk Admin
+    { 
+      href: '/dashboard/admin/users', 
+      label: 'Manajemen User', 
+      icon: UsersIcon, 
+      roles: ['Administrator'] 
+    },
+  ];
+
+  // 1. Filter menu berdasarkan role user
+  let filteredMenu = menuItems.filter(item => item.roles.includes(userRole));
+  
+  // 2. Logika khusus untuk mengganti label (INI SEKARANG AKAN BEKERJA)
+  if (userRole === 'PIC OMI') {
+    filteredMenu = filteredMenu.map(item => 
+      // Jika item adalah '/dashboard/queue', ganti labelnya
+      item.href === '/dashboard/queue' ? { ...item, label: 'Antrian Triase' } : item
+    );
+  } else {
+    // Sembunyikan 'Antrian Tugas Saya' dari PIC OMI (jika labelnya masih default)
+    // Ini adalah penjaga ganda jika map di atas gagal, tapi seharusnya tidak perlu
+     if(userRole !== 'PIC OMI') {
+        filteredMenu = filteredMenu.filter(item => item.label !== 'Antrian Triase');
+     }
+  }
+
+
+  return (
+    <div className="flex h-screen bg-gray-100">
+      {/* Sidebar */}
+      <div className="w-64 bg-gray-900 text-white flex flex-col">
+        <div className="px-6 py-4 border-b border-gray-700">
+          <h1 className="text-2xl font-bold text-white">Helpdesk GT</h1>
+        </div>
+        <nav className="flex-1 px-4 py-6 space-y-2">
+          
+          {filteredMenu.map((item) => (
             <Link
-              href="/dashboard"
-              className={`block px-4 py-2 rounded-md ${
-                isActive('/dashboard')
-                  ? 'bg-blue-600'
-                  : 'hover:bg-gray-700'
-              }`}
+              key={item.href} // Key sekarang akan unik
+              href={item.href}
+              className={`
+                flex items-center px-4 py-3 rounded-lg transition-colors
+                ${isActive(item.href) 
+                  ? 'bg-blue-600 text-white' 
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'}
+              `}
             >
-              Dashboard
-            </Link>
+              <item.icon className="h-6 w-6 mr-3" />
+              {item.label}
+            </Link> // <-- PERBAIKAN TYPO DI SINI
+          ))}
 
-            {/* --- Menu Berdasarkan Role --- */}
-
-            {/* Menu Salesman */}
-            {user.role === 'Salesman' && (
-              <>
-                <Link
-                  href="/dashboard/submit"
-                  className={`block px-4 py-2 rounded-md ${
-                    isActive('/dashboard/submit')
-                      ? 'bg-blue-600'
-                      : 'hover:bg-gray-700'
-                  }`}
-                >
-                  Submit Tiket Baru
-                </Link>
-                <Link
-                  href="/dashboard/my-tickets"
-                  className={`block px-4 py-2 rounded-md ${
-                    isActive('/dashboard/my-tickets')
-                      ? 'bg-blue-600'
-                      : 'hover:bg-gray-700'
-                  }`}
-                >
-                  Riwayat Tiket Saya
-                </Link>
-              </>
-            )}
-
-            {/* Menu PIC OMI */}
-            {(user.role === 'PIC OMI') && (
-              <Link
-                href="/dashboard/queue"
-                className={`block px-4 py-2 rounded-md ${
-                  isActive('/dashboard/queue')
-                    ? 'bg-blue-600'
-                    : 'hover:bg-gray-700'
-                }`}
-              >
-                Antrian Triase
-              </Link>
-            )}
-
-            {/* Menu Manajerial (SM, AM, AP) */}
-            {(user.role === 'Sales Manager' ||
-              user.role === 'Acting Manager' ||
-              user.role === 'Acting PIC') && (
-              <Link
-                href="/dashboard/queue"
-                className={`block px-4 py-2 rounded-md ${
-                  isActive('/dashboard/queue')
-                    ? 'bg-blue-600'
-                    : 'hover:bg-gray-700'
-                }`}
-              >
-                Antrian Tugas Saya
-              </Link>
-            )}
-            
-            {/* Menu User Feedback */}
-            {(user.role === 'User Feedback' || user.role === 'PIC OMI' || user.role === 'Sales Manager') && (
-              <Link
-                href="/dashboard/feedback"
-                className={`block px-4 py-2 rounded-md ${
-                  isActive('/dashboard/feedback')
-                    ? 'bg-blue-600'
-                    : 'hover:bg-gray-700'
-                }`}
-              >
-                Antrian Feedback
-              </Link>
-            )}
-
-            {/* Menu Admin */}
-            {user.role === 'Administrator' && (
-              <Link
-                href="/dashboard/admin/users"
-                className={`block px-4 py-2 rounded-md ${
-                  isActive('/dashboard/admin/users')
-                    ? 'bg-blue-600'
-                    : 'hover:bg-gray-700'
-                }`}
-              >
-                Manajemen User
-              </Link>
-            )}
-          </nav>
-        </div>
-
-        {/* === AREA KONTEN UTAMA (KANAN) === */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* --- HEADER (BILAH ATAS) --- */}
-          <header className="flex justify-between items-center h-16 bg-white shadow-md px-6">
-            <div className="text-gray-800">
-              {/* Nanti bisa diisi judul halaman */}
-            </div>
-            <div className="flex items-center space-x-3">
-              <span className="text-gray-700 text-sm">
-                Halo, <span className="font-semibold">{user.name}</span> (
-                {user.role})
-              </span>
-              <button
-                onClick={() => signOut({ callbackUrl: '/login' })}
-                className="px-4 py-2 text-sm text-white bg-red-600 rounded-md hover:bg-red-700"
-              >
-                Logout
-              </button>
-            </div>
-          </header>
-
-          {/* --- KONTEN HALAMAN (CHILDREN) --- */}
-          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
-            {children}
-          </main>
+        </nav>
+        <div className="px-4 py-4 border-t border-gray-700">
+          <button
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            className="w-full flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-red-600 hover:text-white transition-colors"
+          >
+            <ArrowLeftOnRectangleIcon className="h-6 w-6 mr-3" />
+            Logout
+          </button>
         </div>
       </div>
-    );
-  }
 
-  // Jika status BUKAN 'loading' dan BUKAN 'authenticated' (misal: error)
-  // Ini akan ditangani oleh useEffect di atas, tapi sebagai fallback:
-  return null;
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <header className="bg-white shadow-md border-b border-gray-200">
+          <div className="flex justify-end items-center px-6 py-4">
+            <div className="text-right text-gray-700">
+              <div className="font-semibold">{session?.user?.name}</div>
+              <div className="text-sm text-gray-500">({session?.user?.role})</div>
+            </div>
+          </div>
+        </header>
+        {/* Content Area */}
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
 }
