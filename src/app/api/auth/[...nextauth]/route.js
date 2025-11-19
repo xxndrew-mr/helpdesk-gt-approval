@@ -1,4 +1,4 @@
-// Lokasi File: app/api/auth/[...nextauth]/route.js
+// Lokasi: src/app/api/auth/[...nextauth]/route.js
 
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
@@ -10,16 +10,19 @@ export const authOptions = {
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        email: { label: 'Email', type: 'text' },
+        // Ubah label form login default NextAuth (walau kita pakai custom UI)
+        username: { label: 'Username', type: 'text' }, // <-- GANTI EMAIL JADI USERNAME
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials.email || !credentials.password) {
-          throw new Error('Email dan password wajib diisi.');
+        // Cek input
+        if (!credentials.username || !credentials.password) {
+          throw new Error('Username dan password wajib diisi.');
         }
 
+        // --- PERUBAHAN: Cari user berdasarkan USERNAME ---
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+          where: { username: credentials.username }, // <-- Look up by username
           include: {
             role: true,
             division: true,
@@ -27,8 +30,9 @@ export const authOptions = {
         });
 
         if (!user) {
-          throw new Error('Email tidak terdaftar.');
+          throw new Error('Username tidak ditemukan.');
         }
+        // ------------------------------------------------
 
         const isPasswordCorrect = await bcrypt.compare(
           credentials.password,
@@ -39,27 +43,22 @@ export const authOptions = {
           throw new Error('Password salah.');
         }
         
-        // --- PERUBAHAN DI SINI ---
-        // Cek apakah user 'Active'
         if (user.status !== 'Active') {
           throw new Error('Akun Anda telah dinonaktifkan.');
         }
-        // -------------------------
 
         return user;
       },
     }),
   ],
 
-  session: {
-    strategy: 'jwt',
-  },
+  session: { strategy: 'jwt' },
 
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.user_id;
-        token.email = user.email;
+        token.username = user.username; // Simpan username di token
         token.name = user.name;
         token.role = user.role?.role_name || null;
         token.divisionName = user.division?.division_name || null; 
@@ -67,10 +66,10 @@ export const authOptions = {
       }
       return token;
     },
-
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id;
+        session.user.username = token.username; // Kirim ke session
         session.user.role = token.role;
         session.user.divisionName = token.divisionName;
         session.user.divisionId = token.divisionId;
@@ -78,11 +77,7 @@ export const authOptions = {
       return session;
     },
   },
-
-  pages: {
-    signIn: '/login',
-  },
-
+  pages: { signIn: '/login' },
   secret: process.env.NEXTAUTH_SECRET,
 };
 

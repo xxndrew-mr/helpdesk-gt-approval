@@ -1,140 +1,80 @@
 // Lokasi: src/app/api/tickets/[ticketId]/sm-process/route.js
-// Ini adalah KODE ASLI DENGAN PERBAIKAN PARAMS
 
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getServerSession } from 'next-auth/next';
+import { getRoutingTarget } from '@/lib/smartRouting'; // <-- Import Logika Mapping
 
-// FUNGSI: Sales Manager memproses tiket (Approve, Reject, Complete).
-// === PERBAIKAN DI SINI (Parameter kedua adalah 'context') ===
 export async function POST(request, context) {
-  // 1. Ambil session
   const session = await getServerSession(authOptions);
-
-  // 2. Cek otorisasi (Hanya Sales Manager)
   if (!session || session.user.role !== 'Sales Manager') {
-    return NextResponse.json(
-      { message: 'Anda tidak diizinkan.' },
-      { status: 403 }
-    );
+    return NextResponse.json({ message: 'Akses ditolak.' }, { status: 403 });
   }
 
-  // 3. Ambil data
-  const salesManagerUser = session.user;
-  
-  // === PERBAIKAN DI SINI (Ambil 'params' dari 'context' DENGAN await) ===
-  // 'context.params' adalah Promise di Next.js 14+
   const { ticketId } = await context.params;
-  // =============================================================
-  
-  const { action, notes } = await request.json(); // approve, reject, complete
+  const { action, notes } = await request.json();
 
-  // 4. Validasi input
-  if (!['approve', 'reject', 'complete'].includes(action)) {
-    return NextResponse.json(
-      { message: 'Aksi tidak valid.' },
-      { status: 400 }
-    );
-  }
-  if (!notes || notes.trim() === '') {
-    return NextResponse.json(
-      { message: 'Catatan wajib diisi.' },
-      { status: 400 }
-    );
-  }
-  
-  // === PENJAGA (SAFE-GUARD) UNTUK CRASH BIGINT ===
-  if (!ticketId) {
-    console.error("FATAL: 'ticketId' adalah undefined. Gagal membaca params dari URL.");
-    return NextResponse.json(
-      { message: "Server Error: Gagal membaca ID tiket dari URL." },
-      { status: 500 }
-    );
-  }
-  // ===============================================
+  if (!['approve', 'reject', 'complete'].includes(action)) return NextResponse.json({ message: 'Aksi tidak valid.' }, { status: 400 });
+  if (!notes) return NextResponse.json({ message: 'Catatan wajib.' }, { status: 400 });
 
-  // 5. Verifikasi penugasan
+  // Ambil data tiket untuk cek Sub Kategori
   const currentAssignment = await prisma.ticketAssignment.findFirst({
-    where: {
-      ticket_id: BigInt(ticketId), // Baris ini sekarang AMAN
-      user_id: salesManagerUser.id,
-      assignment_type: 'Active',
-      status: 'Pending',
-    },
+    where: { ticket_id: BigInt(ticketId), user_id: session.user.id, status: 'Pending' },
+    include: { ticket: true } // Include data tiket
   });
 
-  if (!currentAssignment) {
-    return NextResponse.json(
-      { message: 'Anda tidak ditugaskan untuk tiket ini.' },
-      { status: 403 }
-    );
-  }
+  if (!currentAssignment) return NextResponse.json({ message: 'Tugas tidak ditemukan.' }, { status: 403 });
 
-  // 6. Mulai Transaksi Database
   try {
     await prisma.$transaction(async (tx) => {
-      // a. Hapus penugasan Sales Manager
-      await tx.ticketAssignment.delete({
-        where: { assignment_id: currentAssignment.assignment_id },
-      });
+      await tx.ticketAssignment.delete({ where: { assignment_id: currentAssignment.assignment_id } });
 
-      // b. Buat Log Aksi
       await tx.ticketLog.create({
         data: {
           ticket_id: BigInt(ticketId),
-          actor_user_id: salesManagerUser.id,
-          action_type: `sm_${action}`, // sm_approve, sm_reject, ...
+          actor_user_id: session.user.id,
+          action_type: `sm_${action}`,
           notes: notes,
         },
       });
 
-      // --- c. Eksekusi Aksi ---
-
       if (action === 'approve') {
-        // Aksi: Teruskan ke Acting Manager
-        const actingManagerUser = await tx.user.findFirst({
-          where: { role: { role_name: 'Acting Manager' } },
+        // --- SMART ROUTING: MENCARI ACTING MANAGER ---
+        const subKategori = currentAssignment.ticket.sub_kategori;
+        const target = getRoutingTarget(subKategori);
+
+        if (!target) throw new Error(`Mapping routing tidak ditemukan untuk sub kategori: ${subKategori}`);
+
+        // Cari User Acting Manager di Divisi yang sesuai (misal: Divisi Operation)
+        const targetAM = await tx.user.findFirst({
+          where: {
+            role: { role_name: 'Acting Manager' },
+            division: { division_name: target.am_division }
+          }
         });
 
-        if (!actingManagerUser) {
-          throw new Error('User Acting Manager tidak ditemukan.');
-        }
+        if (!targetAM) throw new Error(`User Acting Manager untuk ${target.am_division} tidak ditemukan.`);
 
         await tx.ticketAssignment.create({
           data: {
             ticket_id: BigInt(ticketId),
-            user_id: actingManagerUser.user_id,
+            user_id: targetAM.user_id, // <-- Kirim ke GM/Mkt Mgr/Sales Op Mgr yang tepat
             assignment_type: 'Active',
             status: 'Pending',
           },
         });
+        // ---------------------------------------------
+        
       } else if (action === 'reject') {
-        // Aksi: Tolak tiket
-        await tx.ticket.update({
-          where: { ticket_id: BigInt(ticketId) },
-          data: { status: 'Rejected' },
-        });
+        await tx.ticket.update({ where: { ticket_id: BigInt(ticketId) }, data: { status: 'Rejected' } });
       } else if (action === 'complete') {
-        // Aksi: Selesaikan tiket
-        await tx.ticket.update({
-          where: { ticket_id: BigInt(ticketId) },
-          data: { status: 'Done' },
-        });
+        await tx.ticket.update({ where: { ticket_id: BigInt(ticketId) }, data: { status: 'Done' } });
       }
-    }); // Transaksi selesai (commit)
+    });
 
-    // 7. Kirim response sukses
-    return NextResponse.json(
-      { message: `Aksi '${action}' berhasil dieksekusi.` },
-      { status: 200 }
-    );
+    return NextResponse.json({ message: `Aksi '${action}' berhasil.` }, { status: 200 });
   } catch (error) {
-    // 8. Rollback jika ada error
-    console.error('Gagal memproses tiket (SM):', error);
-    return NextResponse.json(
-      { message: 'Gagal memproses tiket.', error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }

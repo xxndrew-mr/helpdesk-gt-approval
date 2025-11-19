@@ -1,7 +1,7 @@
-// Lokasi File: prisma/schema.prisma
+// Lokasi: prisma/schema.prisma
 
 datasource db {
-  provider = "postgresql" // atau "mysql", sesuai database Anda
+  provider = "postgresql" // atau "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -9,8 +9,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// === Model/Tabel Kita ===
-
+// ... (Model Role dan Division TIDAK BERUBAH) ...
 model Role {
   role_id   Int    @id @default(autoincrement())
   role_name String @unique
@@ -25,30 +24,35 @@ model Division {
 
 model User {
   user_id     Int      @id @default(autoincrement())
-  name        String
-  email       String   @unique
+  name        String   
+  
+  // --- PERUBAHAN DI SINI ---
+  username    String   @unique // <-- KOLOM BARU (Login pakai ini)
+  email       String?  @unique // Email jadi opsional atau tetap unik (untuk kontak)
+  // -------------------------
+  
   password    String
   role_id     Int?
   role        Role?    @relation(fields: [role_id], references: [role_id])
   division_id Int?
   division    Division? @relation(fields: [division_id], references: [division_id])
-  jabatan     String? 
-  toko        String? 
-  
-  // --- PERUBAHAN DI SINI ---
-  // Menambahkan kolom status untuk "Soft Delete"
-  status      String   @default("Active") // 'Active' atau 'Inactive'
-  // -------------------------
+  status      String   @default("Active") 
 
-  // Relasi
+  pic_omi_id  Int?
+  picOmi      User?    @relation("PicOmiHandler", fields: [pic_omi_id], references: [user_id])
+  handledUsers User[]  @relation("PicOmiHandler")
+
   submittedTickets Ticket[] @relation("SubmittedBy")
   logs             TicketLog[] @relation("Actor")
   assignments      TicketAssignment[] @relation("AssignedTo")
 
   @@index([role_id])
   @@index([division_id])
+  @@index([pic_omi_id])
 }
 
+// ... (Model Ticket, TicketDetail, TicketLog, TicketAssignment TIDAK BERUBAH) ...
+// (Pastikan Anda menyalin sisa model tiket yang sudah ada sebelumnya di sini)
 model Ticket {
   ticket_id          BigInt   @id @default(autoincrement())
   title              String
@@ -59,10 +63,10 @@ model Ticket {
   updatedAt          DateTime @updatedAt
   kategori           String
   sub_kategori       String
-  jabatan     String? 
-  toko        String? 
+  nama_pengisi       String?
+  jabatan            String?
+  toko               String?
 
-  // Relasi
   submittedBy User             @relation("SubmittedBy", fields: [submitted_by_user_id], references: [user_id])
   detail      TicketDetail?
   logs        TicketLog[]
@@ -75,8 +79,8 @@ model Ticket {
 
 model TicketDetail {
   ticket_id        BigInt   @id
-  description      String   @db.Text 
-  attachments_json Json?    
+  description      String   @db.Text
+  attachments_json Json?
   ticket           Ticket   @relation(fields: [ticket_id], references: [ticket_id], onDelete: Cascade)
 }
 
@@ -87,11 +91,8 @@ model TicketLog {
   action_type   String
   notes         String?  @db.Text
   timestamp     DateTime @default(now())
-
-  // Relasi
   ticket Ticket @relation(fields: [ticket_id], references: [ticket_id], onDelete: Cascade)
   actor  User   @relation("Actor", fields: [actor_user_id], references: [user_id])
-
   @@index([ticket_id])
   @@index([actor_user_id])
 }
@@ -103,11 +104,8 @@ model TicketAssignment {
   assignment_type String   
   status          String   @default("Pending") 
   createdAt       DateTime @default(now())
-
-  // Relasi
   ticket Ticket @relation(fields: [ticket_id], references: [ticket_id], onDelete: Cascade)
   user   User   @relation("AssignedTo", fields: [user_id], references: [user_id])
-
   @@index([ticket_id])
   @@index([user_id, status]) 
 }

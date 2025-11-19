@@ -1,4 +1,4 @@
-// Lokasi File: src/app/dashboard/submit/page.jsx
+// Lokasi: src/app/dashboard/submit/page.jsx
 
 'use client';
 
@@ -23,38 +23,38 @@ export default function SubmitTicketPage() {
   const [description, setDescription] = useState('');
   const [selectedKategori, setSelectedKategori] = useState('');
   const [selectedSubKategori, setSelectedSubKategori] = useState('');
-  
-  // --- STATE BARU UNTUK PROFIL SUBMITTER ---
+
+  // --- STATE PROFIL SUBMITTER ---
+  const [namaPengisi, setNamaPengisi] = useState('');
   const [jabatan, setJabatan] = useState('');
   const [toko, setToko] = useState('');
-  // ----------------------------------------
-  
-  // State untuk UI
+  // ------------------------------
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  // Daftar sub-kategori yang dinamis
   const subKategoriOptions = selectedKategori ? categories[selectedKategori] : [];
 
-  // Handler untuk submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
     setSuccess(null);
-    
-    // Validasi kondisional
-    if (session.user.role === 'Agen' && !jabatan) {
-      setError('Agen wajib mengisi Jabatan.');
+
+    // --- VALIDASI KONDISIONAL (LOGIKA TETAP SAMA) ---
+    if (session.user.role === 'Agen' && (!namaPengisi || !jabatan)) {
+      setError('Agen wajib mengisi Nama Pengisi dan Jabatan.');
       setIsLoading(false);
       return;
     }
-    if (session.user.role === 'Salesman' && !toko) {
-      setError('Salesman wajib mengisi Toko.');
+
+    if (session.user.role === 'Salesman' && (!namaPengisi || !toko)) {
+      setError('Salesman wajib mengisi Nama Sales dan Nama Toko.');
       setIsLoading(false);
       return;
     }
+    // ---------------------------------------
 
     try {
       const res = await fetch('/api/tickets/submit', {
@@ -65,8 +65,9 @@ export default function SubmitTicketPage() {
           description,
           kategori: selectedKategori,
           sub_kategori: selectedSubKategori,
-          jabatan: jabatan || null, // Kirim jabatan jika ada
-          toko: toko || null,       // Kirim toko jika ada
+          nama_pengisi: namaPengisi || null,
+          jabatan: jabatan || null,
+          toko: toko || null,
         }),
       });
 
@@ -76,19 +77,17 @@ export default function SubmitTicketPage() {
       }
 
       setSuccess('Tiket berhasil disubmit!');
-      // Reset form
       setTitle('');
       setDescription('');
       setSelectedKategori('');
       setSelectedSubKategori('');
+      setNamaPengisi('');
       setJabatan('');
       setToko('');
-      
-      // Arahkan ke riwayat tiket setelah 2 detik
-      setTimeout(() => {
-        router.push('/dashboard/my-tickets'); 
-      }, 2000);
 
+      setTimeout(() => {
+        router.push('/dashboard/my-tickets');
+      }, 2000);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -96,118 +95,156 @@ export default function SubmitTicketPage() {
     }
   };
 
-  // Cek role (jika tidak ada sesi atau role tidak sesuai)
-  if (!session) {
-    return <div>Memuat...</div>
-  }
+  // State loading & guard role (logika tetap)
+  if (!session)
+    return (
+      <div className="flex justify-center py-10 text-sm text-slate-500">
+        Memuat...
+      </div>
+    );
+
   if (!['Salesman', 'Agen'].includes(session.user.role)) {
     return (
-      <div className="text-red-500">
-        Hanya Salesman atau Agen yang dapat mengakses halaman ini.
+      <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        Akses Ditolak.
       </div>
     );
   }
 
+  const userRole = session.user.role;
+
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-6">Buat Tiket Baru</h1>
-      
-      <div className="bg-white p-6 rounded-lg shadow-md max-w-3xl mx-auto">
+    <div className="px-4 py-6">
+      {/* HEADER */}
+      <div className="relative mb-8 overflow-hidden rounded-3xl bg-indigo-600 px-6 py-6 shadow-lg">
+        <h1 className="text-2xl font-semibold tracking-tight text-white">
+          Buat Tiket Baru
+        </h1>
+        <p className="mt-1 text-sm text-indigo-100">
+          Kirim permintaan atau feedback Anda untuk diproses oleh tim OMI.
+        </p>
+        <div className="absolute -bottom-10 -right-10 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
+      </div>
+
+      {/* CARD FORM */}
+      <div className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <form onSubmit={handleSubmit} className="space-y-6">
-          
-          {error && <div className="p-3 bg-red-100 text-red-700 rounded-md">{error}</div>}
-          {success && <div className="p-3 bg-green-100 text-green-700 rounded-md">{success}</div>}
-          
-          {/* --- BAGIAN INFO SUBMITTER BARU --- */}
-          <fieldset className="border p-4 rounded-md">
-            <legend className="text-lg font-semibold text-gray-800 px-2">
-              Info Submitter
+          {/* Alert error / success */}
+          {error && (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+              {success}
+            </div>
+          )}
+
+          {/* Identitas Pengirim */}
+          <fieldset className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+            <legend className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700">
+              Identitas Pengirim ({userRole})
             </legend>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Nama</label>
-                <input
-                  type="text"
-                  value={session.user.name}
-                  disabled
-                  className="w-full px-3 py-2 mt-1 text-gray-500 bg-gray-100 border border-gray-300 rounded-md"
-                />
+
+            <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="md:col-span-2 text-xs text-slate-500">
+                Login sebagai:{' '}
+                <span className="font-medium text-slate-800">
+                  {session.user.name}
+                </span>{' '}
+                <span className="text-slate-400">({session.user.email})</span>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <input
-                  type="email"
-                  value={session.user.email}
-                  disabled
-                  className="w-full px-3 py-2 mt-1 text-gray-500 bg-gray-100 border border-gray-300 rounded-md"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Posisi</label>
-                <input
-                  type="text"
-                  value={session.user.role}
-                  disabled
-                  className="w-full px-3 py-2 mt-1 text-gray-500 bg-gray-100 border border-gray-300 rounded-md"
-                />
-              </div>
-              
-              {/* Input Kondisional untuk Jabatan/Toko */}
-              {session.user.role === 'Agen' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Jabatan (Wajib)
-                  </label>
-                  <input
-                    type="text"
-                    value={jabatan}
-                    onChange={(e) => setJabatan(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 mt-1 text-gray-900 border border-gray-300 rounded-md"
-                  />
-                </div>
+
+              {userRole === 'Salesman' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-800">
+                      Nama Salesman <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={namaPengisi}
+                      onChange={(e) => setNamaPengisi(e.target.value)}
+                      required
+                      placeholder="Masukkan nama Anda"
+                      className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-800">
+                      Nama Toko <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={toko}
+                      onChange={(e) => setToko(e.target.value)}
+                      required
+                      placeholder="Toko yang sedang dikunjungi"
+                      className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                    />
+                  </div>
+                </>
               )}
-              {session.user.role === 'Salesman' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Toko (Wajib)
-                  </label>
-                  <input
-                    type="text"
-                    value={toko}
-                    onChange={(e) => setToko(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 mt-1 text-gray-900 border border-gray-300 rounded-md"
-                  />
-                </div>
+
+              {userRole === 'Agen' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-800">
+                      Nama Pengisi <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={namaPengisi}
+                      onChange={(e) => setNamaPengisi(e.target.value)}
+                      required
+                      placeholder="Siapa yang mengisi form ini?"
+                      className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-800">
+                      Jabatan <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={jabatan}
+                      onChange={(e) => setJabatan(e.target.value)}
+                      required
+                      placeholder="Contoh: Owner, Staff, Istri Owner"
+                      className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                    />
+                  </div>
+                </>
               )}
             </div>
           </fieldset>
-          {/* ------------------------------------- */}
-          
-          {/* --- BAGIAN INFO TIKET --- */}
-          <fieldset className="border p-4 rounded-md">
-            <legend className="text-lg font-semibold text-gray-800 px-2">
-              Info Tiket
+
+          {/* Detail Tiket */}
+          <fieldset className="rounded-2xl border border-slate-200 bg-white p-4">
+            <legend className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
+              Detail Tiket
             </legend>
-            <div className="space-y-6 mt-2">
+
+            <div className="mt-3 space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Judul / Ringkasan Masalah
+                <label className="block text-sm font-medium text-slate-800">
+                  Judul / Ringkasan
                 </label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
-                  className="w-full px-3 py-2 mt-1 text-gray-900 border border-gray-300 rounded-md"
+                  className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  placeholder="Contoh: Display program kurang lengkap, stok kosong, dsb."
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Kategori (Wajib)
+                  <label className="block text-sm font-medium text-slate-800">
+                    Kategori
                   </label>
                   <select
                     value={selectedKategori}
@@ -216,55 +253,58 @@ export default function SubmitTicketPage() {
                       setSelectedSubKategori('');
                     }}
                     required
-                    className="w-full px-3 py-2 mt-1 text-gray-900 border border-gray-300 rounded-md"
+                    className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                   >
                     <option value="">Pilih Kategori...</option>
                     {Object.keys(categories).map((kat) => (
-                      <option key={kat} value={kat}>{kat}</option>
+                      <option key={kat} value={kat}>
+                        {kat}
+                      </option>
                     ))}
                   </select>
                 </div>
-                
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Sub Kategori (Wajib)
+                  <label className="block text-sm font-medium text-slate-800">
+                    Sub Kategori
                   </label>
                   <select
                     value={selectedSubKategori}
                     onChange={(e) => setSelectedSubKategori(e.target.value)}
                     required
                     disabled={!selectedKategori}
-                    className="w-full px-3 py-2 mt-1 text-gray-900 border border-gray-300 rounded-md disabled:bg-gray-100"
+                    className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm disabled:bg-slate-50 disabled:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                   >
                     <option value="">Pilih Sub Kategori...</option>
                     {subKategoriOptions.map((subKat) => (
-                      <option key={subKat} value={subKat}>{subKat}</option>
+                      <option key={subKat} value={subKat}>
+                        {subKat}
+                      </option>
                     ))}
                   </select>
                 </div>
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Notes / Deskripsi Lengkap
+                <label className="block text-sm font-medium text-slate-800">
+                  Deskripsi Lengkap
                 </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   required
-                  rows="5"
-                  className="w-full px-3 py-2 mt-1 text-gray-900 border border-gray-300 rounded-md"
-                  placeholder="Jelaskan detail request atau feedback Anda di sini..."
+                  rows={5}
+                  className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  placeholder="Jelaskan kondisi di lapangan, lokasi, detail kendala, dan kebutuhan Anda."
                 />
               </div>
             </div>
           </fieldset>
-          {/* --------------------------- */}
-          
+
+          {/* Tombol Submit */}
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full px-4 py-2 font-medium text-white bg-blue-600 rounded-md shadow-sm hover:bg-blue-700 disabled:bg-gray-400"
+            className="flex w-full items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-200 transition hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 disabled:cursor-not-allowed disabled:bg-slate-400"
           >
             {isLoading ? 'Mengirim...' : 'Submit Tiket'}
           </button>
