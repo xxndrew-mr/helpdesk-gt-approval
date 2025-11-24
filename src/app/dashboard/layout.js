@@ -5,6 +5,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Dialog, Transition } from '@headlessui/react';
+import Image from 'next/image';
 
 import { 
   HomeIcon, 
@@ -133,11 +134,11 @@ export default function DashboardLayout({ children }) {
             </button>
 
             {feedbackOpen && (
-              <div className={`
-                ${horizontal
+              <div className={
+                horizontal
                   ? "absolute mt-1 bg-blue-900 border border-blue-700 rounded-lg shadow-lg w-52"
-                  : "ml-6 mt-2 space-y-1"}
-              `}>
+                  : "ml-6 mt-2 space-y-1"
+              }>
                 <Link
                   href="/dashboard/feedback"
                   onClick={() => onNavigate?.()}
@@ -175,7 +176,7 @@ export default function DashboardLayout({ children }) {
     <div className="min-h-screen bg-slate-50">
 
       {/* ========== NAVBAR DESKTOP ========== */}
-      <header className="sticky top-0 z-40 bg-gradient-to-r from-blue-700 to-blue-900 shadow-md">
+      <header className="sticky top-0 z-40 bg-indigo-600 shadow-md">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           
           {/* LEFT */}
@@ -187,10 +188,19 @@ export default function DashboardLayout({ children }) {
               <Bars3Icon className="w-6 h-6" />
             </button>
 
-            <span className="hidden md:flex h-9 w-9 items-center justify-center rounded-lg bg-white text-blue-700 font-bold">
-              GT
-            </span>
-            <span className="text-white font-semibold text-sm">Helpdesk GT</span>
+            <div className="hidden md:flex h-9 w-9 items-center justify-center rounded-lg bg-white overflow-hidden">
+            <Image
+              src="/logo-login.png"  
+              alt="Logo"
+              width={36}
+              height={36}
+              className="object-cover"
+                            />
+              </div>
+            <div className="flex flex-col">
+              <span className="text-white font-semibold text-sm">Helpdesk GT</span>
+              <span className="text-[11px] text-white/80">PT.ONDA MEGA INTEGRA</span>
+            </div>
           </div>
 
           {/* CENTER NAV */}
@@ -202,7 +212,7 @@ export default function DashboardLayout({ children }) {
           <div className="flex items-center gap-3 text-white">
             <div className="hidden sm:flex flex-col text-right">
               <span className="text-sm font-medium">{session?.user?.name}</span>
-              <span className="text-xs opacity-70">{session?.user?.role}</span>
+              <span className="text-xs opacity-80">{session?.user?.role}</span>
             </div>
 
             <button
@@ -245,7 +255,9 @@ export default function DashboardLayout({ children }) {
       </Transition.Root>
 
       {/* CONTENT */}
-      <main className="max-w-7xl mx-auto px-4 py-6">{children}</main>
+      <main className="max-w-7xl mx-auto px-4 py-6">
+        {children}
+      </main>
     </div>
   );
 }

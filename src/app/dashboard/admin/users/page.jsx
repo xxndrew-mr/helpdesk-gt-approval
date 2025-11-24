@@ -545,12 +545,6 @@ export default function AdminUsersPage() {
                         scope="col"
                         className="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider"
                       >
-                        Detail Tambahan
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider"
-                      >
                         Status
                       </th>
                       <th
@@ -592,7 +586,7 @@ export default function AdminUsersPage() {
                           <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
                             <div className="flex items-center">
                               <div className="relative h-10 w-10 flex-shrink-0">
-                                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-slate-800 to-indigo-600 text-white flex items-center justify-center text-sm font-semibold shadow-sm">
+                                <div className="h-10 w-10 rounded-full bg-indigo-600 text-white flex items-center justify-center text-sm font-semibold shadow-sm">
                                   {user.name.charAt(0).toUpperCase()}
                                 </div>
                                 <span className="absolute -bottom-1 -right-1 inline-flex items-center justify-center rounded-full bg-white p-0.5 shadow">
@@ -629,22 +623,6 @@ export default function AdminUsersPage() {
                                 </span>
                               )}
                             </div>
-                          </td>
-
-                          {/* Kolom Info Tambahan (PIC) */}
-                          <td className="whitespace-nowrap px-3 py-4 text-sm text-slate-600">
-                            {user.picOmi ? (
-                              <div className="text-xs flex flex-col">
-                                <span className="text-slate-400 mb-0.5">
-                                  Ditangani oleh:
-                                </span>
-                                <div className="flex items-center gap-1 font-medium text-slate-700">
-                                  <UserIcon className="h-3 w-3" /> {user.picOmi.name}
-                                </div>
-                              </div>
-                            ) : (
-                              <span className="text-slate-300 text-xs">-</span>
-                            )}
                           </td>
 
                           {/* Kolom Status */}
