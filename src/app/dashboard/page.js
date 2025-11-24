@@ -49,8 +49,8 @@ export default function DashboardPage() {
         </p>
 
         <p className="mt-2 text-slate-600 leading-relaxed">
-          Gunakan menu navigasi di sebelah kiri untuk membuka halaman tiket,
-          antrian tugas, riwayat tiket, ataupun membuat tiket baru.
+          Gunakan menu navigasi di sebelah kiri untuk membuka halaman Request,
+          antrian tugas, riwayat Request, ataupun membuat Request baru.
         </p>
 
         <p className="mt-4 text-slate-500 text-sm">

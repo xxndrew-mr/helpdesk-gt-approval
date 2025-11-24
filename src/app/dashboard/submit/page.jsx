@@ -73,10 +73,10 @@ export default function SubmitTicketPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || 'Gagal submit tiket');
+        throw new Error(data.message || 'Gagal submit Request');
       }
 
-      setSuccess('Tiket berhasil disubmit!');
+      setSuccess('Request berhasil disubmit!');
       setTitle('');
       setDescription('');
       setSelectedKategori('');
@@ -118,7 +118,7 @@ export default function SubmitTicketPage() {
       {/* HEADER */}
       <div className="relative mb-8 overflow-hidden rounded-3xl bg-indigo-600 px-6 py-6 shadow-lg">
         <h1 className="text-2xl font-semibold tracking-tight text-white">
-          Buat Tiket Baru
+          Buat Request Baru
         </h1>
         <p className="mt-1 text-sm text-indigo-100">
           Kirim permintaan atau feedback Anda untuk diproses oleh tim OMI.
@@ -220,10 +220,10 @@ export default function SubmitTicketPage() {
             </div>
           </fieldset>
 
-          {/* Detail Tiket */}
+          {/* Detail Request */}
           <fieldset className="rounded-2xl border border-slate-200 bg-white p-4">
             <legend className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
-              Detail Tiket
+              Detail Request
             </legend>
 
             <div className="mt-3 space-y-5">
@@ -306,7 +306,7 @@ export default function SubmitTicketPage() {
             disabled={isLoading}
             className="flex w-full items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-200 transition hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 disabled:cursor-not-allowed disabled:bg-slate-400"
           >
-            {isLoading ? 'Mengirim...' : 'Submit Tiket'}
+            {isLoading ? 'Mengirim...' : 'Submit Request'}
           </button>
         </form>
       </div>

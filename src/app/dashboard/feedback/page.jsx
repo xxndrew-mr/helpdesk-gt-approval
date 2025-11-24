@@ -1,10 +1,13 @@
-// Lokasi: src/app/dashboard/feedback/page.jsx
-
-'use client'; // WAJIB, untuk fetch data dan state
+'use client';
 
 import { useState, useEffect } from 'react';
+import {
+  BookmarkIcon,
+  ArchiveBoxIcon,
+  ChevronDownIcon,
+} from '@heroicons/react/24/outline';
 
-// === Komponen Aksi Feedback ===
+// === ACTION BUTTONS ===
 function FeedbackActions({ assignment, onSuccess, onError }) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -18,19 +21,14 @@ function FeedbackActions({ assignment, onSuccess, onError }) {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: actionType, // 'bookmark' atau 'archive'
-          }),
+          body: JSON.stringify({ action: actionType }),
         }
       );
 
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Gagal melakukan aksi');
-      }
-      onSuccess(); // Refresh list
+      if (!res.ok) throw new Error(data.message || 'Gagal melakukan aksi');
+      onSuccess();
     } catch (err) {
-      console.error(err);
       onError(err.message);
     } finally {
       setIsLoading(false);
@@ -38,35 +36,36 @@ function FeedbackActions({ assignment, onSuccess, onError }) {
   };
 
   return (
-    <div className="mt-4 p-4 bg-gray-50 rounded-md border">
-      <h3 className="font-semibold text-gray-800">Aksi Feedback</h3>
-      <p className="text-sm text-gray-600">
-        Status Anda Saat Ini: <strong>{assignment.status}</strong>
-      </p>
-      <div className="flex flex-wrap gap-3 mt-3">
+    <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+      <h3 className="text-sm font-semibold text-slate-800">Aksi Feedback</h3>
+
+      <div className="mt-3 flex flex-wrap gap-3">
         {assignment.status === 'Pending' && (
           <button
             onClick={() => handleSubmit('bookmark')}
             disabled={isLoading}
-            className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 disabled:bg-gray-400"
+            className="inline-flex items-center gap-2 rounded-xl bg-yellow-600 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-yellow-200 hover:bg-yellow-500 disabled:bg-slate-400"
           >
-            {isLoading ? 'Loading...' : 'Bookmark'}
+            <BookmarkIcon className="h-4 w-4" />
+            {isLoading ? 'Memproses...' : 'Bookmark'}
           </button>
         )}
-        
+
         {assignment.status !== 'Archived' && (
           <button
             onClick={() => handleSubmit('archive')}
             disabled={isLoading}
-            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:bg-gray-400"
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-700 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-slate-300 hover:bg-slate-600 disabled:bg-slate-400"
           >
-            {isLoading ? 'Loading...' : 'Archive'}
+            <ArchiveBoxIcon className="h-4 w-4" />
+            {isLoading ? 'Memproses...' : 'Archive'}
           </button>
         )}
       </div>
     </div>
   );
 }
+
 // ===================================================
 
 export default function FeedbackQueuePage() {
@@ -75,16 +74,14 @@ export default function FeedbackQueuePage() {
   const [error, setError] = useState(null);
   const [actionError, setActionError] = useState(null);
 
-  // Fungsi untuk memuat data antrian
+  const [expandedId, setExpandedId] = useState(null);
+
   const loadQueue = async () => {
     setError(null);
     setActionError(null);
     try {
-      // Panggil API kita dengan parameter type=Feedback_Review
       const res = await fetch('/api/queue/my-queue?type=Feedback_Review');
-      if (!res.ok) {
-        throw new Error('Gagal mengambil data antrian');
-      }
+      if (!res.ok) throw new Error('Gagal mengambil data antrian');
       const data = await res.json();
       setAssignments(data);
     } catch (err) {
@@ -94,80 +91,142 @@ export default function FeedbackQueuePage() {
     }
   };
 
-  // Muat data saat halaman dibuka
   useEffect(() => {
     loadQueue();
   }, []);
 
-  if (isLoading) return <div>Memuat antrian feedback...</div>;
-  if (error) return <div className="text-red-500">Error: {error}</div>;
+  if (isLoading)
+    return (
+      <div className="flex justify-center py-10 text-slate-500 text-sm">
+        Memuat antrian feedback...
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-red-700">
+        Error: {error}
+      </div>
+    );
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-6">Antrian Feedback</h1>
+    <div className="px-4 py-6">
+      {/* HEADER */}
+      <div className="relative mb-8 overflow-hidden rounded-3xl bg-blue-600 px-6 py-6 shadow-lg">
+        <h1 className="text-2xl font-semibold text-white tracking-tight">
+          Antrian Feedback
+        </h1>
+        <p className="text-blue-100 mt-1 text-sm">
+          Semua feedback yang masuk menunggu tindak lanjut Anda.
+        </p>
+        <div className="absolute -bottom-10 -right-10 h-32 w-32 bg-white/10 rounded-full blur-2xl" />
+      </div>
 
+      {/* NOTIF ERROR AKSI */}
       {actionError && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
           Error Aksi: {actionError}
         </div>
       )}
 
-      <div className="bg-white p-6 rounded-lg shadow-md">
+      {/* LIST */}
+      <div>
         {assignments.length === 0 ? (
-          <p className="text-gray-700">
-            Tidak ada feedback di antrian Anda saat ini.
-          </p>
+          <div className="rounded-xl border border-dashed border-slate-300 bg-white py-10 text-center text-sm text-slate-500">
+            Tidak ada feedback untuk diproses.
+          </div>
         ) : (
-          <div className="space-y-6">
-            {assignments.map((assignment) => (
-              <div
-                key={assignment.assignment_id}
-                className="p-4 border rounded-lg"
-              >
-                <h2 className="text-xl font-semibold text-gray-800">
-                  {assignment.ticket.title}
-                </h2>
-                
-                {/* --- PERUBAHAN DI SINI --- */}
-                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
-                  <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-md">
-                    Oleh: {assignment.ticket.submittedBy.name}
-                  </span>
-                  <span className="px-2 py-1 text-xs font-medium bg-indigo-100 text-indigo-700 rounded-md">
-                    Kategori: {assignment.ticket.kategori}
-                  </span>
-                  <span className="px-2 py-1 text-xs font-medium bg-indigo-100 text-indigo-700 rounded-md">
-                    Sub: {assignment.ticket.sub_kategori}
-                  </span>
-                  {/* Tampilkan Toko/Jabatan jika ada */}
-                  {assignment.ticket.toko && (
-                    <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-md">
-                      Toko: {assignment.ticket.toko}
-                    </span>
-                  )}
-                  {assignment.ticket.jabatan && (
-                    <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-md">
-                      Jabatan: {assignment.ticket.jabatan}
-                    </span>
-                  )}
-                </div>
-                {/* ------------------------- */}
-                
-                <p className="mt-4 text-gray-800">
-                  {assignment.ticket.detail?.description ||
-                    '(Tidak ada deskripsi)'}
-                </p>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {assignments.map((assignment) => {
+              const isExpanded = expandedId === assignment.assignment_id;
+              const ticket = assignment.ticket;
 
-                {/* === Area Tombol Aksi === */}
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <FeedbackActions
-                    assignment={assignment}
-                    onSuccess={loadQueue}
-                    onError={setActionError}
-                  />
+              return (
+                <div
+                  key={assignment.assignment_id}
+                  className={`group cursor-pointer rounded-2xl border bg-white p-4 shadow-sm transition hover:shadow-md ${
+                    isExpanded
+                      ? 'border-blue-500 bg-blue-50/70'
+                      : 'border-slate-200 hover:border-blue-300'
+                  }`}
+                  onClick={() =>
+                    setExpandedId(
+                      isExpanded ? null : assignment.assignment_id
+                    )
+                  }
+                >
+                  {/* HEADER CARD */}
+                  <div className="flex justify-between items-start">
+                    <h2 className="text-[12px] font-semibold text-slate-900 line-clamp-2">
+                      {ticket.title}
+                    </h2>
+                    <span className="rounded-full bg-amber-50 px-2 py-1 text-[10px] font-semibold text-amber-700">
+                      {assignment.status}
+                    </span>
+                  </div>
+
+                  {/* Chips */}
+                  <div className="mt-2 flex flex-wrap gap-1 text-[10px]">
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">
+                      {ticket.submittedBy.name}
+                    </span>
+                    <span className="rounded-full bg-blue-50 px-2 py-0.5 text-blue-700">
+                      {ticket.kategori}
+                    </span>
+                    {ticket.sub_kategori && (
+                      <span className="rounded-full bg-blue-50 px-2 py-0.5 text-blue-700">
+                        {ticket.sub_kategori}
+                      </span>
+                    )}
+                    {ticket.toko && (
+                      <span className="rounded-full bg-yellow-50 px-2 py-0.5 text-yellow-700">
+                        {ticket.toko}
+                      </span>
+                    )}
+                    {ticket.jabatan && (
+                      <span className="rounded-full bg-yellow-50 px-2 py-0.5 text-yellow-700">
+                        {ticket.jabatan}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* EXPAND DETAIL */}
+                  {isExpanded && (
+                    <div className="mt-3 space-y-3 rounded-xl border border-slate-200 bg-white p-3 text-[11px] text-slate-700">
+                      <div>
+                        <div className="text-[10px] font-semibold text-slate-500 uppercase mb-1">
+                          Deskripsi
+                        </div>
+                        <p>
+                          {ticket.detail?.description ||
+                            '(Tidak ada deskripsi)'}
+                        </p>
+                      </div>
+
+                      <div className="border-t border-slate-100 pt-3">
+                        <FeedbackActions
+                          assignment={assignment}
+                          onSuccess={loadQueue}
+                          onError={setActionError}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Footer indikator */}
+                  <div className="mt-2 flex justify-end text-[10px] text-slate-400">
+                    <span className="mr-1">
+                      {isExpanded ? 'Sembunyikan' : 'Lihat detail'}
+                    </span>
+                    <ChevronDownIcon
+                      className={`h-3 w-3 transition ${
+                        isExpanded ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

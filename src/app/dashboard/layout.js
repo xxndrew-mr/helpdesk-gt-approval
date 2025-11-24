@@ -19,6 +19,9 @@ import {
   Bars3Icon,
   XMarkIcon,
   UserCircleIcon,
+  ClockIcon,
+  ArchiveBoxIcon,
+  BookmarkIcon,
 } from '@heroicons/react/24/outline';
 
 export default function DashboardLayout({ children }) {
@@ -27,7 +30,6 @@ export default function DashboardLayout({ children }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Ambil role dari session
   const userRole = session?.user?.role;
 
   if (status === 'loading') {
@@ -41,7 +43,6 @@ export default function DashboardLayout({ children }) {
     );
   }
 
-  // Jika tidak ada sesi
   if (status === 'unauthenticated') {
     router.push('/login');
     return (
@@ -51,10 +52,9 @@ export default function DashboardLayout({ children }) {
     );
   }
 
-  // Fungsi untuk mengecek link aktif
   const isActive = (path) => pathname === path;
 
-  // Daftar menu dinamis (TIDAK DIUBAH)
+  // === DAFTAR MENU UTAMA (tanpa feedback/bookmark/archive) ===
   const menuItems = [
     { 
       href: '/dashboard', 
@@ -81,60 +81,159 @@ export default function DashboardLayout({ children }) {
       roles: ['PIC OMI', 'Sales Manager', 'Acting Manager', 'Acting PIC'] 
     },
     { 
-      href: '/dashboard/feedback', 
-      label: 'Antrian Feedback', 
-      icon: InboxStackIcon, 
-      roles: ['PIC OMI', 'Sales Manager', 'User Feedback'] 
-    },
-    { 
       href: '/dashboard/admin/users', 
       label: 'Manajemen User', 
       icon: UsersIcon, 
       roles: ['Administrator'] 
     },
+    { 
+      href: '/dashboard/history', 
+      label: 'Riwayat Aksi', 
+      icon: ClockIcon, 
+      roles: ['PIC OMI', 'Sales Manager', 'Acting Manager', 'Acting PIC'] 
+    },
   ];
 
-  // 1. Filter menu berdasarkan role user
+  // Role yang boleh lihat menu Feedback (Antrian, Bookmark, Archive)
+  const FEEDBACK_ALLOWED_ROLES = ['PIC OMI', 'Sales Manager', 'User Feedback'];
+  const showFeedbackMenu = FEEDBACK_ALLOWED_ROLES.includes(userRole);
+
+  // Route yang termasuk grup "Feedback"
+  const FEEDBACK_ROUTES = [
+    '/dashboard/feedback',
+    '/dashboard/bookmarks',
+    '/dashboard/archive',
+  ];
+
+  // 1. Filter menu berdasarkan role
   let filteredMenu = menuItems.filter(item => item.roles.includes(userRole));
   
-  // 2. Logika khusus label untuk PIC OMI (TIDAK DIUBAH)
+  // 2. Logika khusus label untuk PIC OMI
   if (userRole === 'PIC OMI') {
     filteredMenu = filteredMenu.map(item => 
       item.href === '/dashboard/queue' ? { ...item, label: 'Antrian Triase' } : item
     );
   } else {
-    if (userRole !== 'PIC OMI') {
-      filteredMenu = filteredMenu.filter(item => item.label !== 'Antrian Triase');
-    }
+    filteredMenu = filteredMenu.map(item =>
+      item.href === '/dashboard/queue' ? { ...item, label: 'Antrian Tugas Saya' } : item
+    );
   }
 
-  // Komponen item menu (supaya dipakai di mobile & desktop)
-  const NavItems = ({ onNavigate }) => (
-    <nav className="mt-4 flex-1 space-y-1">
-      {filteredMenu.map((item) => {
-        const active = isActive(item.href);
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={() => onNavigate && onNavigate()}
-            className={`group flex items-center rounded-xl px-3 py-2 text-sm font-medium transition-colors
-              ${active
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-200 hover:bg-slate-800 hover:text-white'
-              }`}
-          >
-            <item.icon
-              className={`mr-3 h-5 w-5 flex-shrink-0 ${
-                active ? 'text-white' : 'text-slate-300 group-hover:text-white'
-              }`}
-            />
-            <span>{item.label}</span>
-          </Link>
-        );
-      })}
-    </nav>
-  );
+  // Komponen menu (dipakai mobile & desktop)
+  const NavItems = ({ onNavigate }) => {
+    // buka submenu otomatis kalau lagi di salah satu route feedback
+    const [feedbackOpen, setFeedbackOpen] = useState(
+      FEEDBACK_ROUTES.includes(pathname)
+    );
+
+    const feedbackParentActive = FEEDBACK_ROUTES.includes(pathname);
+
+    const handleNavClick = (href) => {
+      if (onNavigate) onNavigate();
+    };
+
+    return (
+      <nav className="mt-4 flex-1 space-y-1">
+        {/* Menu utama biasa */}
+        {filteredMenu.map((item) => {
+          const active = isActive(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => handleNavClick(item.href)}
+              className={`group flex items-center rounded-xl px-3 py-2 text-sm font-medium transition-colors
+                ${active
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'text-slate-200 hover:bg-slate-800 hover:text-white'
+                }`}
+            >
+              <item.icon
+                className={`mr-3 h-5 w-5 flex-shrink-0 ${
+                  active ? 'text-white' : 'text-slate-300 group-hover:text-white'
+                }`}
+              />
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+
+        {/* Menu Feedback (Antrian / Bookmark / Arsip) */}
+        {showFeedbackMenu && (
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => setFeedbackOpen(prev => !prev)}
+              className={`group flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-medium transition-colors
+                ${feedbackParentActive
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'text-slate-200 hover:bg-slate-800 hover:text-white'
+                }`}
+            >
+              <span className="flex items-center">
+                <InboxStackIcon
+                  className={`mr-3 h-5 w-5 flex-shrink-0 ${
+                    feedbackParentActive ? 'text-white' : 'text-slate-300 group-hover:text-white'
+                  }`}
+                />
+                <span>Feedback</span>
+              </span>
+              <span
+                className={`ml-2 text-xs transition-transform ${
+                  feedbackOpen ? 'rotate-90' : 'rotate-0'
+                }`}
+              >
+                ▸
+              </span>
+            </button>
+
+            {feedbackOpen && (
+              <div className="mt-1 ml-8 space-y-1 text-xs">
+                <Link
+                  href="/dashboard/feedback"
+                  onClick={() => handleNavClick('/dashboard/feedback')}
+                  className={`flex items-center rounded-lg px-2 py-1.5 transition-colors
+                    ${isActive('/dashboard/feedback')
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-slate-200 hover:bg-slate-800 hover:text-white'
+                    }`}
+                >
+                  <span className="mr-2 h-1.5 w-1.5 rounded-full bg-slate-400" />
+                  Antrian Feedback
+                </Link>
+
+                <Link
+                  href="/dashboard/bookmarks"
+                  onClick={() => handleNavClick('/dashboard/bookmarks')}
+                  className={`flex items-center rounded-lg px-2 py-1.5 transition-colors
+                    ${isActive('/dashboard/bookmarks')
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-slate-200 hover:bg-slate-800 hover:text-white'
+                    }`}
+                >
+                  <span className="mr-2 h-1.5 w-1.5 rounded-full bg-slate-400" />
+                  Bookmark Bersama
+                </Link>
+
+                <Link
+                  href="/dashboard/archive"
+                  onClick={() => handleNavClick('/dashboard/archive')}
+                  className={`flex items-center rounded-lg px-2 py-1.5 transition-colors
+                    ${isActive('/dashboard/archive')
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-slate-200 hover:bg-slate-800 hover:text-white'
+                    }`}
+                >
+                  <span className="mr-2 h-1.5 w-1.5 rounded-full bg-slate-400" />
+                  Arsip Saya
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
+      </nav>
+    );
+  };
 
   const handleLogout = () => {
     signOut({ callbackUrl: '/login' });
@@ -240,7 +339,7 @@ export default function DashboardLayout({ children }) {
 
       {/* Area utama (digeser di desktop karena sidebar fixed) */}
       <div className="lg:pl-64 flex flex-col min-h-screen">
-        {/* Header Top (Mobile + Desktop) */}
+        {/* Header Top */}
         <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
             {/* Tombol menu mobile */}
@@ -262,7 +361,7 @@ export default function DashboardLayout({ children }) {
               </div>
             </div>
 
-            {/* Info user (mobile & desktop) */}
+            {/* Info user */}
             <div className="ml-auto flex items-center gap-3">
               <div className="hidden sm:flex flex-col text-right text-sm text-slate-700">
                 <div className="font-semibold flex items-center gap-1 justify-end">

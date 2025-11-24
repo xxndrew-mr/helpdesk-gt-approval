@@ -22,12 +22,13 @@ export default function MyTicketsPage() {
   const [tickets, setTickets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedMonth, setSelectedMonth] = useState(''); // filter bulan (YYYY-MM)
 
   const loadHistory = async () => {
     setError(null);
     try {
       const res = await fetch('/api/tickets/my-history');
-      if (!res.ok) throw new Error('Gagal mengambil data riwayat tiket');
+      if (!res.ok) throw new Error('Gagal mengambil data riwayat');
       const data = await res.json();
       setTickets(data);
     } catch (err) {
@@ -44,7 +45,7 @@ export default function MyTicketsPage() {
   if (isLoading)
     return (
       <div className="flex justify-center py-10 text-slate-500 text-sm">
-        Memuat riwayat tiket Anda...
+        Memuat riwayat Request Anda...
       </div>
     );
 
@@ -55,108 +56,176 @@ export default function MyTicketsPage() {
       </div>
     );
 
+  // === FILTER BY BULAN ===
+  const visibleTickets = tickets.filter((ticket) => {
+    if (!selectedMonth) return true; // tidak ada filter -> semua tampil
+
+    const d = new Date(ticket.createdAt);
+    if (isNaN(d.getTime())) return false;
+
+    const monthStr =
+      d.getFullYear().toString() +
+      '-' +
+      String(d.getMonth() + 1).padStart(2, '0'); // YYYY-MM
+
+    return monthStr === selectedMonth;
+  });
+  // =======================
+
   return (
     <div className="px-4 py-6">
       {/* HEADER */}
       <div className="relative overflow-hidden rounded-3xl bg-indigo-600 px-6 py-6 shadow-lg mb-8">
         <h1 className="text-2xl font-semibold text-white tracking-tight">
-          Riwayat Tiket Saya
+          Riwayat Request Saya
         </h1>
         <p className="text-indigo-100 mt-1 text-sm">
           Semua laporan, request, serta update status ada di sini.
         </p>
 
+        <div className="mt-4 inline-flex items-center gap-2 text-xs text-indigo-100/90 bg-indigo-500/30 px-3 py-1 rounded-full">
+          <span>Total Request:</span>
+          <span className="font-semibold">{tickets.length}</span>
+        </div>
+
         <div className="absolute -bottom-10 -right-10 h-36 w-36 bg-white/10 rounded-full blur-2xl" />
       </div>
 
       {/* CONTENT WRAPPER */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-        {tickets.length === 0 ? (
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
+        {/* FILTER BAR BULAN */}
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-slate-500">
+            {' '}
+            {selectedMonth
+              ? `Filter bulan: ${selectedMonth}`
+              : 'Anda dapat memfilter berdasarkan bulan.'}
+          </p>
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-medium text-slate-600">
+              Filter bulan:
+            </label>
+            <input
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+            />
+            {selectedMonth && (
+              <button
+                type="button"
+                onClick={() => setSelectedMonth('')}
+                className="text-[11px] text-slate-500 hover:text-slate-700"
+              >
+                Reset
+              </button>
+            )}
+          </div>
+        </div>
+
+        {visibleTickets.length === 0 ? (
           <p className="text-gray-600 text-sm">
-            Anda belum pernah submit tiket apapun.
+            {selectedMonth
+              ? 'Tidak ada Request pada bulan yang dipilih.'
+              : 'Anda belum pernah submit Request apapun.'}
           </p>
         ) : (
-          <div className="space-y-6">
-            {tickets.map((ticket) => (
-              <div
-                key={ticket.ticket_id}
-                className="rounded-2xl border border-slate-200 bg-white shadow-sm p-6 hover:shadow-md transition"
-              >
-                {/* Header ticket */}
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <h2 className="text-xl font-semibold text-indigo-700">
-                      {ticket.title}
-                    </h2>
-                    <div className="text-xs text-gray-500 mt-1">
-                      <strong>{ticket.type}</strong> •{' '}
-                      {new Date(ticket.createdAt).toLocaleString('id-ID')}
+          <>
+            {/* LIST / GRID CARD KECIL */}
+            <div className="grid gap-4 md:grid-cols-2">
+              {visibleTickets.map((ticket) => (
+                <div
+                  key={ticket.ticket_id}
+                  className="rounded-2xl border border-slate-200 bg-white shadow-sm p-4 hover:shadow-md hover:border-indigo-200 transition"
+                >
+                  {/* Header: judul + status */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h2 className="text-sm font-semibold text-slate-900 line-clamp-2">
+                        {ticket.title}
+                      </h2>
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500">
+                        <span className="font-medium text-indigo-600">
+                          {ticket.type}
+                        </span>
+                        <span>•</span>
+                        <span>
+                          {new Date(ticket.createdAt).toLocaleString('id-ID')}
+                        </span>
+                      </div>
                     </div>
+
+                    <span
+                      className={`inline-flex items-center rounded-full ring-1 px-2.5 py-1 text-[11px] font-semibold ${getStatusClass(
+                        ticket.status
+                      )}`}
+                    >
+                      {ticket.status}
+                    </span>
                   </div>
 
-                  <span
-                    className={`mt-3 sm:mt-0 inline-flex items-center rounded-full ring-1 px-3 py-1 text-xs font-semibold ${getStatusClass(
-                      ticket.status
-                    )}`}
-                  >
-                    {ticket.status}
-                  </span>
-                </div>
+                  {/* Deskripsi singkat */}
+                  <p className="mt-3 text-xs text-slate-700 leading-relaxed">
+                    {ticket.detail?.description || '(Tidak ada deskripsi)'}
+                  </p>
 
-                {/* Deskripsi */}
-                <p className="mt-4 text-gray-700 text-sm leading-relaxed">
-                  {ticket.detail?.description || '(Tidak ada deskripsi)'}
-                </p>
+                  {/* PIC saat ini */}
+                  <div className="mt-3 border-t border-slate-100 pt-2">
+                    <p className="text-[11px] font-semibold text-slate-600">
+                      PIC Saat Ini
+                    </p>
+                    {ticket.assignments.length > 0 ? (
+                      <p className="mt-0.5 text-xs text-slate-800">
+                        {ticket.assignments[0].user.name} •{' '}
+                        {ticket.assignments[0].user.role.role_name}
+                      </p>
+                    ) : (
+                      <p className="mt-0.5 text-[11px] text-slate-400 italic">
+                        (Request selesai)
+                      </p>
+                    )}
+                  </div>
 
-                {/* PIC */}
-                <div className="mt-5">
-                  <h4 className="text-sm font-semibold text-slate-700">
-                    PIC Saat Ini
-                  </h4>
-                  {ticket.assignments.length > 0 ? (
-                    <p className="mt-1 text-sm text-gray-800">
-                      {ticket.assignments[0].user.name} •{' '}
-                      {ticket.assignments[0].user.role.role_name}
-                    </p>
-                  ) : (
-                    <p className="text-gray-400 text-xs italic mt-1">
-                      (Tiket selesai / tidak ada PIC aktif)
-                    </p>
+                  {/* Riwayat aksi: collapsible */}
+                  {ticket.logs && ticket.logs.length > 0 && (
+                    <details className="mt-3 group">
+                      <summary className="text-[11px] text-indigo-600 cursor-pointer select-none flex items-center gap-1">
+                        <span className="underline-offset-2 group-open:underline">
+                          Lihat riwayat aksi ({ticket.logs.length})
+                        </span>
+                        <span className="text-[9px] text-slate-400 group-open:rotate-90 transition-transform">
+                          ▶
+                        </span>
+                      </summary>
+                      <ul className="mt-2 space-y-2 max-h-32 overflow-y-auto pr-1">
+                        {ticket.logs.map((log) => (
+                          <li
+                            key={log.log_id}
+                            className="rounded-lg bg-slate-50 border border-slate-200 p-2"
+                          >
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs font-medium text-slate-900">
+                                {log.actor.name}
+                              </span>
+                              <span className="text-[10px] text-slate-500">
+                                {log.action_type}
+                              </span>
+                            </div>
+                            <div className="mt-0.5 text-[11px] text-slate-700 italic">
+                              "{log.notes}"
+                            </div>
+                            <div className="mt-0.5 text-[10px] text-slate-400">
+                              {new Date(log.timestamp).toLocaleString('id-ID')}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
                   )}
                 </div>
-
-                {/* Log activity */}
-                <div className="mt-6">
-                  <h4 className="text-sm font-semibold text-slate-700">
-                    Riwayat Aksi
-                  </h4>
-                  <ul className="mt-2 space-y-3">
-                    {ticket.logs.map((log) => (
-                      <li
-                        key={log.log_id}
-                        className="relative rounded-lg bg-slate-50 border border-slate-200 p-3 text-sm"
-                      >
-                        <div className="font-medium text-gray-900">
-                          {log.actor.name}{' '}
-                          <span className="text-slate-600 text-xs">
-                            ({log.action_type})
-                          </span>
-                        </div>
-
-                        <div className="text-gray-700 italic text-sm">
-                          "{log.notes}"
-                        </div>
-
-                        <div className="text-[10px] text-gray-400 mt-1">
-                          {new Date(log.timestamp).toLocaleString('id-ID')}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
