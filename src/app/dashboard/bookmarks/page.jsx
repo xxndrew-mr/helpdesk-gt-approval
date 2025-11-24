@@ -1,5 +1,3 @@
-// Lokasi: src/app/dashboard/archive/page.jsx (atau sesuai routing Anda)
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -83,7 +81,7 @@ export default function BookmarksPage() {
   return (
     <div className="px-4 py-6">
       {/* HEADER */}
-      <div className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-700 via-indigo-600 to-amber-500 px-6 py-6 shadow-lg">
+      <div className="relative mb-8 overflow-hidden rounded-3xl bg-indigo-600 px-6 py-6 shadow-lg">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-white">
@@ -206,9 +204,9 @@ export default function BookmarksPage() {
                           className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800"
                         >
                           <UserIcon className="h-3 w-3" />
-                          {asg.user?.name || '-'}{' '}
+                          {asg.user?.name || '-'}
                           {asg.user?.role?.role_name
-                            ? `(${asg.user.role.role_name})`
+                            ? ` (${asg.user.role.role_name})`
                             : ''}
                         </span>
                       ))}
@@ -223,4 +221,3 @@ export default function BookmarksPage() {
     </div>
   );
 }
-    

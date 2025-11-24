@@ -16,10 +16,8 @@ import {
 // === UTILS: Komponen Kecil untuk UI ===
 const Badge = ({ children, color }) => {
   const colors = {
-    // dipakai untuk status saja
     green: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
     red: 'bg-rose-50 text-rose-700 ring-rose-600/10',
-    // default: biru/abu elegan
     blue: 'bg-indigo-50 text-indigo-700 ring-indigo-600/15',
     gray: 'bg-slate-50 text-slate-600 ring-slate-500/15',
   };
@@ -29,7 +27,7 @@ const Badge = ({ children, color }) => {
   if (!color) {
     if (children === 'Active') selectedColor = colors.green;
     else if (children === 'Inactive') selectedColor = colors.red;
-    else selectedColor = colors.blue; // role & lainnya: biru lembut
+    else selectedColor = colors.blue;
   }
 
   return (
@@ -57,7 +55,6 @@ function UserForm({ title, buttonText, initialData, roles, divisions, picOmis, o
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Reset input kondisional jika role berubah
   const handleRoleChange = (e) => {
     setFormData(prev => ({ 
       ...prev, 
@@ -105,7 +102,7 @@ function UserForm({ title, buttonText, initialData, roles, divisions, picOmis, o
             />
           </div>
 
-          {/* --- INPUT USERNAME (WAJIB) --- */}
+          {/* USERNAME */}
           <div className="col-span-2 sm:col-span-1">
             <label className="block text-sm font-medium leading-6 text-slate-900">
               Username (Login)
@@ -128,7 +125,6 @@ function UserForm({ title, buttonText, initialData, roles, divisions, picOmis, o
               Username digunakan untuk login, pastikan unik dan mudah diingat.
             </p>
           </div>
-          {/* ----------------------------- */}
 
           <div className="col-span-2 sm:col-span-1">
             <label className="block text-sm font-medium leading-6 text-slate-900">
@@ -188,7 +184,7 @@ function UserForm({ title, buttonText, initialData, roles, divisions, picOmis, o
         </div>
       </div>
 
-      {/* INPUT KONDISIONAL (Muncul berdasarkan Role) */}
+      {/* INPUT KONDISIONAL */}
       {roleName && (
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
@@ -204,7 +200,6 @@ function UserForm({ title, buttonText, initialData, roles, divisions, picOmis, o
           </div>
 
           <div className="space-y-4">
-            {/* Input Divisi (logika: role-role tertentu wajib punya division) */}
             {['Salesman', 'Sales Manager', 'PIC OMI', 'Agen', 'Acting Manager', 'Acting PIC'].includes(roleName) && (
               <div>
                 <label className="block text-sm font-medium leading-6 text-slate-900">
@@ -227,7 +222,6 @@ function UserForm({ title, buttonText, initialData, roles, divisions, picOmis, o
               </div>
             )}
 
-            {/* Input PIC OMI (Untuk Salesman & Agen) */}
             {['Salesman', 'Agen'].includes(roleName) && (
               <div>
                 <label className="block text-sm font-medium leading-6 text-slate-900">
@@ -295,13 +289,11 @@ function UserForm({ title, buttonText, initialData, roles, divisions, picOmis, o
 export default function AdminUsersPage() {
   const { data: session } = useSession();
   
-  // State Data
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [divisions, setDivisions] = useState([]);
   const [picOmis, setPicOmis] = useState([]);
   
-  // State UI
   const [isLoading, setIsLoading] = useState(true);
   const [modalState, setModalState] = useState({ isOpen: false, type: 'create', user: null });
   const [searchTerm, setSearchTerm] = useState('');
@@ -406,7 +398,6 @@ export default function AdminUsersPage() {
     }
   };
 
-  // Filter Logic
   const filteredUsers = users.filter(user => {
     const matchSearch =
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -424,6 +415,7 @@ export default function AdminUsersPage() {
   return (
     <div className="bg-slate-50 min-h-screen">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
+
         {/* NOTIFIKASI TOAST */}
         {notification && (
           <div className={`fixed top-5 right-5 px-4 py-2.5 rounded-xl shadow-xl text-sm font-medium text-white z-50 flex items-center gap-2 ${
@@ -438,8 +430,8 @@ export default function AdminUsersPage() {
           </div>
         )}
 
-        {/* HEADER */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-900 px-6 py-6 shadow-lg sm:flex sm:items-center sm:justify-between sm:px-8">
+        {/* HEADER — BIRU SAMA DENGAN HALAMAN LAIN */}
+        <div className="relative overflow-hidden rounded-3xl bg-indigo-600 px-6 py-6 shadow-lg sm:flex sm:items-center sm:justify-between sm:px-8">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl flex items-center gap-2">
               <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm">
@@ -447,14 +439,14 @@ export default function AdminUsersPage() {
               </span>
               Manajemen User
             </h1>
-            <p className="mt-2 text-sm text-slate-200 max-w-xl">
+            <p className="mt-2 text-sm text-indigo-100 max-w-xl">
               Kelola akun, role, dan akses pengguna sistem Helpdesk dengan tampilan yang rapi dan konsisten.
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-slate-100">
                 Total User: <span className="ml-1 font-semibold">{totalUsers}</span>
               </span>
-              <span className="inline-flex items-center rounded-full bg_WHITE/10 px-3 py-1 text-xs font-medium text-slate-100">
+              <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-slate-100">
                 Active: <span className="ml-1 font-semibold">{activeUsers}</span>
               </span>
               <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-slate-100">
@@ -516,7 +508,7 @@ export default function AdminUsersPage() {
               <select
                 value={filterDivision}
                 onChange={(e) => setFilterDivision(e.target.value)}
-                className="block w-full rounded-xl border border-slate-200 bg_WHITE px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
               >
                 <option value="">Semua Divisi</option>
                 {divisions.map(d => (

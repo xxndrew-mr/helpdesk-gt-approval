@@ -38,7 +38,10 @@ function TriageActions({ ticketId, onSuccess, onError }) {
   };
 
   return (
-    <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+    <div
+      className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-3"
+      onClick={(e) => e.stopPropagation()} // <-- cegah card toggle
+    >
       <h3 className="text-xs font-semibold text-slate-800">
         Aksi Triase (PIC OMI)
       </h3>
@@ -106,7 +109,10 @@ function SalesManagerActions({ ticketId, onSuccess, onError }) {
   };
 
   return (
-    <div className="mt-3 rounded-2xl border border-indigo-200 bg-indigo-50/70 p-3">
+    <div
+      className="mt-3 rounded-2xl border border-indigo-200 bg-indigo-50/70 p-3"
+      onClick={(e) => e.stopPropagation()} // <-- cegah card toggle
+    >
       <h3 className="text-xs font-semibold text-slate-800">
         Aksi Sales Manager
       </h3>
@@ -181,7 +187,10 @@ function ActingManagerActions({ ticketId, onSuccess, onError }) {
   };
 
   return (
-    <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3">
+    <div
+      className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3"
+      onClick={(e) => e.stopPropagation()} // <-- cegah card toggle
+    >
       <h3 className="text-xs font-semibold text-slate-800">
         Aksi Acting Manager
       </h3>
@@ -249,7 +258,10 @@ function ActingPicActions({ ticketId, onSuccess, onError }) {
   };
 
   return (
-    <div className="mt-3 rounded-2xl border border-violet-200 bg-violet-50/70 p-3">
+    <div
+      className="mt-3 rounded-2xl border border-violet-200 bg-violet-50/70 p-3"
+      onClick={(e) => e.stopPropagation()} // <-- cegah card toggle
+    >
       <h3 className="text-xs font-semibold text-slate-800">
         Aksi Acting PIC
       </h3>
@@ -286,7 +298,7 @@ export default function QueuePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [actionError, setActionError] = useState(null);
-  const [selectedId, setSelectedId] = useState(null); // card yang dipilih
+  const [selectedId, setSelectedId] = useState(null);
 
   const loadQueue = async () => {
     setError(null);
@@ -345,14 +357,12 @@ export default function QueuePage() {
         <div className="absolute -bottom-10 -right-10 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
       </div>
 
-      {/* NOTIFIKASI ERROR AKSI */}
       {actionError && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
           Error Aksi: {actionError}
         </div>
       )}
 
-      {/* WRAPPER KONTEN */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         {assignments.length === 0 ? (
           <p className="text-sm text-gray-600">
@@ -377,14 +387,12 @@ export default function QueuePage() {
                       : 'border-slate-200 hover:border-indigo-200 hover:shadow-md'
                   }`}
                 >
-                  {/* Badge dipilih */}
                   {isSelected && (
                     <span className="absolute right-3 top-3 rounded-full bg-indigo-600 px-2.5 py-0.5 text-[10px] font-semibold text-white shadow-sm">
                       Sedang Dipilih
                     </span>
                   )}
 
-                  {/* Header ringkas */}
                   <div className="flex flex-col gap-1 pr-16">
                     <h2 className="text-sm font-semibold text-slate-900 line-clamp-2">
                       {assignment.ticket.title}
@@ -394,7 +402,6 @@ export default function QueuePage() {
                     </p>
                   </div>
 
-                  {/* Meta chips (selalu terlihat) */}
                   <div className="mt-2 flex flex-wrap gap-1.5 text-[10px]">
                     <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
                       Oleh: {assignment.ticket.submittedBy.name}
@@ -414,23 +421,19 @@ export default function QueuePage() {
                     )}
                   </div>
 
-                  {/* Hint kalau belum dipilih */}
                   {!isSelected && (
                     <p className="mt-2 text-[10px] text-slate-400">
                       Klik untuk melihat deskripsi dan aksi.
                     </p>
                   )}
 
-                  {/* Detail hanya muncul kalau dipilih */}
                   {isSelected && (
                     <div className="mt-3 border-t border-slate-200 pt-3">
-                      {/* Deskripsi */}
                       <p className="text-xs leading-relaxed text-gray-800">
                         {assignment.ticket.detail?.description ||
                           '(Tidak ada deskripsi)'}
                       </p>
 
-                      {/* Area Aksi */}
                       <div className="mt-3">
                         {session?.user?.role === 'PIC OMI' &&
                           assignment.ticket.type === 'Pending' && (

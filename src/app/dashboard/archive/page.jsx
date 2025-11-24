@@ -45,7 +45,6 @@ export default function ArchivePage() {
       .catch(() => setIsLoading(false));
   }, []);
 
-  // Generate pilihan bulan
   const monthOptions = Array.from(
     new Map(
       assignments
@@ -55,7 +54,6 @@ export default function ArchivePage() {
   ).map(([value, label]) => ({ value, label }))
    .sort((a, b) => (a.value < b.value ? 1 : -1));
 
-  // Filter data
   const filteredAssignments =
     monthFilter === "all"
       ? assignments
@@ -72,23 +70,24 @@ export default function ArchivePage() {
 
   return (
     <div className="px-4 py-6">
-      {/* HEADER */}
-      <div className="relative mb-8 rounded-3xl bg-gradient-to-r from-slate-600 via-slate-700 to-gray-900 px-6 py-6 shadow-lg overflow-hidden">
+
+      {/* HEADER — sudah diperbaiki jadi warna biru */}
+      <div className="relative mb-8 rounded-3xl bg-indigo-600 px-6 py-6 shadow-lg overflow-hidden">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="flex items-center gap-3 text-2xl font-semibold text-white">
               <span className="h-9 w-9 flex items-center justify-center rounded-2xl bg-white/10">
-                <ArchiveBoxIcon className="h-5 w-5 text-gray-200" />
+                <ArchiveBoxIcon className="h-5 w-5 text-white" />
               </span>
               Arsip Saya
             </h1>
-            <p className="mt-1 text-sm text-gray-200/80">
+            <p className="mt-1 text-sm text-indigo-100">
               Daftar feedback yang Anda arsipkan secara pribadi.
             </p>
           </div>
 
           {/* FILTER BULAN */}
-          <div className="mt-3 sm:mt-0 flex items-center gap-2 bg-white/10 px-3 py-2 rounded-xl backdrop-blur text-xs text-gray-100">
+          <div className="mt-3 sm:mt-0 flex items-center gap-2 bg-white/10 px-3 py-2 rounded-xl backdrop-blur text-xs text-white">
             <CalendarDaysIcon className="h-4 w-4" />
             <select
               value={monthFilter}
@@ -105,7 +104,7 @@ export default function ArchivePage() {
           </div>
         </div>
 
-        <div className="pointer-events-none absolute -right-10 -bottom-10 h-28 w-28 bg-white/10 rounded-full blur-2xl" />
+        <div className="pointer-events-none absolute -right-10 -bottom-10 h-28 w-28 bg-white/20 rounded-full blur-2xl" />
       </div>
 
       {/* BODY */}
@@ -119,9 +118,8 @@ export default function ArchivePage() {
             {filteredAssignments.map((asg) => (
               <div
                 key={asg.assignment_id}
-                className="rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm hover:border-slate-300 hover:shadow-md transition"
+                className="rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm hover:border-indigo-300 hover:shadow-md transition"
               >
-                {/* Header */}
                 <div className="flex justify-between items-start">
                   <h2 className="line-clamp-2 font-semibold text-slate-800">
                     {asg.ticket.title}
@@ -132,7 +130,6 @@ export default function ArchivePage() {
                   </span>
                 </div>
 
-                {/* Meta */}
                 <div className="mt-2 flex items-center gap-2 text-[11px] text-slate-500">
                   <UserIcon className="h-3 w-3 text-slate-400" />
                   <span>{asg.ticket.submittedBy?.name}</span>
@@ -140,7 +137,6 @@ export default function ArchivePage() {
                   <span>{formatDate(asg.ticket.createdAt)}</span>
                 </div>
 
-                {/* Deskripsi */}
                 <p className="mt-3 text-xs leading-relaxed bg-slate-50 rounded-xl px-3 py-2 line-clamp-3 text-slate-700">
                   {asg.ticket.detail?.description || '(Tidak ada deskripsi)'}
                 </p>
