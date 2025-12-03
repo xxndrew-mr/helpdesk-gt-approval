@@ -13,18 +13,37 @@ export async function POST(request) {
   }
   
   const user = session.user;
-  const { title, description, kategori, sub_kategori, nama_pengisi, jabatan, toko } = await request.json();
+
+  // ⬇️ TAMBAH no_telepon DI DESTRUCTURING
+  const { 
+    title, 
+    description, 
+    kategori, 
+    sub_kategori, 
+    nama_pengisi, 
+    jabatan, 
+    toko, 
+    no_telepon,      // <-- FIELD BARU DARI FRONTEND
+    attachments 
+  } = await request.json();
 
   if (!title || !description || !kategori || !sub_kategori) {
     return NextResponse.json({ message: 'Data tidak lengkap.' }, { status: 400 });
   }
+
+  // ✅ VALIDASI NOMOR TELEPON (WAJIB)
+  if (!no_telepon) {
+    return NextResponse.json(
+      { message: 'Nomor Telepon/WA wajib diisi.' },
+      { status: 400 }
+    );
+  }
   
-  // --- VALIDASI BARU SESUAI PERMINTAAN ---
+  // --- VALIDASI SESUAI ROLE ---
   if (user.role === 'Agen' && (!nama_pengisi || !jabatan)) {
     return NextResponse.json({ message: 'Agen wajib mengisi Nama Pengisi dan Jabatan.' }, { status: 400 });
   }
   
-  // Salesman sekarang WAJIB mengisi nama_pengisi (Nama Sales) dan toko
   if (user.role === 'Salesman' && (!nama_pengisi || !toko)) {
     return NextResponse.json({ message: 'Salesman wajib mengisi Nama Sales dan Toko.' }, { status: 400 });
   }
@@ -51,15 +70,19 @@ export async function POST(request) {
           status: 'Open',
           kategori,
           sub_kategori,
-          // Simpan data sesuai role
-          nama_pengisi: nama_pengisi || null, // Disimpan untuk Agen & Salesman
-          jabatan: jabatan || null,         // Hanya Agen
-          toko: toko || null,               // Hanya Salesman
+          nama_pengisi: nama_pengisi || null,
+          jabatan: jabatan || null,
+          toko: toko || null,
+          no_telepon: no_telepon,  // <-- SIMPAN KE KOLOM DI TABLE TICKET
         },
       });
 
       await tx.ticketDetail.create({
-        data: { ticket_id: ticket.ticket_id, description },
+        data: { 
+          ticket_id: ticket.ticket_id, 
+          description, 
+          attachments_json: attachments || [] 
+        },
       });
 
       await tx.ticketLog.create({
@@ -67,10 +90,10 @@ export async function POST(request) {
           ticket_id: ticket.ticket_id,
           actor_user_id: user.id,
           action_type: 'Submit',
-          // Log diperjelas
+          // Log sekalian mencatat nomor telepon
           notes: user.role === 'Salesman' 
-            ? `Tiket dibuat oleh Sales ${nama_pengisi} untuk ${toko}.` 
-            : `Tiket dibuat oleh ${nama_pengisi} (${jabatan}).`,
+            ? `Tiket dibuat oleh Sales ${nama_pengisi} (${no_telepon}) untuk ${toko}.` 
+            : `Tiket dibuat oleh ${nama_pengisi} (${jabatan}) (${no_telepon}).`,
         },
       });
 

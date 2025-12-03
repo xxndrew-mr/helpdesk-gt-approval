@@ -6,7 +6,8 @@ import { getServerSession } from 'next-auth/next';
 // FUNGSI: Mengambil SEMUA tiket yang di-Bookmark (Shared View)
 export async function GET(request) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  if (!session)
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
   // Cek Role yang diizinkan
   const allowedRoles = ['PIC OMI', 'Sales Manager', 'User Feedback'];
@@ -21,22 +22,34 @@ export async function GET(request) {
         assignments: {
           some: {
             status: 'Bookmarked',
-            assignment_type: 'Feedback_Review'
-          }
-        }
+            assignment_type: 'Feedback_Review',
+          },
+        },
       },
       include: {
-        detail: { select: { description: true } },
-        submittedBy: { select: { name: true } },
+        detail: {
+          select: {
+            description: true,
+            attachments_json: true,   // ⬅️ penting: kirim lampiran ke frontend
+          },
+        },
+        submittedBy: {
+          select: { name: true },
+        },
         // Ambil info SIAPA yang mem-bookmark
         assignments: {
           where: { status: 'Bookmarked' },
           include: {
-            user: { select: { name: true, role: { select: { role_name: true } } } }
-          }
-        }
+            user: {
+              select: {
+                name: true,
+                role: { select: { role_name: true } },
+              },
+            },
+          },
+        },
       },
-      orderBy: { updatedAt: 'desc' }
+      orderBy: { updatedAt: 'desc' },
     });
 
     return NextResponse.json(tickets);

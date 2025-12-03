@@ -10,7 +10,6 @@ export async function GET(request) {
   // 1. Ambil session
   const session = await getServerSession(authOptions);
 
-  // === PERBAIKAN DI SINI ===
   // 2. Cek otorisasi (Salesman ATAU Agen)
   if (!session || !['Salesman', 'Agen'].includes(session.user.role)) {
     return NextResponse.json(
@@ -18,7 +17,6 @@ export async function GET(request) {
       { status: 403 }
     );
   }
-  // =========================
 
   try {
     // 3. Ambil data tiket dari database
@@ -27,11 +25,16 @@ export async function GET(request) {
         // HANYA ambil tiket yang di-submit oleh user ini
         submitted_by_user_id: session.user.id,
       },
-      // Ambil juga data-data terkait ini:
       include: {
+        // 🔴 TADI MASALAH: hanya select description
+        // ✅ SOLUSI: tambahkan attachments_json juga
         detail: {
-          select: { description: true }, // Ambil deskripsinya
+          select: {
+            description: true,
+            attachments_json: true, // <-- penting supaya muncul di MyTicketsPage
+          },
         },
+
         // Ambil SEMUA log riwayat, urutkan dari yang terlama
         logs: {
           include: {
@@ -41,15 +44,14 @@ export async function GET(request) {
             timestamp: 'asc',
           },
         },
-        // Ambil penugasan yang still 'Pending' (untuk tahu siapa PIC saat ini)
+
+        // Ambil penugasan yang masih 'Pending' (untuk tahu siapa PIC saat ini)
         assignments: {
           where: { status: 'Pending' },
           include: {
-            // === PERBAIKAN DI SINI (dari bug sebelumnya) ===
             user: {
               select: {
                 name: true,
-                // Kita include relasi 'role' dan HANYA ambil 'role_name'
                 role: {
                   select: {
                     role_name: true,
@@ -57,7 +59,6 @@ export async function GET(request) {
                 },
               },
             },
-            // =======================
           },
         },
       },
@@ -70,11 +71,10 @@ export async function GET(request) {
     // 4. Kirim response sukses
     return NextResponse.json(tickets);
   } catch (error) {
-    // 5. Rollback jika ada error
     console.error('Gagal mengambil riwayat tiket:', error);
     return NextResponse.json(
       { message: 'Gagal mengambil riwayat tiket.', error: error.message },
       { status: 500 }
     );
   }
-}     
+}

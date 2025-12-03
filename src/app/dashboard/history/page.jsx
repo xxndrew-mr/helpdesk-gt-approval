@@ -6,6 +6,7 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ArrowPathIcon,
+  PaperClipIcon, // <-- TAMBAHAN
 } from '@heroicons/react/24/outline';
 
 // Helper: Format tanggal
@@ -142,7 +143,7 @@ export default function ActionHistoryPage() {
   return (
     <div className="px-4 py-6">
       {/* HEADER */}
-      <div className="relative mb-8 overflow-hidden rounded-3xl bg-indigo-600 px-6 py-6 shadow-lg">
+      <div className="relative mb-8 overflow-hidden rounded-3xl bg-blue-800 px-6 py-6 shadow-lg">
         <div className="flex items-center gap-3">
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-white/10 text-white">
             <ClockIcon className="h-5 w-5" />
@@ -169,7 +170,7 @@ export default function ActionHistoryPage() {
           </span>{' '}
           dari{' '}
           <span className="font-semibold text-slate-700">{tickets.length}</span>{' '}
-          tiket yang pernah Anda proses.
+          Request yang pernah Anda proses.
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-slate-500">Filter bulan:</span>
@@ -194,11 +195,11 @@ export default function ActionHistoryPage() {
       {/* STATE TANPA DATA */}
       {tickets.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-200 bg-white py-10 text-center text-sm text-slate-500">
-          Anda belum pernah memproses tiket apapun.
+          Anda belum pernah memproses Request apapun.
         </div>
       ) : filteredTickets.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-200 bg-white py-10 text-center text-sm text-slate-500">
-          Tidak ada tiket pada bulan yang dipilih.
+          Tidak ada Request pada bulan yang dipilih.
         </div>
       ) : (
         // GRID CARD KECIL + EXPAND DETAIL
@@ -216,9 +217,7 @@ export default function ActionHistoryPage() {
                     : 'border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40'
                 }`}
                 onClick={() =>
-                  setExpandedId(
-                    isExpanded ? null : ticket.ticket_id
-                  )
+                  setExpandedId(isExpanded ? null : ticket.ticket_id)
                 }
               >
                 {/* HEADER KECIL */}
@@ -245,7 +244,9 @@ export default function ActionHistoryPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex-shrink-0">{getStatusBadge(ticket.status)}</div>
+                  <div className="flex-shrink-0">
+                    {getStatusBadge(ticket.status)}
+                  </div>
                 </div>
 
                 {/* INFO RINGKAS DI BAWAH HEADER */}
@@ -269,6 +270,36 @@ export default function ActionHistoryPage() {
                       </p>
                     </div>
 
+                    {/* Lampiran */}
+                    {ticket.detail?.attachments_json &&
+                      Array.isArray(ticket.detail.attachments_json) &&
+                      ticket.detail.attachments_json.length > 0 && (
+                        <div>
+                          <div className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                            <PaperClipIcon className="h-3 w-3" />
+                            Lampiran
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {ticket.detail.attachments_json.map(
+                              (file, idx) => (
+                                <a
+                                  key={idx}
+                                  href={file.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-[11px] text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-100"
+                                >
+                                  <PaperClipIcon className="h-4 w-4" />
+                                  <span className="max-w-[140px] truncate font-medium">
+                                    {file.name}
+                                  </span>
+                                </a>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                     {/* Posisi tiket saat ini */}
                     <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2">
                       <div className="text-[10px] text-slate-500">
@@ -281,7 +312,7 @@ export default function ActionHistoryPage() {
                       {ticket.status === 'Done' ||
                       ticket.status === 'Rejected' ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-3 py-1 text-[10px] font-medium text-slate-500">
-                          Tiket ditutup
+                          Request ditutup
                         </span>
                       ) : (
                         <div className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-[10px] font-medium text-amber-800">

@@ -5,6 +5,7 @@ import {
   BookmarkIcon,
   ArchiveBoxIcon,
   ChevronDownIcon,
+  PaperClipIcon, // <-- TAMBAHAN
 } from '@heroicons/react/24/outline';
 
 // === ACTION BUTTONS ===
@@ -112,7 +113,7 @@ export default function FeedbackQueuePage() {
   return (
     <div className="px-4 py-6">
       {/* HEADER */}
-      <div className="relative mb-8 overflow-hidden rounded-3xl bg-blue-600 px-6 py-6 shadow-lg">
+      <div className="relative mb-8 overflow-hidden rounded-3xl bg-blue-800 px-6 py-6 shadow-lg">
         <h1 className="text-2xl font-semibold text-white tracking-tight">
           Antrian Feedback
         </h1>
@@ -193,6 +194,7 @@ export default function FeedbackQueuePage() {
                   {/* EXPAND DETAIL */}
                   {isExpanded && (
                     <div className="mt-3 space-y-3 rounded-xl border border-slate-200 bg-white p-3 text-[11px] text-slate-700">
+                      {/* Deskripsi */}
                       <div>
                         <div className="text-[10px] font-semibold text-slate-500 uppercase mb-1">
                           Deskripsi
@@ -203,6 +205,37 @@ export default function FeedbackQueuePage() {
                         </p>
                       </div>
 
+                      {/* Lampiran */}
+                      {ticket.detail?.attachments_json &&
+                        Array.isArray(ticket.detail.attachments_json) &&
+                        ticket.detail.attachments_json.length > 0 && (
+                          <div>
+                            <div className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                              <PaperClipIcon className="h-3 w-3" />
+                              Lampiran
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {ticket.detail.attachments_json.map(
+                                (file, idx) => (
+                                  <a
+                                    key={idx}
+                                    href={file.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-[11px] text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-100"
+                                  >
+                                    <PaperClipIcon className="h-4 w-4" />
+                                    <span className="max-w-[140px] truncate font-medium">
+                                      {file.name}
+                                    </span>
+                                  </a>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                      {/* Aksi */}
                       <div className="border-t border-slate-100 pt-3">
                         <FeedbackActions
                           assignment={assignment}

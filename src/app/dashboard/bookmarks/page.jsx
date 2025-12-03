@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { BookmarkIcon, UserIcon } from '@heroicons/react/24/solid';
-import { CalendarDaysIcon } from '@heroicons/react/24/outline';
+import { CalendarDaysIcon, PaperClipIcon } from '@heroicons/react/24/outline'; // <-- TAMBAHAN
 
 // Helper: format tanggal singkat
 const formatDate = (dateString) => {
@@ -81,7 +81,7 @@ export default function BookmarksPage() {
   return (
     <div className="px-4 py-6">
       {/* HEADER */}
-      <div className="relative mb-8 overflow-hidden rounded-3xl bg-indigo-600 px-6 py-6 shadow-lg">
+      <div className="relative mb-8 overflow-hidden rounded-3xl bg-blue-800 px-6 py-6 shadow-lg">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-white">
@@ -91,7 +91,7 @@ export default function BookmarksPage() {
               Bookmark Bersama
             </h1>
             <p className="mt-1 text-sm text-indigo-100 max-w-xl">
-              Daftar tiket feedback yang ditandai penting oleh tim untuk dipantau
+              Daftar feedback yang ditandai penting oleh tim untuk dipantau
               bersama.
             </p>
           </div>
@@ -128,18 +128,18 @@ export default function BookmarksPage() {
             <span className="font-semibold text-slate-800">
               {filteredTickets.length}
             </span>{' '}
-            tiket yang di-bookmark
+            Feedback yang di-bookmark
             {monthFilter !== 'all' && ' pada bulan terpilih'}.
           </span>
         </div>
 
         {tickets.length === 0 ? (
           <div className="py-10 text-center text-sm text-slate-500">
-            Belum ada tiket yang di-bookmark.
+            Belum ada Feedback yang di-bookmark.
           </div>
         ) : filteredTickets.length === 0 ? (
           <div className="py-10 text-center text-sm text-slate-500">
-            Tidak ada tiket yang di-bookmark pada bulan ini.
+            Tidak ada Feedback yang di-bookmark pada bulan ini.
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
@@ -173,6 +173,34 @@ export default function BookmarksPage() {
                 <p className="mt-3 line-clamp-3 rounded-xl bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-700">
                   {ticket.detail?.description || '(Tidak ada deskripsi)'}
                 </p>
+
+                {/* Lampiran */}
+                {ticket.detail?.attachments_json &&
+                  Array.isArray(ticket.detail.attachments_json) &&
+                  ticket.detail.attachments_json.length > 0 && (
+                    <div className="mt-3">
+                      <div className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                        <PaperClipIcon className="h-3 w-3" />
+                        Lampiran
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {ticket.detail.attachments_json.map((file, idx) => (
+                          <a
+                            key={idx}
+                            href={file.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-[11px] text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-100"
+                          >
+                            <PaperClipIcon className="h-4 w-4" />
+                            <span className="max-w-[140px] truncate font-medium">
+                              {file.name}
+                            </span>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                 {/* Footer info */}
                 <div className="mt-3 border-t border-dashed border-slate-200 pt-3 text-[11px] text-slate-500">

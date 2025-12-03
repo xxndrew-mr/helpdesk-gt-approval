@@ -1,3 +1,5 @@
+// Lokasi: src/app/api/tickets/history/route.js
+
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
@@ -14,46 +16,55 @@ export async function GET(request) {
   const userId = session.user.id;
 
   try {
-    // Logika: Cari semua Tiket di mana user ini pernah membuat Log
-    // (artinya user ini pernah melakukan aksi pada tiket tersebut)
     const tickets = await prisma.ticket.findMany({
       where: {
+        // tiket di mana user ini pernah membuat log (pernah proses sesuatu)
         logs: {
           some: {
-            actor_user_id: userId
-          }
-        }
+            actor_user_id: userId,
+          },
+        },
       },
       include: {
+        // ⛔ tadinya cuma { description: true }
+        // ✅ sekarang kirim juga attachments_json
         detail: {
-          select: { description: true },
+          select: {
+            description: true,
+            attachments_json: true, // <--- ini kuncinya
+          },
         },
         submittedBy: {
-          select: { name: true, role: { select: { role_name: true } } }
+          select: {
+            name: true,
+            role: {
+              select: { role_name: true },
+            },
+          },
         },
-        // Ambil log terakhir untuk melihat status terkini
+        // log terakhir (kalau nanti mau dipakai buat info tambahan)
         logs: {
           orderBy: { timestamp: 'desc' },
           take: 1,
           include: {
-            actor: { select: { name: true } }
-          }
+            actor: { select: { name: true } },
+          },
         },
-        // Ambil penugasan saat ini (siapa yang sedang pegang bola)
+        // penugasan saat ini (siapa yang pegang “bola”)
         assignments: {
           where: { status: 'Pending' },
           include: {
-            user: { 
-              select: { 
-                name: true, 
-                role: { select: { role_name: true } } 
-              } 
-            }, 
+            user: {
+              select: {
+                name: true,
+                role: { select: { role_name: true } },
+              },
+            },
           },
         },
       },
       orderBy: {
-        updatedAt: 'desc', // Yang baru di-update paling atas
+        updatedAt: 'desc', // yang terbaru di atas
       },
     });
 

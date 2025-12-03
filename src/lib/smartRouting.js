@@ -3,18 +3,28 @@
 export const routingMap = {
   // === PRODUK ===
   'PRODUK KOMPETITOR': {
-    am_division: 'Divisi Operation', // Ke GM Operation
-    ap_division: 'Divisi Prodev'     // Ke Staff Prodev
+    am_division: 'Divisi Operation', // GM Operation
+    ap_division: 'Divisi Prodev'     // Staff Prodev
   },
   'PRODUK ONDA': {
     am_division: 'Divisi Operation',
     ap_division: 'Divisi Prodev'
   },
+  // --- UPDATE BARU SESUAI REQUEST ---
+  'KUANTITAS': {
+    am_division: 'Divisi Operation', // GM Operation
+    ap_division: 'Divisi Prodev'     // Staff Prodev
+  },
+  'KUALITAS': {
+    am_division: 'Divisi Operation', // GM Operation
+    ap_division: 'Divisi Prodev'     // Staff Prodev
+  },
+  // ----------------------------------
 
   // === STOK ===
-  'STOCK': {
-    am_division: 'Divisi Operation', // Ke GM Operation
-    ap_division: 'Divisi Supply Chain' // Ke Supply Chain
+  'STOK': { // Jaga-jaga jika ejaan berbeda
+    am_division: 'Divisi Operation', 
+    ap_division: 'Divisi Supply Chain' 
   },
   'KIRIMAN': {
     am_division: 'Divisi Operation',
@@ -27,16 +37,16 @@ export const routingMap = {
 
   // === PROGRAM ===
   'HADIAH PROGRAM': {
-    am_division: 'Divisi Marketing Pusat', // Ke Marketing Mgr
-    ap_division: 'Divisi Marketing Pusat'  // Ke Staff Marketing
+    am_division: 'Divisi Marketing Pusat', 
+    ap_division: 'Divisi Marketing Pusat'  
   },
   'SKEMA PROGRAM': {
     am_division: 'Divisi Marketing Pusat',
     ap_division: 'Divisi Marketing Pusat'
   },
   'INSENTIF': {
-    am_division: 'Divisi Sales Operation', // Ke Sales Op Mgr
-    ap_division: 'Divisi Sales Operation'  // Ke Staff Sales Op
+    am_division: 'Divisi Sales Operation', 
+    ap_division: 'Divisi Sales Operation'  
   },
 
   // === TOOLS ===
@@ -48,15 +58,15 @@ export const routingMap = {
     am_division: 'Divisi Sales Operation',
     ap_division: 'Divisi Sales Operation'
   },
-  'OTHERS': {
-     // Default fallback jika ada
+  'LAINNYA': {
     am_division: 'Divisi Operation',
     ap_division: 'Divisi Supply Chain'
   }
 };
 
 export function getRoutingTarget(subKategori) {
-  // Normalisasi input (uppercase)
-  const key = subKategori?.toUpperCase();
+  if (!subKategori) return null;
+  // Normalisasi input (uppercase) agar tidak sensitif huruf besar/kecil
+  const key = subKategori.toUpperCase();
   return routingMap[key] || null;
 }

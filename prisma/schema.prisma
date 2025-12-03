@@ -9,7 +9,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// ... (Model Role dan Division TIDAK BERUBAH) ...
+// ... (Model Role, Division, User TIDAK BERUBAH) ...
 model Role {
   role_id   Int    @id @default(autoincrement())
   role_name String @unique
@@ -25,12 +25,8 @@ model Division {
 model User {
   user_id     Int      @id @default(autoincrement())
   name        String   
-  
-  // --- PERUBAHAN DI SINI ---
-  username    String   @unique // <-- KOLOM BARU (Login pakai ini)
-  email       String?  @unique // Email jadi opsional atau tetap unik (untuk kontak)
-  // -------------------------
-  
+  username    String   @unique 
+  email       String?  @unique
   password    String
   role_id     Int?
   role        Role?    @relation(fields: [role_id], references: [role_id])
@@ -51,8 +47,6 @@ model User {
   @@index([pic_omi_id])
 }
 
-// ... (Model Ticket, TicketDetail, TicketLog, TicketAssignment TIDAK BERUBAH) ...
-// (Pastikan Anda menyalin sisa model tiket yang sudah ada sebelumnya di sini)
 model Ticket {
   ticket_id          BigInt   @id @default(autoincrement())
   title              String
@@ -66,6 +60,8 @@ model Ticket {
   nama_pengisi       String?
   jabatan            String?
   toko               String?
+  no_telepon         String? // Menyimpan No HP/WA Submitter
+
 
   submittedBy User             @relation("SubmittedBy", fields: [submitted_by_user_id], references: [user_id])
   detail      TicketDetail?
@@ -77,6 +73,7 @@ model Ticket {
   @@index([status])
 }
 
+// ... (Model TicketDetail, TicketLog, TicketAssignment TIDAK BERUBAH) ...
 model TicketDetail {
   ticket_id        BigInt   @id
   description      String   @db.Text

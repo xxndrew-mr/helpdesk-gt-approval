@@ -5,12 +5,25 @@
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import {
+  CloudArrowUpIcon,
+  PaperClipIcon,
+  XMarkIcon,
+} from '@heroicons/react/24/outline';
 
-// === Data Master untuk Dropdown ===
+// === KATEGORI BARU (UPDATE SAJA BAGIAN INI) ===
 const categories = {
-  STOK: ['PRODUK KOMPETITOR', 'PRODUK ONDA', 'STOCK', 'KIRIMAN', 'RETURAN'],
+  // Kategori Baru
+  PRODUK: [
+    'PRODUK KOMPETITOR',
+    'PRODUK ONDA',
+    'KUALITAS',
+    'KUANTITAS', // Stok produk di level produk
+  ],
+  // Kategori Stok (lebih ke pergerakan stok)
+  STOK: ['STOK', 'KIRIMAN', 'RETURAN'],
   PROGRAM: ['INSENTIF', 'HADIAH PROGRAM', 'SKEMA PROGRAM'],
-  TOOLS: ['FLYER PROGRAM', 'PERALATAN', 'OTHERS'],
+  TOOLS: ['FLYER PROGRAM', 'PERALATAN', 'LAINNYA'],
 };
 // ===================================
 
@@ -19,7 +32,6 @@ export default function SubmitTicketPage() {
   const router = useRouter();
 
   // State untuk form
-  const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [selectedKategori, setSelectedKategori] = useState('');
   const [selectedSubKategori, setSelectedSubKategori] = useState('');
@@ -28,7 +40,25 @@ export default function SubmitTicketPage() {
   const [namaPengisi, setNamaPengisi] = useState('');
   const [jabatan, setJabatan] = useState('');
   const [toko, setToko] = useState('');
+  const [noTelepon, setNoTelepon] = useState(''); // <-- STATE NOMOR TELEPON
   // ------------------------------
+
+  // --- STATE LAMPIRAN ---
+  const [file, setFile] = useState(null);
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (selectedFile.size > maxSize) {
+      alert('Ukuran file maksimal 5MB');
+      return;
+    }
+
+    setFile(selectedFile);
+  };
+  // ----------------------
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -42,6 +72,12 @@ export default function SubmitTicketPage() {
     setError(null);
     setSuccess(null);
 
+    if (!session || !session.user) {
+      setError('Session tidak ditemukan. Silakan login ulang.');
+      setIsLoading(false);
+      return;
+    }
+
     // --- VALIDASI KONDISIONAL (LOGIKA TETAP SAMA) ---
     if (session.user.role === 'Agen' && (!namaPengisi || !jabatan)) {
       setError('Agen wajib mengisi Nama Pengisi dan Jabatan.');
@@ -54,20 +90,66 @@ export default function SubmitTicketPage() {
       setIsLoading(false);
       return;
     }
+
+    // VALIDASI NOMOR TELEPON (WAJIB, SAMA DENGAN BACKEND)
+    if (!noTelepon) {
+      setError('Nomor Telepon/WA wajib diisi.');
+      setIsLoading(false);
+      return;
+    }
     // ---------------------------------------
 
     try {
+      let attachments = null;
+
+      // === LANGKAH 1: kalau ada file, upload dulu ke /api/upload ===
+      if (file) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const uploadData = await uploadRes.json();
+
+        if (!uploadRes.ok) {
+          throw new Error(uploadData.message || 'Gagal mengupload lampiran');
+        }
+
+        attachments = [
+          {
+            url: uploadData.url,
+            name: uploadData.name,
+            type: uploadData.type,
+          },
+        ];
+      }
+
+      // === AUTO-GENERATE TITLE (karena field judul dihapus) ===
+      const autoTitle =
+        selectedKategori && selectedSubKategori
+          ? `${selectedKategori} - ${selectedSubKategori}`
+          : selectedKategori ||
+            selectedSubKategori ||
+            (description ? description.slice(0, 50) : 'Request');
+
+      // === LANGKAH 2: submit tiket ke /api/tickets/submit ===
       const res = await fetch('/api/tickets/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title,
+          title: autoTitle,
           description,
           kategori: selectedKategori,
           sub_kategori: selectedSubKategori,
           nama_pengisi: namaPengisi || null,
           jabatan: jabatan || null,
           toko: toko || null,
+          no_telepon: noTelepon, // <-- KIRIM KE BACKEND
+          // selected_pic_id: ???  // <-- backend kamu juga butuh ini, nanti kita isi saat PIC OMI ditambahkan
+          attachments,
         }),
       });
 
@@ -77,13 +159,14 @@ export default function SubmitTicketPage() {
       }
 
       setSuccess('Request berhasil disubmit!');
-      setTitle('');
       setDescription('');
       setSelectedKategori('');
       setSelectedSubKategori('');
       setNamaPengisi('');
       setJabatan('');
       setToko('');
+      setNoTelepon(''); // <-- RESET NOMOR TELEPON
+      setFile(null);
 
       setTimeout(() => {
         router.push('/dashboard/my-tickets');
@@ -115,17 +198,6 @@ export default function SubmitTicketPage() {
 
   return (
     <div className="px-4 py-6">
-      {/* HEADER */}
-      <div className="relative mb-8 overflow-hidden rounded-3xl bg-indigo-600 px-6 py-6 shadow-lg">
-        <h1 className="text-2xl font-semibold tracking-tight text-white">
-          Buat Request Baru
-        </h1>
-        <p className="mt-1 text-sm text-indigo-100">
-          Kirim permintaan atau feedback Anda untuk diproses oleh tim OMI.
-        </p>
-        <div className="absolute -bottom-10 -right-10 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
-      </div>
-
       {/* CARD FORM */}
       <div className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -217,29 +289,32 @@ export default function SubmitTicketPage() {
                   </div>
                 </>
               )}
+
+              {/* NOMOR TELEPON / WA (WAJIB UNTUK SEMUA ROLE) */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-slate-800">
+                  Nomor Telepon / WA <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="tel"
+                  value={noTelepon}
+                  onChange={(e) => setNoTelepon(e.target.value)}
+                  required
+                  placeholder="Contoh: 0812xxxxxxx"
+                  className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                />
+              </div>
             </div>
           </fieldset>
 
-          {/* Detail Request */}
+          {/* Detail  */}
           <fieldset className="rounded-2xl border border-slate-200 bg-white p-4">
             <legend className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
               Detail Request
             </legend>
 
             <div className="mt-3 space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-slate-800">
-                  Judul / Ringkasan
-                </label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                  className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-                  placeholder="Contoh: Display program kurang lengkap, stok kosong, dsb."
-                />
-              </div>
+              {/* Field Judul DIHAPUS */}
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
@@ -296,6 +371,57 @@ export default function SubmitTicketPage() {
                   className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                   placeholder="Jelaskan kondisi di lapangan, lokasi, detail kendala, dan kebutuhan Anda."
                 />
+              </div>
+
+              {/* Lampiran / Foto (Opsional) */}
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Lampiran / Foto (Opsional)
+                </label>
+                {!file ? (
+                  <div className="flex items-center justify-center w-full">
+                    <label
+                      htmlFor="dropzone-file"
+                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <CloudArrowUpIcon className="w-8 h-8 mb-2 text-gray-400" />
+                        <p className="mb-2 text-sm text-gray-500">
+                          <span className="font-semibold">
+                            Klik untuk upload
+                          </span>{' '}
+                          atau drag file
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          PNG, JPG, PDF (Max. 5MB)
+                        </p>
+                      </div>
+                      <input
+                        id="dropzone-file"
+                        type="file"
+                        className="hidden"
+                        onChange={handleFileChange}
+                        accept="image/*,application/pdf"
+                      />
+                    </label>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <PaperClipIcon className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                      <span className="text-sm font-medium text-blue-900 truncate max-w-[200px]">
+                        {file.name}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFile(null)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <XMarkIcon className="h-5 w-5" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </fieldset>

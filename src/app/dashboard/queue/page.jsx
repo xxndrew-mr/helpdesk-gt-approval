@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { PaperClipIcon } from '@heroicons/react/24/outline'; // <-- TAMBAHAN
 
 // === Komponen Aksi Triase (Hanya untuk PIC OMI) ===
 function TriageActions({ ticketId, onSuccess, onError }) {
@@ -40,7 +41,7 @@ function TriageActions({ ticketId, onSuccess, onError }) {
   return (
     <div
       className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-3"
-      onClick={(e) => e.stopPropagation()} // <-- cegah card toggle
+      onClick={(e) => e.stopPropagation()}
     >
       <h3 className="text-xs font-semibold text-slate-800">
         Aksi Triase (PIC OMI)
@@ -111,7 +112,7 @@ function SalesManagerActions({ ticketId, onSuccess, onError }) {
   return (
     <div
       className="mt-3 rounded-2xl border border-indigo-200 bg-indigo-50/70 p-3"
-      onClick={(e) => e.stopPropagation()} // <-- cegah card toggle
+      onClick={(e) => e.stopPropagation()}
     >
       <h3 className="text-xs font-semibold text-slate-800">
         Aksi Sales Manager
@@ -189,7 +190,7 @@ function ActingManagerActions({ ticketId, onSuccess, onError }) {
   return (
     <div
       className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3"
-      onClick={(e) => e.stopPropagation()} // <-- cegah card toggle
+      onClick={(e) => e.stopPropagation()}
     >
       <h3 className="text-xs font-semibold text-slate-800">
         Aksi Acting Manager
@@ -260,7 +261,7 @@ function ActingPicActions({ ticketId, onSuccess, onError }) {
   return (
     <div
       className="mt-3 rounded-2xl border border-violet-200 bg-violet-50/70 p-3"
-      onClick={(e) => e.stopPropagation()} // <-- cegah card toggle
+      onClick={(e) => e.stopPropagation()}
     >
       <h3 className="text-xs font-semibold text-slate-800">
         Aksi Acting PIC
@@ -343,7 +344,7 @@ export default function QueuePage() {
   return (
     <div className="px-4 py-6">
       {/* HEADER */}
-      <div className="relative mb-6 overflow-hidden rounded-3xl bg-indigo-600 px-6 py-5 shadow-lg">
+      <div className="relative mb-6 overflow-hidden rounded-3xl bg-blue-800 px-6 py-5 shadow-lg">
         <h1 className="text-xl font-semibold tracking-tight text-white">
           Antrian Tugas Aktif
         </h1>
@@ -429,10 +430,42 @@ export default function QueuePage() {
 
                   {isSelected && (
                     <div className="mt-3 border-t border-slate-200 pt-3">
+                      {/* Deskripsi */}
                       <p className="text-xs leading-relaxed text-gray-800">
                         {assignment.ticket.detail?.description ||
                           '(Tidak ada deskripsi)'}
                       </p>
+
+                      {/* Lampiran */}
+                      {assignment.ticket.detail?.attachments_json &&
+                        Array.isArray(
+                          assignment.ticket.detail.attachments_json
+                        ) &&
+                        assignment.ticket.detail.attachments_json.length > 0 && (
+                          <div className="mt-3">
+                            <h4 className="mb-2 flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-gray-400">
+                              <PaperClipIcon className="h-3 w-3" /> Lampiran
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                              {assignment.ticket.detail.attachments_json.map(
+                                (file, idx) => (
+                                  <a
+                                    key={idx}
+                                    href={file.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700 shadow-sm transition-all hover:border-blue-300 hover:bg-blue-100"
+                                  >
+                                    <PaperClipIcon className="h-4 w-4" />
+                                    <span className="max-w-[150px] truncate font-medium">
+                                      {file.name}
+                                    </span>
+                                  </a>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        )}
 
                       <div className="mt-3">
                         {session?.user?.role === 'PIC OMI' &&

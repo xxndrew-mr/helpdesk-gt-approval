@@ -1,7 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArchiveBoxIcon, CalendarDaysIcon, UserIcon } from '@heroicons/react/24/outline';
+import {
+  ArchiveBoxIcon,
+  CalendarDaysIcon,
+  UserIcon,
+  PaperClipIcon, // <-- TAMBAHAN
+} from '@heroicons/react/24/outline';
 
 // Helpers ----------------------------------------------------
 const formatDate = (dateString) => {
@@ -33,7 +38,7 @@ const getMonthLabel = (dateString) => {
 export default function ArchivePage() {
   const [assignments, setAssignments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [monthFilter, setMonthFilter] = useState("all");
+  const [monthFilter, setMonthFilter] = useState('all');
 
   useEffect(() => {
     fetch('/api/tickets/archive')
@@ -49,15 +54,21 @@ export default function ArchivePage() {
     new Map(
       assignments
         .filter((a) => a.ticket?.createdAt)
-        .map((a) => [getMonthKey(a.ticket.createdAt), getMonthLabel(a.ticket.createdAt)])
+        .map((a) => [
+          getMonthKey(a.ticket.createdAt),
+          getMonthLabel(a.ticket.createdAt),
+        ])
     )
-  ).map(([value, label]) => ({ value, label }))
-   .sort((a, b) => (a.value < b.value ? 1 : -1));
+  )
+    .map(([value, label]) => ({ value, label }))
+    .sort((a, b) => (a.value < b.value ? 1 : -1));
 
   const filteredAssignments =
-    monthFilter === "all"
+    monthFilter === 'all'
       ? assignments
-      : assignments.filter((a) => getMonthKey(a.ticket.createdAt) === monthFilter);
+      : assignments.filter(
+          (a) => getMonthKey(a.ticket.createdAt) === monthFilter
+        );
 
   if (isLoading) {
     return (
@@ -70,9 +81,8 @@ export default function ArchivePage() {
 
   return (
     <div className="px-4 py-6">
-
-      {/* HEADER — sudah diperbaiki jadi warna biru */}
-      <div className="relative mb-8 rounded-3xl bg-indigo-600 px-6 py-6 shadow-lg overflow-hidden">
+      {/* HEADER */}
+      <div className="relative mb-8 rounded-3xl bg-blue-800 px-6 py-6 shadow-lg overflow-hidden">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="flex items-center gap-3 text-2xl font-semibold text-white">
@@ -120,6 +130,7 @@ export default function ArchivePage() {
                 key={asg.assignment_id}
                 className="rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm hover:border-indigo-300 hover:shadow-md transition"
               >
+                {/* Header kartu */}
                 <div className="flex justify-between items-start">
                   <h2 className="line-clamp-2 font-semibold text-slate-800">
                     {asg.ticket.title}
@@ -130,6 +141,7 @@ export default function ArchivePage() {
                   </span>
                 </div>
 
+                {/* Info pengirim & tanggal */}
                 <div className="mt-2 flex items-center gap-2 text-[11px] text-slate-500">
                   <UserIcon className="h-3 w-3 text-slate-400" />
                   <span>{asg.ticket.submittedBy?.name}</span>
@@ -137,9 +149,38 @@ export default function ArchivePage() {
                   <span>{formatDate(asg.ticket.createdAt)}</span>
                 </div>
 
+                {/* Deskripsi */}
                 <p className="mt-3 text-xs leading-relaxed bg-slate-50 rounded-xl px-3 py-2 line-clamp-3 text-slate-700">
                   {asg.ticket.detail?.description || '(Tidak ada deskripsi)'}
                 </p>
+
+                {/* Lampiran */}
+                {asg.ticket.detail?.attachments_json &&
+                  Array.isArray(asg.ticket.detail.attachments_json) &&
+                  asg.ticket.detail.attachments_json.length > 0 && (
+                    <div className="mt-3">
+                      <div className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                        <PaperClipIcon className="h-3 w-3" />
+                        Lampiran
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {asg.ticket.detail.attachments_json.map((file, idx) => (
+                          <a
+                            key={idx}
+                            href={file.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-[11px] text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-100"
+                          >
+                            <PaperClipIcon className="h-4 w-4" />
+                            <span className="max-w-[140px] truncate font-medium">
+                              {file.name}
+                            </span>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
               </div>
             ))}
           </div>

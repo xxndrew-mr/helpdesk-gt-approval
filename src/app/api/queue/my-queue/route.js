@@ -13,7 +13,7 @@ export async function GET(request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const assignmentType = searchParams.get('type'); 
+  const assignmentType = searchParams.get('type');
 
   if (!assignmentType || !['Active', 'Feedback_Review'].includes(assignmentType)) {
     return NextResponse.json(
@@ -25,39 +25,38 @@ export async function GET(request) {
   try {
     const assignments = await prisma.ticketAssignment.findMany({
       where: {
-        user_id: session.user.id,
+        user_id: session.user.id,        // kalau user_id di DB BigInt, id di session harus string numerik yg cocok
         assignment_type: assignmentType,
         status: 'Pending',
       },
-      // --- PERUBAHAN DI SINI ---
       include: {
         ticket: {
-          // Kita tidak lagi pakai 'include' di dalam 'ticket',
-          // kita pakai 'select' agar bisa mengambil
-          // SEMUA field scalar (termasuk kategori) DAN relasi
+          // pakai select untuk ambil field scalar dan relasi yang dibutuhkan
           select: {
-            // Semua field scalar dari Ticket
+            // Field scalar
             ticket_id: true,
             title: true,
             type: true,
             status: true,
             createdAt: true,
-            kategori: true,       // <-- INI DIA
-            sub_kategori: true,  // <-- INI DIA
+            kategori: true,
+            sub_kategori: true,
             jabatan: true,
             toko: true,
-            
-            // Relasi yang kita butuhkan
+
+            // Relasi
             submittedBy: {
               select: { name: true },
             },
             detail: {
-              select: { description: true },
+              select: {
+                description: true,
+                attachments_json: true,   // <-- TAMBAHAN PENTING: kirim lampiran ke frontend
+              },
             },
           },
         },
       },
-      // -------------------------
       orderBy: {
         createdAt: 'asc',
       },
