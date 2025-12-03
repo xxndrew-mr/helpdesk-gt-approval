@@ -3,13 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "migrate:deploy": "prisma migrate deploy",
-   "build": "prisma migrate deploy && next build",
-    "dev": "next dev --webpack",
-    "build": "next build --webpack",
-    "start": "next start",
-    "lint": "eslint"
-  },
+  "migrate:deploy": "prisma migrate deploy",
+  "dev": "next dev --webpack",
+  "build": "prisma migrate deploy && next build --webpack",
+  "start": "next start",
+  "lint": "eslint"
+}
+,
   
   "prisma": {
     "seed": "node prisma/seed.js"
