@@ -25,15 +25,14 @@ export async function GET(request) {
   try {
     const assignments = await prisma.ticketAssignment.findMany({
       where: {
-        user_id: session.user.id,        // kalau user_id di DB BigInt, id di session harus string numerik yg cocok
+        user_id: Number(session.user.id),   // pastikan numeric
         assignment_type: assignmentType,
         status: 'Pending',
       },
       include: {
         ticket: {
-          // pakai select untuk ambil field scalar dan relasi yang dibutuhkan
           select: {
-            // Field scalar
+            // FIELD SCALAR TICKET
             ticket_id: true,
             title: true,
             type: true,
@@ -43,20 +42,27 @@ export async function GET(request) {
             sub_kategori: true,
             jabatan: true,
             toko: true,
+            nama_pengisi: true,
+            no_telepon: true,
 
-            // Relasi
+            // RELASI SUBMITTER (AGEN)
             submittedBy: {
-              select: { name: true },
+              select: {
+                name: true,
+              },
             },
+
+            // DETAIL (DESKRIPSI + LAMPIRAN)
             detail: {
               select: {
                 description: true,
-                attachments_json: true,   // <-- TAMBAHAN PENTING: kirim lampiran ke frontend
+                attachments_json: true,
               },
             },
           },
         },
       },
+      // urutkan berdasarkan waktu assignment dibuat (TicketAssignment.createdAt)
       orderBy: {
         createdAt: 'asc',
       },

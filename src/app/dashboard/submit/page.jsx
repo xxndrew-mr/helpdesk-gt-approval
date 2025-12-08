@@ -64,7 +64,16 @@ export default function SubmitTicketPage() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  const subKategoriOptions = selectedKategori ? categories[selectedKategori] : [];
+  const userRole = session?.user?.role;
+
+  // Sub kategori: filter KIRIMAN & RETURAN untuk Salesman (hanya di kategori STOK)
+  const rawSubKategoriOptions = selectedKategori ? categories[selectedKategori] : [];
+  const subKategoriOptions = rawSubKategoriOptions.filter((subKat) => {
+    if (userRole === 'Salesman' && selectedKategori === 'STOK') {
+      return subKat !== 'KIRIMAN' && subKat !== 'RETURAN';
+    }
+    return true;
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -120,14 +129,15 @@ export default function SubmitTicketPage() {
 
         attachments = [
           {
-            url: uploadData.url,
-            name: uploadData.name,
-            type: uploadData.type,
+            url: uploadData.fileUrl,
+            name: file.name,
+            type: file.type,
+            fileId: uploadData.fileId, // optional
           },
         ];
       }
 
-      // === AUTO-GENERATE TITLE (karena field judul dihapus) ===
+      // === AUTO-GENERATE TITLE SESUAI KATEGORI ===
       const autoTitle =
         selectedKategori && selectedSubKategori
           ? `${selectedKategori} - ${selectedSubKategori}`
@@ -148,7 +158,6 @@ export default function SubmitTicketPage() {
           jabatan: jabatan || null,
           toko: toko || null,
           no_telepon: noTelepon, // <-- KIRIM KE BACKEND
-          // selected_pic_id: ???  // <-- backend kamu juga butuh ini, nanti kita isi saat PIC OMI ditambahkan
           attachments,
         }),
       });
@@ -194,7 +203,7 @@ export default function SubmitTicketPage() {
     );
   }
 
-  const userRole = session.user.role;
+  const effectiveUserRole = session.user.role;
 
   return (
     <div className="px-4 py-6">
@@ -216,7 +225,7 @@ export default function SubmitTicketPage() {
           {/* Identitas Pengirim */}
           <fieldset className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
             <legend className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700">
-              Identitas Pengirim ({userRole})
+              Identitas Pengirim ({effectiveUserRole})
             </legend>
 
             <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -228,7 +237,7 @@ export default function SubmitTicketPage() {
                 <span className="text-slate-400">({session.user.email})</span>
               </div>
 
-              {userRole === 'Salesman' && (
+              {effectiveUserRole === 'Salesman' && (
                 <>
                   <div>
                     <label className="block text-sm font-medium text-slate-800">
@@ -259,7 +268,7 @@ export default function SubmitTicketPage() {
                 </>
               )}
 
-              {userRole === 'Agen' && (
+              {effectiveUserRole === 'Agen' && (
                 <>
                   <div>
                     <label className="block text-sm font-medium text-slate-800">

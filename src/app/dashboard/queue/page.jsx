@@ -4,9 +4,9 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { PaperClipIcon } from '@heroicons/react/24/outline'; // <-- TAMBAHAN
+import { PaperClipIcon } from '@heroicons/react/24/outline';
 
-// === Komponen Aksi Triase (Hanya untuk PIC OMI) ===
+// === Komponen Aksi Kirim (dulu: Triase) – Hanya untuk PIC OMI ===
 function TriageActions({ ticketId, onSuccess, onError }) {
   const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -44,12 +44,12 @@ function TriageActions({ ticketId, onSuccess, onError }) {
       onClick={(e) => e.stopPropagation()}
     >
       <h3 className="text-xs font-semibold text-slate-800">
-        Aksi Triase (PIC OMI)
+        Aksi Kirim (PIC OMI)
       </h3>
       <textarea
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
-        placeholder="Tambahkan catatan triase (opsional)..."
+        placeholder="Tambahkan catatan kirim (opsional)..."
         className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
         rows="2"
       />
@@ -59,14 +59,14 @@ function TriageActions({ ticketId, onSuccess, onError }) {
           disabled={isLoading}
           className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm shadow-indigo-200 transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-400"
         >
-          {isLoading ? 'Loading...' : 'Triase sebagai Request'}
+          {isLoading ? 'Loading...' : 'Kirim sebagai Request'}
         </button>
         <button
           onClick={() => handleSubmit('Feedback')}
           disabled={isLoading}
           className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm shadow-sky-200 transition hover:bg-sky-500 disabled:cursor-not-allowed disabled:bg-slate-400"
         >
-          {isLoading ? 'Loading...' : 'Triase sebagai Feedback'}
+          {isLoading ? 'Loading...' : 'Kirim sebagai Feedback'}
         </button>
       </div>
     </div>
@@ -374,6 +374,12 @@ export default function QueuePage() {
             {assignments.map((assignment) => {
               const isSelected = selectedId === assignment.assignment_id;
 
+              // meta data (mirip MyTicketsPage) – pastikan backend include ini:
+              const pengirim = assignment.ticket.nama_pengisi || '-';
+              const noTelepon = assignment.ticket.no_telepon || '-';
+              const toko = assignment.ticket.toko || '-';
+              const agen = assignment.ticket.submittedBy?.name || '-';
+
               return (
                 <div
                   key={assignment.assignment_id}
@@ -405,7 +411,7 @@ export default function QueuePage() {
 
                   <div className="mt-2 flex flex-wrap gap-1.5 text-[10px]">
                     <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
-                      Oleh: {assignment.ticket.submittedBy.name}
+                      Agen: {assignment.ticket.submittedBy.name}
                     </span>
                     <span className="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 font-medium text-indigo-700">
                       {assignment.ticket.kategori} • {assignment.ticket.sub_kategori}
@@ -430,6 +436,22 @@ export default function QueuePage() {
 
                   {isSelected && (
                     <div className="mt-3 border-t border-slate-200 pt-3">
+                      {/* Meta detail mirip MyTicketsPage */}
+                      <div className="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-700">
+                        <span>
+                          <span className="font-semibold text-slate-900">
+                            Pengirim:
+                          </span>{' '}
+                          {pengirim}
+                        </span>
+                        <span>
+                          <span className="font-semibold text-slate-900">
+                            No. HP:
+                          </span>{' '}
+                          {noTelepon}
+                        </span>
+                      </div>
+
                       {/* Deskripsi */}
                       <p className="text-xs leading-relaxed text-gray-800">
                         {assignment.ticket.detail?.description ||

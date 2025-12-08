@@ -14,7 +14,7 @@ export async function POST(request, context) {
 
   const picOmiUser = session.user;
   const { ticketId } = await context.params; 
-  
+
   const { type, notes } = await request.json(); 
 
   if (!['Request', 'Feedback'].includes(type)) {

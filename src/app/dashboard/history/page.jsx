@@ -6,13 +6,15 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ArrowPathIcon,
-  PaperClipIcon, // <-- TAMBAHAN
+  PaperClipIcon,
 } from '@heroicons/react/24/outline';
 
 // Helper: Format tanggal
 const formatDate = (dateString) => {
   if (!dateString) return '-';
-  return new Date(dateString).toLocaleString('id-ID', {
+  const d = new Date(dateString);
+  if (isNaN(d)) return '-';
+  return d.toLocaleString('id-ID', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -79,8 +81,12 @@ export default function ActionHistoryPage() {
   const [tickets, setTickets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // filter bulan
+  // filter bulan (LOGIC ASLI)
   const [selectedMonth, setSelectedMonth] = useState('all');
+  // filter kategori (BARU)
+  const [selectedCategory, setSelectedCategory] = useState('');
+  // search bar (BARU)
+  const [searchQuery, setSearchQuery] = useState('');
   // id tiket yang sedang di-expand
   const [expandedId, setExpandedId] = useState(null);
 
@@ -111,7 +117,7 @@ export default function ActionHistoryPage() {
     );
   }
 
-  // Build opsi bulan dari updatedAt / createdAt
+  // Build opsi bulan dari updatedAt / createdAt (LOGIC ASLI)
   const monthMap = new Map();
   tickets.forEach((t) => {
     const baseDate = t.updatedAt || t.createdAt;
@@ -130,15 +136,66 @@ export default function ActionHistoryPage() {
     a.value.localeCompare(b.value)
   );
 
-  // Filter tiket per bulan
-  const filteredTickets =
-    selectedMonth === 'all'
-      ? tickets
-      : tickets.filter((t) => {
-          const baseDate = t.updatedAt || t.createdAt;
-          if (!baseDate) return false;
-          return getMonthKey(baseDate) === selectedMonth;
-        });
+  // Opsi kategori (BARU) – aman kalau kategori kosong
+  const kategoriSet = new Set(
+    tickets.map((t) => t.kategori).filter((k) => !!k)
+  );
+  const kategoriOptions = Array.from(kategoriSet);
+
+  // Filter tiket: bulan (logic asli) + kategori + search (BARU)
+  const filteredTickets = tickets.filter((t) => {
+    const baseDate = t.updatedAt || t.createdAt;
+    if (!baseDate) return false;
+
+    // FILTER BULAN (ASLI)
+    if (selectedMonth !== 'all') {
+      if (getMonthKey(baseDate) !== selectedMonth) return false;
+    }
+
+    // FILTER KATEGORI (BARU)
+    if (selectedCategory && t.kategori !== selectedCategory) {
+      return false;
+    }
+
+    // FILTER SEARCH (BARU) – cari di judul, deskripsi, pengirim, agen, toko, dll
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+
+      const title = t.title || '';
+      const desc = t.detail?.description || '';
+      const namaPengisi = t.nama_pengisi || '';
+      const noTelepon = t.no_telepon || '';
+      const toko = t.toko || '';
+      const kategori = t.kategori || '';
+      const type = t.type || '';
+      const status = t.status || '';
+      const agen = t.submittedBy?.name || '';
+
+      const combined = (
+        title +
+        ' ' +
+        desc +
+        ' ' +
+        namaPengisi +
+        ' ' +
+        noTelepon +
+        ' ' +
+        toko +
+        ' ' +
+        kategori +
+        ' ' +
+        type +
+        ' ' +
+        status +
+        ' ' +
+        agen
+      ).toLowerCase();
+
+      if (!combined.includes(q)) return false;
+    }
+
+    return true;
+  });
 
   return (
     <div className="px-4 py-6">
@@ -161,8 +218,8 @@ export default function ActionHistoryPage() {
         <div className="absolute -bottom-10 -right-10 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
       </div>
 
-      {/* BAR FILTER */}
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/* BAR FILTER – sekarang mirip MyTickets */}
+      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="text-xs text-slate-500">
           Menampilkan{' '}
           <span className="font-semibold text-slate-700">
@@ -171,24 +228,94 @@ export default function ActionHistoryPage() {
           dari{' '}
           <span className="font-semibold text-slate-700">{tickets.length}</span>{' '}
           Request yang pernah Anda proses.
+          <div className="mt-1 text-[11px] text-slate-500">
+            {[
+              selectedMonth !== 'all' && selectedMonth
+                ? `Bulan: ${selectedMonth}`
+                : null,
+              selectedCategory ? `Kategori: ${selectedCategory}` : null,
+              searchQuery ? `Pencarian: "${searchQuery}"` : null,
+            ]
+              .filter(Boolean)
+              .join(' · ') ||
+              'Anda dapat memfilter riwayat berdasarkan bulan, kategori, dan kata kunci.'}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500">Filter bulan:</span>
-          <select
-            value={selectedMonth}
-            onChange={(e) => {
-              setSelectedMonth(e.target.value);
-              setExpandedId(null); // reset expand saat ganti bulan
-            }}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-          >
-            <option value="all">Semua bulan</option>
-            {monthOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:flex-wrap">
+          {/* Search bar */}
+          <div className="flex items-center gap-1">
+            <span className="hidden sm:inline text-[11px] text-slate-500">
+              Cari:
+            </span>
+            <input
+              type="text"
+              placeholder="Cari judul, pengirim, toko..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full sm:w-52 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+            />
+          </div>
+
+          {/* Filter kategori */}
+          <div className="flex items-center gap-1">
+            <span className="hidden sm:inline text-[11px] text-slate-500">
+              Kategori:
+            </span>
+            <select
+              value={selectedCategory}
+              onChange={(e) => {
+                setSelectedCategory(e.target.value);
+                setExpandedId(null);
+              }}
+              className="w-full sm:w-40 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+            >
+              <option value="">Semua</option>
+              {kategoriOptions.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Filter bulan (logic asli) */}
+          <div className="flex items-center gap-1">
+            <span className="hidden sm:inline text-[11px] text-slate-500">
+              Bulan:
+            </span>
+            <select
+              value={selectedMonth}
+              onChange={(e) => {
+                setSelectedMonth(e.target.value);
+                setExpandedId(null); // tetap seperti sebelumnya
+              }}
+              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+            >
+              <option value="all">Semua bulan</option>
+              {monthOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Reset filter */}
+          {(selectedMonth !== 'all' || selectedCategory || searchQuery) && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedMonth('all');
+                setSelectedCategory('');
+                setSearchQuery('');
+                setExpandedId(null);
+              }}
+              className="text-[11px] text-slate-500 hover:text-slate-700"
+            >
+              Reset filter
+            </button>
+          )}
         </div>
       </div>
 
@@ -199,7 +326,7 @@ export default function ActionHistoryPage() {
         </div>
       ) : filteredTickets.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-200 bg-white py-10 text-center text-sm text-slate-500">
-          Tidak ada Request pada bulan yang dipilih.
+          Tidak ada Request yang cocok dengan filter.
         </div>
       ) : (
         // GRID CARD KECIL + EXPAND DETAIL
@@ -207,6 +334,11 @@ export default function ActionHistoryPage() {
           {filteredTickets.map((ticket) => {
             const baseDate = ticket.updatedAt || ticket.createdAt;
             const isExpanded = expandedId === ticket.ticket_id;
+
+            const namaPengisi = ticket.nama_pengisi || '-';
+            const noTelepon = ticket.no_telepon || '-';
+            const toko = ticket.toko || '-';
+            const agen = ticket.submittedBy?.name || '-';
 
             return (
               <div
@@ -249,12 +381,34 @@ export default function ActionHistoryPage() {
                   </div>
                 </div>
 
-                {/* INFO RINGKAS DI BAWAH HEADER */}
-                <div className="mt-2 flex items-center justify-between text-[10px] text-slate-500">
-                  <span>{formatDate(baseDate)}</span>
-                  <span className="truncate max-w-[120px] text-right">
-                    Pengirim: {ticket.submittedBy.name}
-                  </span>
+                {/* META mirip MyTickets: tanggal + agen + pengirim/no hp/toko */}
+                <div className="mt-2 text-[10px] text-slate-600 space-y-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span>{formatDate(baseDate)}</span>
+                    <span className="truncate max-w-[140px] text-right">
+                      Agen: {agen}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-x-4 gap-y-0.5">
+                    <span>
+                      <span className="font-semibold text-slate-900">
+                        Pengirim:
+                      </span>{' '}
+                      {namaPengisi}
+                    </span>
+                    <span>
+                      <span className="font-semibold text-slate-900">
+                        No. HP:
+                      </span>{' '}
+                      {noTelepon}
+                    </span>
+                    <span>
+                      <span className="font-semibold text-slate-900">
+                        Toko:
+                      </span>{' '}
+                      {toko}
+                    </span>
+                  </div>
                 </div>
 
                 {/* DETAIL MUNCUL SAAT DI-CLICK */}
@@ -280,22 +434,20 @@ export default function ActionHistoryPage() {
                             Lampiran
                           </div>
                           <div className="flex flex-wrap gap-2">
-                            {ticket.detail.attachments_json.map(
-                              (file, idx) => (
-                                <a
-                                  key={idx}
-                                  href={file.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-[11px] text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-100"
-                                >
-                                  <PaperClipIcon className="h-4 w-4" />
-                                  <span className="max-w-[140px] truncate font-medium">
-                                    {file.name}
-                                  </span>
-                                </a>
-                              )
-                            )}
+                            {ticket.detail.attachments_json.map((file, idx) => (
+                              <a
+                                key={idx}
+                                href={file.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-[11px] text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-100"
+                              >
+                                <PaperClipIcon className="h-4 w-4" />
+                                <span className="max-w-[140px] truncate font-medium">
+                                  {file.name}
+                                </span>
+                              </a>
+                            ))}
                           </div>
                         </div>
                       )}
@@ -311,7 +463,7 @@ export default function ActionHistoryPage() {
 
                       {ticket.status === 'Done' ||
                       ticket.status === 'Rejected' ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-3 py-1 text-[10px] font-medium text-slate-500">
+                        <span className="inline-flex items=center gap-1 rounded-full bg-slate-50 px-3 py-1 text-[10px] font-medium text-slate-500">
                           Request ditutup
                         </span>
                       ) : (
@@ -319,8 +471,8 @@ export default function ActionHistoryPage() {
                           <ArrowPathIcon className="h-3 w-3" />
                           <span>
                             Menunggu:{' '}
-                            {ticket.assignments[0]?.user?.name || 'Sistem'}{' '}
-                            {ticket.assignments[0]?.user?.role?.role_name
+                            {ticket.assignments?.[0]?.user?.name || 'Sistem'}{' '}
+                            {ticket.assignments?.[0]?.user?.role?.role_name
                               ? `(${ticket.assignments[0].user.role.role_name})`
                               : ''}
                           </span>
@@ -331,7 +483,7 @@ export default function ActionHistoryPage() {
                 )}
 
                 {/* Indikator klik */}
-                <div className="mt-2 flex items-center justify-end text-[10px] text-slate-400">
+                <div className="mt-2 flex items=center justify-end text-[10px] text-slate-400">
                   <span className="mr-1">
                     {isExpanded ? 'Sembunyikan detail' : 'Lihat detail'}
                   </span>
