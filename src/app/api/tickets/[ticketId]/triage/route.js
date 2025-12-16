@@ -2,10 +2,28 @@ import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getServerSession } from 'next-auth/next';
-import { getRoutingTarget } from '@/lib/smartRouting'; 
+import { getRoutingTarget } from '@/lib/smartRouting';
+import { sendTicketAssignedEmail } from '@/lib/email';
 
-// FUNGSI: PIC OMI melakukan Triase (memilah) tiket.
 export async function POST(request, context) {
+
+  // =====================================
+  // FIX WAJIB: params harus di-await lewat context.params
+  // =====================================
+  const params = await context.params;
+  const rawId = params.ticketId;
+
+  // ===== VALIDASI ticketId =====
+  if (!rawId || isNaN(Number(rawId))) {
+    return NextResponse.json(
+      { message: 'Ticket ID tidak valid.' },
+      { status: 400 }
+    );
+  }
+
+  const ticketId = BigInt(rawId);
+
+  // ===== SESSION =====
   const session = await getServerSession(authOptions);
 
   if (!session || session.user.role !== 'PIC OMI') {
@@ -13,43 +31,46 @@ export async function POST(request, context) {
   }
 
   const picOmiUser = session.user;
-  const { ticketId } = await context.params; 
 
-  const { type, notes } = await request.json(); 
+  const { type, notes } = await request.json();
 
   if (!['Request', 'Feedback'].includes(type)) {
-    return NextResponse.json({ message: "Tipe harus 'Request' atau 'Feedback'." }, { status: 400 });
+    return NextResponse.json(
+      { message: "Tipe harus 'Request' atau 'Feedback'." },
+      { status: 400 }
+    );
   }
-  
-  if (!ticketId) return NextResponse.json({ message: "Server Error: Ticket ID missing." }, { status: 500 });
 
-  // Ambil data assignment + tiket + submitter
+  // ===== CEK ASSIGNMENT =====
   const currentAssignment = await prisma.ticketAssignment.findFirst({
     where: {
-      ticket_id: BigInt(ticketId),
+      ticket_id: ticketId,
       user_id: picOmiUser.id,
       assignment_type: 'Active',
       status: 'Pending',
     },
     include: {
       ticket: {
-        include: {
-          submittedBy: true, 
-        },
+        include: { submittedBy: true },
       },
     },
   });
 
   if (!currentAssignment) {
-    return NextResponse.json({ message: 'Anda tidak ditugaskan untuk tiket ini.' }, { status: 403 });
+    return NextResponse.json(
+      { message: 'Anda tidak ditugaskan untuk tiket ini.' },
+      { status: 403 }
+    );
   }
 
   try {
-    await prisma.$transaction(async (tx) => {
-      // 1. Update Tiket & Hapus Tugas Lama
-      await tx.ticket.update({
-        where: { ticket_id: BigInt(ticketId) },
-        data: { type: type, status: 'Open' }, 
+    const result = await prisma.$transaction(async (tx) => {
+      const updatedTicket = await tx.ticket.update({
+        where: { ticket_id: ticketId },
+        data: {
+          type: type,
+          status: 'Open',
+        },
       });
 
       await tx.ticketAssignment.delete({
@@ -58,100 +79,123 @@ export async function POST(request, context) {
 
       await tx.ticketLog.create({
         data: {
-          ticket_id: BigInt(ticketId),
+          ticket_id: ticketId,
           actor_user_id: picOmiUser.id,
           action_type: 'Triase',
           notes: `Triase sebagai: ${type}. Catatan: ${notes || '-'}`,
         },
       });
 
-      // 2. LOGIKA ROUTING
       const submitter = currentAssignment.ticket.submittedBy;
       const submitterDivisionId = submitter.division_id;
       const subKategori = currentAssignment.ticket.sub_kategori;
 
+      let salesManagerUser = null;
+      let feedbackUsers = [];
+
       if (type === 'Request') {
-        // --- ALUR REQUEST (Tetap Sama) ---
-        if (!submitterDivisionId) throw new Error('Pengirim tiket tidak memiliki divisi.');
-        
-        const salesManagerUser = await tx.user.findFirst({
+        salesManagerUser = await tx.user.findFirst({
+          where: {
+            role: { role_name: 'Sales Manager' },
+            status: 'Active',
+            division_id: submitterDivisionId,
+          },
+          select: { user_id: true, email: true, name: true },
+        });
+
+        if (salesManagerUser) {
+          await tx.ticketAssignment.create({
+            data: {
+              ticket_id: ticketId,
+              user_id: salesManagerUser.user_id,
+              assignment_type: 'Active',
+              status: 'Pending',
+            },
+          });
+        }
+      } else {
+        salesManagerUser = await tx.user.findFirst({
           where: {
             role: { role_name: 'Sales Manager' },
             division_id: submitterDivisionId,
+            status: 'Active',
           },
+          select: { user_id: true, email: true, name: true },
         });
 
-        if (!salesManagerUser) throw new Error('Sales Manager untuk divisi ini tidak ditemukan.');
-
-        await tx.ticketAssignment.create({
-          data: {
-            ticket_id: BigInt(ticketId),
-            user_id: salesManagerUser.user_id,
-            assignment_type: 'Active',
-            status: 'Pending',
-          },
-        });
-
-      } else {
-        // --- ALUR FEEDBACK (REVISI: Hapus PIC OMI) ---
-        let assignmentsToCreate = [];
-
-        // A. Penugasan untuk PIC OMI (Diri Sendiri) ---> DIHAPUS SESUAI PERMINTAAN
-        // (Kode sebelumnya yang membuat assignment untuk picOmiUser.id dihapus di sini)
-
-        // B. Penugasan untuk Sales Manager (Regional)
-        if (submitterDivisionId) {
-          const salesManagerUser = await tx.user.findFirst({
-            where: {
-              role: { role_name: 'Sales Manager' },
-              division_id: submitterDivisionId,
-            },
-          });
-          if (salesManagerUser) {
-            assignmentsToCreate.push({
-              ticket_id: BigInt(ticketId),
+        if (salesManagerUser) {
+          await tx.ticketAssignment.create({
+            data: {
+              ticket_id: ticketId,
               user_id: salesManagerUser.user_id,
               assignment_type: 'Feedback_Review',
               status: 'Pending',
-            });
-          }
-        }
-
-        // C. Penugasan untuk User Feedback (Smart Routing)
-        const target = getRoutingTarget(subKategori);
-        let feedbackWhereClause = { role: { role_name: 'User Feedback' } };
-
-        if (target && target.ap_division) {
-             feedbackWhereClause = {
-                role: { role_name: 'User Feedback' },
-                division: { division_name: target.ap_division } 
-             };
-        }
-
-        const feedbackUsers = await tx.user.findMany({
-          where: feedbackWhereClause
-        });
-
-        feedbackUsers.forEach((fbUser) => {
-          assignmentsToCreate.push({
-            ticket_id: BigInt(ticketId),
-            user_id: fbUser.user_id,
-            assignment_type: 'Feedback_Review',
-            status: 'Pending',
+            },
           });
+        }
+
+        const target = getRoutingTarget(subKategori);
+
+        const feedbackWhere = target?.ap_division
+          ? {
+              role: { role_name: 'User Feedback' },
+              division: { division_name: target.ap_division },
+            }
+          : { role: { role_name: 'User Feedback' } };
+
+        feedbackUsers = await tx.user.findMany({
+          where: feedbackWhere,
+          select: { user_id: true, email: true, name: true },
         });
 
-        if (assignmentsToCreate.length > 0) {
-            await tx.ticketAssignment.createMany({
-                data: assignmentsToCreate,
-            });
+        if (feedbackUsers.length > 0) {
+          await tx.ticketAssignment.createMany({
+            data: feedbackUsers.map((fb) => ({
+              ticket_id: ticketId,
+              user_id: fb.user_id,
+              assignment_type: 'Feedback_Review',
+              status: 'Pending',
+            })),
+          });
         }
       }
-    }); 
 
-    return NextResponse.json({ message: `Tiket berhasil di-triase sebagai ${type}.` }, { status: 200 });
+      return { updatedTicket, salesManagerUser, feedbackUsers };
+    });
+
+    const ticketNumber = rawId;
+
+    if (result.salesManagerUser?.email) {
+      sendTicketAssignedEmail({
+        to: result.salesManagerUser.email,
+        subject: `${type} baru (#${ticketNumber})`,
+        ticket: result.updatedTicket,
+        extraText: `Anda mendapatkan tugas baru dari Sales Regional.`,
+      });
+    }
+
+    if (type === 'Feedback') {
+      for (const fbUser of result.feedbackUsers) {
+        if (!fbUser.email) continue;
+
+        sendTicketAssignedEmail({
+          to: fbUser.email,
+          subject: `Feedback baru (#${ticketNumber})`,
+          ticket: result.updatedTicket,
+          extraText: `Anda mendapatkan tugas untuk review feedback.`,
+        });
+      }
+    }
+
+    return NextResponse.json(
+      { message: `Tiket berhasil di-triase sebagai ${type}.` },
+      { status: 200 }
+    );
   } catch (error) {
-    console.error('Gagal melakukan triase:', error);
-    return NextResponse.json({ message: 'Gagal melakukan triase.', error: error.message }, { status: 500 });
+    console.error('Gagal triase:', error);
+    return NextResponse.json(
+      { message: 'Gagal melakukan triase.', error: error.message },
+      { status: 500 }
+    );
   }
 }

@@ -1,9 +1,8 @@
-// Lokasi File: src/app/api/tickets/submit/route.js
-
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getServerSession } from 'next-auth/next';
+import { sendTicketAssignedEmail } from '@/lib/email';
 
 export async function POST(request) {
   const session = await getServerSession(authOptions);
@@ -11,10 +10,9 @@ export async function POST(request) {
   if (!session || !['Salesman', 'Agen'].includes(session.user.role)) {
     return NextResponse.json({ message: 'Akses ditolak.' }, { status: 403 });
   }
-  
+
   const user = session.user;
 
-  // ⬇️ TAMBAH no_telepon DI DESTRUCTURING
   const { 
     title, 
     description, 
@@ -23,7 +21,7 @@ export async function POST(request) {
     nama_pengisi, 
     jabatan, 
     toko, 
-    no_telepon,      // <-- FIELD BARU DARI FRONTEND
+    no_telepon,
     attachments 
   } = await request.json();
 
@@ -31,26 +29,35 @@ export async function POST(request) {
     return NextResponse.json({ message: 'Data tidak lengkap.' }, { status: 400 });
   }
 
-  // ✅ VALIDASI NOMOR TELEPON (WAJIB)
   if (!no_telepon) {
     return NextResponse.json(
       { message: 'Nomor Telepon/WA wajib diisi.' },
       { status: 400 }
     );
   }
-  
-  // --- VALIDASI SESUAI ROLE ---
+
   if (user.role === 'Agen' && (!nama_pengisi || !jabatan)) {
     return NextResponse.json({ message: 'Agen wajib mengisi Nama Pengisi dan Jabatan.' }, { status: 400 });
   }
-  
+
   if (user.role === 'Salesman' && (!nama_pengisi || !toko)) {
     return NextResponse.json({ message: 'Salesman wajib mengisi Nama Sales dan Toko.' }, { status: 400 });
   }
-  // ---------------------------------------
 
-  // Cari data user untuk routing (cek pic_omi_id)
-  const submitterData = await prisma.user.findUnique({ where: { user_id: user.id } });
+  if (
+    user.role === 'Salesman' &&
+    ['KIRIMAN', 'RETURAN'].includes(sub_kategori)
+  ) {
+    return NextResponse.json(
+      { message: 'Salesman tidak boleh memilih sub kategori KIRIMAN atau RETURAN. Sub kategori tersebut hanya untuk Agen.' },
+      { status: 400 }
+    );
+  }
+
+  const submitterData = await prisma.user.findUnique({
+    where: { user_id: user.id },
+  });
+
   const assignedPicOmiId = submitterData.pic_omi_id;
 
   if (!assignedPicOmiId) {
@@ -61,7 +68,11 @@ export async function POST(request) {
   }
 
   try {
-    const newTicket = await prisma.$transaction(async (tx) => {
+    // ----------------------------------------
+    // TRANSAKSI: CREATE TICKET + GET PIC USER
+    // ----------------------------------------
+    const { ticket, picOmiUser } = await prisma.$transaction(async (tx) => {
+      
       const ticket = await tx.ticket.create({
         data: {
           title,
@@ -73,7 +84,7 @@ export async function POST(request) {
           nama_pengisi: nama_pengisi || null,
           jabatan: jabatan || null,
           toko: toko || null,
-          no_telepon: no_telepon,  // <-- SIMPAN KE KOLOM DI TABLE TICKET
+          no_telepon,
         },
       });
 
@@ -90,7 +101,6 @@ export async function POST(request) {
           ticket_id: ticket.ticket_id,
           actor_user_id: user.id,
           action_type: 'Submit',
-          // Log sekalian mencatat nomor telepon
           notes: user.role === 'Salesman' 
             ? `Tiket dibuat oleh Sales ${nama_pengisi} (${no_telepon}) untuk ${toko}.` 
             : `Tiket dibuat oleh ${nama_pengisi} (${jabatan}) (${no_telepon}).`,
@@ -101,17 +111,38 @@ export async function POST(request) {
         data: {
           ticket_id: ticket.ticket_id,
           user_id: assignedPicOmiId,
-          assignment_type: 'Active', 
+          assignment_type: 'Active',
           status: 'Pending',
         },
       });
-      
-      return ticket;
+
+      const picOmiUser = await tx.user.findUnique({
+        where: { user_id: assignedPicOmiId },
+        select: { email: true, name: true },
+      });
+
+      return { ticket, picOmiUser };
     });
 
-    return NextResponse.json({ message: 'Sukses', ticket: newTicket }, { status: 201 });
+    // ----------------------------------------
+    // EMAIL NOTIFICATION
+    // ----------------------------------------
+    if (picOmiUser?.email) {
+      sendTicketAssignedEmail({
+        to: picOmiUser.email,
+        subject: `Request Pending Baru`,
+        ticket,
+        extraText: `Anda ditugaskan sebagai Sales Regional untuk request ini.`,
+      }).catch((err) => console.error('Gagal kirim email PIC OMI:', err));
+    }
+
+    return NextResponse.json({ message: 'Sukses', ticket }, { status: 201 });
+
   } catch (error) {
     console.error('Gagal submit tiket:', error);
-    return NextResponse.json({ message: 'Error server.', error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { message: 'Error server.', error: error.message }, 
+      { status: 500 }
+    );
   }
 }

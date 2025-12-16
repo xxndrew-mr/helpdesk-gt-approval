@@ -4,7 +4,8 @@ import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getServerSession } from 'next-auth/next';
-import { getRoutingTarget } from '@/lib/smartRouting'; // <-- Import Logika Mapping
+import { getRoutingTarget } from '@/lib/smartRouting';
+import { sendTicketAssignedEmail } from '@/lib/email'; // <-- Import Logika Mapping
 
 export async function POST(request, context) {
   const session = await getServerSession(authOptions);
@@ -12,22 +13,39 @@ export async function POST(request, context) {
     return NextResponse.json({ message: 'Akses ditolak.' }, { status: 403 });
   }
 
-  const { ticketId } = await context.params;
+  const { ticketId: ticketIdParam } = await context.params;
+
+  if (!ticketIdParam) {
+    return NextResponse.json(
+      { message: 'ticketId tidak ditemukan di URL.' },
+      { status: 400 }
+    );
+  }
+
+  const ticketId = Number(ticketIdParam);
+  if (Number.isNaN(ticketId)) {
+    return NextResponse.json(
+      { message: 'ticketId tidak valid.' },
+      { status: 400 }
+    );
+  }
   const { action, notes } = await request.json();
 
   if (!['approve', 'reject', 'complete'].includes(action)) return NextResponse.json({ message: 'Aksi tidak valid.' }, { status: 400 });
   if (!notes) return NextResponse.json({ message: 'Catatan wajib.' }, { status: 400 });
 
-  // Ambil data tiket untuk cek Sub Kategori
   const currentAssignment = await prisma.ticketAssignment.findFirst({
     where: { ticket_id: BigInt(ticketId), user_id: session.user.id, status: 'Pending' },
-    include: { ticket: true } // Include data tiket
+    include: { ticket: true }
   });
 
   if (!currentAssignment) return NextResponse.json({ message: 'Tugas tidak ditemukan.' }, { status: 403 });
 
   try {
-    await prisma.$transaction(async (tx) => {
+    let updatedTicket = null; // <- Perubahan 1: definisi updatedTicket
+    let targetAM = null;     // <- Perubahan 2: definisi targetAM
+
+    const result = await prisma.$transaction(async (tx) => {
       await tx.ticketAssignment.delete({ where: { assignment_id: currentAssignment.assignment_id } });
 
       await tx.ticketLog.create({
@@ -40,38 +58,54 @@ export async function POST(request, context) {
       });
 
       if (action === 'approve') {
-        // --- SMART ROUTING: MENCARI ACTING MANAGER ---
         const subKategori = currentAssignment.ticket.sub_kategori;
         const target = getRoutingTarget(subKategori);
 
         if (!target) throw new Error(`Mapping routing tidak ditemukan untuk sub kategori: ${subKategori}`);
 
-        // Cari User Acting Manager di Divisi yang sesuai (misal: Divisi Operation)
-        const targetAM = await tx.user.findFirst({
+        targetAM = await tx.user.findFirst({
           where: {
             role: { role_name: 'Acting Manager' },
-            division: { division_name: target.am_division }
-          }
+            division: { division_name: target.am_division },
+            status: 'Active'
+          },
+          select: { user_id: true, email: true, name: true },
         });
 
         if (!targetAM) throw new Error(`User Acting Manager untuk ${target.am_division} tidak ditemukan.`);
 
-        await tx.ticketAssignment.create({
+        updatedTicket = await tx.ticketAssignment.create({
           data: {
             ticket_id: BigInt(ticketId),
-            user_id: targetAM.user_id, // <-- Kirim ke GM/Mkt Mgr/Sales Op Mgr yang tepat
+            user_id: targetAM.user_id,
             assignment_type: 'Active',
             status: 'Pending',
           },
         });
-        // ---------------------------------------------
-        
+
       } else if (action === 'reject') {
-        await tx.ticket.update({ where: { ticket_id: BigInt(ticketId) }, data: { status: 'Rejected' } });
+        updatedTicket = await tx.ticket.update({
+          where: { ticket_id: BigInt(ticketId) },
+          data: { status: 'Rejected' },
+        });
       } else if (action === 'complete') {
-        await tx.ticket.update({ where: { ticket_id: BigInt(ticketId) }, data: { status: 'Done' } });
+        updatedTicket = await tx.ticket.update({
+          where: { ticket_id: BigInt(ticketId) },
+          data: { status: 'Done' },
+        });
       }
+
+      return { updatedTicket, targetAM }; // <- Perubahan 3: return variabel yg sudah didefinisikan
     });
+
+    if (action === 'approve' && result.targetAM?.email) {
+      sendTicketAssignedEmail({
+        to: result.targetAM.email,
+        subject: `[Helpdesk GT] Pending Request (#${ticketId}) - Menunggu approval Manager`,
+        ticket: result.updatedTicket,
+        extraText: `Request telah di-approve oleh Sales Manager dan menunggu keputusan Anda.`,
+      }).catch((err) => console.error('Gagal kirim email SM→AM:', err));
+    }
 
     return NextResponse.json({ message: `Aksi '${action}' berhasil.` }, { status: 200 });
   } catch (error) {

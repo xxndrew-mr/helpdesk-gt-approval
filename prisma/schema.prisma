@@ -1,15 +1,12 @@
-// Lokasi: prisma/schema.prisma
-
-datasource db {
-  provider = "postgresql" // atau "mysql"
-  url      = env("DATABASE_URL")
-}
-
 generator client {
   provider = "prisma-client-js"
 }
 
-// ... (Model Role, Division, User TIDAK BERUBAH) ...
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
 model Role {
   role_id   Int    @id @default(autoincrement())
   role_name String @unique
@@ -23,24 +20,22 @@ model Division {
 }
 
 model User {
-  user_id     Int      @id @default(autoincrement())
-  name        String   
-  username    String   @unique 
-  email       String?  @unique
-  password    String
-  role_id     Int?
-  role        Role?    @relation(fields: [role_id], references: [role_id])
-  division_id Int?
-  division    Division? @relation(fields: [division_id], references: [division_id])
-  status      String   @default("Active") 
-
-  pic_omi_id  Int?
-  picOmi      User?    @relation("PicOmiHandler", fields: [pic_omi_id], references: [user_id])
-  handledUsers User[]  @relation("PicOmiHandler")
-
-  submittedTickets Ticket[] @relation("SubmittedBy")
-  logs             TicketLog[] @relation("Actor")
+  user_id          Int                @id @default(autoincrement())
+  name             String
+  email            String?            @unique
+  password         String
+  role_id          Int?
+  division_id      Int?
+  status           String             @default("Active")
+  pic_omi_id       Int?
+  username         String             @unique
+  submittedTickets Ticket[]           @relation("SubmittedBy")
   assignments      TicketAssignment[] @relation("AssignedTo")
+  logs             TicketLog[]        @relation("Actor")
+  division         Division?          @relation(fields: [division_id], references: [division_id])
+  picOmi           User?              @relation("PicOmiHandler", fields: [pic_omi_id], references: [user_id])
+  handledUsers     User[]             @relation("PicOmiHandler")
+  role             Role?              @relation(fields: [role_id], references: [role_id])
 
   @@index([role_id])
   @@index([division_id])
@@ -48,37 +43,34 @@ model User {
 }
 
 model Ticket {
-  ticket_id          BigInt   @id @default(autoincrement())
-  title              String
+  ticket_id            BigInt             @id @default(autoincrement())
+  title                String
   submitted_by_user_id Int
-  type               String   @default("Pending")
-  status             String   @default("Open")
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  kategori           String
-  sub_kategori       String
-  nama_pengisi       String?
-  jabatan            String?
-  toko               String?
-  no_telepon         String? // Menyimpan No HP/WA Submitter
-
-
-  submittedBy User             @relation("SubmittedBy", fields: [submitted_by_user_id], references: [user_id])
-  detail      TicketDetail?
-  logs        TicketLog[]
-  assignments TicketAssignment[]
+  type                 String             @default("Pending")
+  status               String             @default("Open")
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  kategori             String
+  sub_kategori         String
+  jabatan              String?
+  toko                 String?
+  nama_pengisi         String?
+  no_telepon           String?
+  submittedBy          User               @relation("SubmittedBy", fields: [submitted_by_user_id], references: [user_id])
+  assignments          TicketAssignment[]
+  detail               TicketDetail?
+  logs                 TicketLog[]
 
   @@index([submitted_by_user_id])
   @@index([type])
   @@index([status])
 }
 
-// ... (Model TicketDetail, TicketLog, TicketAssignment TIDAK BERUBAH) ...
 model TicketDetail {
-  ticket_id        BigInt   @id
-  description      String   @db.Text
+  ticket_id        BigInt @id
+  description      String
   attachments_json Json?
-  ticket           Ticket   @relation(fields: [ticket_id], references: [ticket_id], onDelete: Cascade)
+  ticket           Ticket @relation(fields: [ticket_id], references: [ticket_id], onDelete: Cascade)
 }
 
 model TicketLog {
@@ -86,10 +78,11 @@ model TicketLog {
   ticket_id     BigInt
   actor_user_id Int
   action_type   String
-  notes         String?  @db.Text
+  notes         String?
   timestamp     DateTime @default(now())
-  ticket Ticket @relation(fields: [ticket_id], references: [ticket_id], onDelete: Cascade)
-  actor  User   @relation("Actor", fields: [actor_user_id], references: [user_id])
+  actor         User     @relation("Actor", fields: [actor_user_id], references: [user_id])
+  ticket        Ticket   @relation(fields: [ticket_id], references: [ticket_id], onDelete: Cascade)
+
   @@index([ticket_id])
   @@index([actor_user_id])
 }
@@ -98,11 +91,12 @@ model TicketAssignment {
   assignment_id   BigInt   @id @default(autoincrement())
   ticket_id       BigInt
   user_id         Int
-  assignment_type String   
-  status          String   @default("Pending") 
+  assignment_type String
+  status          String   @default("Pending")
   createdAt       DateTime @default(now())
-  ticket Ticket @relation(fields: [ticket_id], references: [ticket_id], onDelete: Cascade)
-  user   User   @relation("AssignedTo", fields: [user_id], references: [user_id])
+  ticket          Ticket   @relation(fields: [ticket_id], references: [ticket_id], onDelete: Cascade)
+  user            User     @relation("AssignedTo", fields: [user_id], references: [user_id])
+
   @@index([ticket_id])
-  @@index([user_id, status]) 
+  @@index([user_id, status])
 }

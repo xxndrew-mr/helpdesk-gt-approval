@@ -108,6 +108,12 @@ export default function DashboardLayout({ children }) {
       icon: UsersIcon,
       roles: ['Administrator'],
     },
+    {
+      href: '/dashboard/change-password',
+      label: 'Ganti Password',
+      icon: UsersIcon,
+      roles: ['PIC OMI', 'Sales Manager', 'Acting Manager', 'Acting PIC','Salesman', 'Agen'],
+    },
   ];
 
   const FEEDBACK_ALLOWED = ['Sales Manager', 'User Feedback'];
