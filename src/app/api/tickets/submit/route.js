@@ -4,6 +4,14 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getServerSession } from 'next-auth/next';
 import { sendTicketAssignedEmail } from '@/lib/email';
 
+const serialize = (data) =>
+  JSON.parse(
+    JSON.stringify(data, (_, value) =>
+      typeof value === 'bigint' ? value.toString() : value
+    )
+  );
+
+
 export async function POST(request) {
   const session = await getServerSession(authOptions);
   
@@ -136,7 +144,11 @@ export async function POST(request) {
       }).catch((err) => console.error('Gagal kirim email PIC OMI:', err));
     }
 
-    return NextResponse.json({ message: 'Sukses', ticket }, { status: 201 });
+    return NextResponse.json(
+  { message: 'Sukses', ticket: serialize(ticket) },
+  { status: 201 }
+);
+
 
   } catch (error) {
     console.error('Gagal submit tiket:', error);

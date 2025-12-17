@@ -5,6 +5,14 @@ import { NextResponse } from 'next/server';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getServerSession } from 'next-auth/next';
 
+const serialize = (data) =>
+  JSON.parse(
+    JSON.stringify(data, (_, value) =>
+      typeof value === 'bigint' ? value.toString() : value
+    )
+  );
+
+
 export async function GET(request) {
   const session = await getServerSession(authOptions);
 
@@ -68,7 +76,8 @@ export async function GET(request) {
       },
     });
 
-    return NextResponse.json(assignments);
+    return NextResponse.json(serialize(assignments));
+
   } catch (error) {
     console.error('Gagal mengambil antrian:', error);
     return NextResponse.json(

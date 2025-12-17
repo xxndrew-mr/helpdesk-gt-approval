@@ -1,9 +1,15 @@
 // Lokasi: src/app/api/tickets/history/route.js
-
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getServerSession } from 'next-auth/next';
+
+const serialize = (data) =>
+  JSON.parse(
+    JSON.stringify(data, (_, value) =>
+      typeof value === 'bigint' ? value.toString() : value
+    )
+  );
 
 // FUNGSI: Mengambil tiket yang PERNAH diproses oleh user yang login
 export async function GET(request) {
@@ -68,7 +74,8 @@ export async function GET(request) {
       },
     });
 
-    return NextResponse.json(tickets);
+    return NextResponse.json(serialize(tickets));
+
   } catch (error) {
     console.error('Gagal mengambil riwayat aksi:', error);
     return NextResponse.json(

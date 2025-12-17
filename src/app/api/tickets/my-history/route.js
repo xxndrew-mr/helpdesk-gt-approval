@@ -5,6 +5,14 @@ import { NextResponse } from 'next/server';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getServerSession } from 'next-auth/next';
 
+const serialize = (data) =>
+  JSON.parse(
+    JSON.stringify(data, (_, value) =>
+      typeof value === 'bigint' ? value.toString() : value
+    )
+  );
+
+
 // FUNGSI: Mengambil riwayat tiket yang di-submit oleh user yang login
 export async function GET(request) {
   // 1. Ambil session
@@ -69,7 +77,8 @@ export async function GET(request) {
     });
 
     // 4. Kirim response sukses
-    return NextResponse.json(tickets);
+    return NextResponse.json(serialize(tickets));
+
   } catch (error) {
     console.error('Gagal mengambil riwayat tiket:', error);
     return NextResponse.json(
