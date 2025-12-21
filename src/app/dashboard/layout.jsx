@@ -18,7 +18,6 @@ import {
   Bars3Icon,
   XMarkIcon,
   ClockIcon,
-  ChartBarIcon,
 } from '@heroicons/react/24/outline';
 
 import { Button } from '@/components/ui/button';
@@ -107,12 +106,6 @@ export default function DashboardLayout({ children }) {
       href: '/dashboard/admin/users',
       label: 'Manajemen User',
       icon: UsersIcon,
-      roles: ['Administrator'],
-    },
-    {
-      href: '/dashboard/admin/analytics',
-      label: 'Dashboard Analitik',
-      icon: ChartBarIconn,
       roles: ['Administrator'],
     },
     {
