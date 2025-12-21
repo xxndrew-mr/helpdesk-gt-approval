@@ -18,6 +18,7 @@ import {
   Bars3Icon,
   XMarkIcon,
   ClockIcon,
+  ChartBarIcon,
 } from '@heroicons/react/24/outline';
 
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,7 @@ import {
   navigationMenuTriggerStyle,
   NavigationMenuViewport,
 } from '@/components/ui/navigation-menu';
+import { ChartBarIcon } from 'lucide-react';
 
 export default function DashboardLayout({ children }) {
   const { data: session, status } = useSession();
@@ -113,6 +115,12 @@ export default function DashboardLayout({ children }) {
       label: 'Ganti Password',
       icon: UsersIcon,
       roles: ['PIC OMI', 'Sales Manager', 'Acting Manager', 'Acting PIC','Salesman', 'Agen'],
+    },
+    {
+      href: '/dashboard/admin/analytics',
+      label: 'Dashboard Analitik',
+      icon: ChartBarIcon,
+      roles:['Administrator'],
     },
   ];
 
