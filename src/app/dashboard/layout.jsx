@@ -32,7 +32,6 @@ import {
   navigationMenuTriggerStyle,
   NavigationMenuViewport,
 } from '@/components/ui/navigation-menu';
-import { ChartBarIcon } from 'lucide-react';
 
 export default function DashboardLayout({ children }) {
   const { data: session, status } = useSession();
