@@ -12,19 +12,24 @@ import {
 } from '@heroicons/react/24/outline';
 
 // === KATEGORI BARU (UPDATE SAJA BAGIAN INI) ===
+// === KATEGORI ===
 const categories = {
-  // Kategori Baru
   PRODUK: [
     'PRODUK KOMPETITOR',
     'PRODUK ONDA',
     'KUALITAS',
-    'KUANTITAS', // Stok produk di level produk
+    'KUANTITAS',
   ],
-  // Kategori Stok (lebih ke pergerakan stok)
   STOK: ['STOK', 'KIRIMAN', 'RETURAN'],
   PROGRAM: ['INSENTIF', 'HADIAH PROGRAM', 'SKEMA PROGRAM'],
   TOOLS: ['FLYER PROGRAM', 'PERALATAN', 'LAINNYA'],
 };
+
+// === RULE LAMPIRAN WAJIB (INI YANG KEMARIN BELUM ADA) ===
+const REQUIRED_ATTACHMENT_RULES = {
+  PRODUK: ['KUALITAS', 'KUANTITAS', 'PRODUK ONDA', 'PRODUK KOMPETITOR'],
+};
+
 // ===================================
 
 export default function SubmitTicketPage() {
@@ -65,6 +70,9 @@ export default function SubmitTicketPage() {
   const [success, setSuccess] = useState(null);
 
   const userRole = session?.user?.role;
+  const isAttachmentRequired =
+  REQUIRED_ATTACHMENT_RULES[selectedKategori]?.includes(selectedSubKategori);
+
 
   // Sub kategori: filter KIRIMAN & RETURAN untuk Salesman (hanya di kategori STOK)
   const rawSubKategoriOptions = selectedKategori ? categories[selectedKategori] : [];
@@ -106,6 +114,13 @@ export default function SubmitTicketPage() {
       setIsLoading(false);
       return;
     }
+    // VALIDASI LAMPIRAN WAJIB (SAMA DENGAN BACKEND)
+if (isAttachmentRequired && !file) {
+  setError('Lampiran / foto wajib diisi untuk kategori dan sub kategori ini.');
+  setIsLoading(false);
+  return;
+}
+
     // ---------------------------------------
 
     try {
@@ -384,9 +399,13 @@ export default function SubmitTicketPage() {
 
               {/* Lampiran / Foto (Opsional) */}
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Lampiran / Foto (Opsional)
-                </label>
+               <label className="block text-sm font-medium mb-2">
+  Lampiran / Foto
+  {isAttachmentRequired && (
+    <span className="text-rose-500"> *</span>
+  )}
+</label>
+
                 {!file ? (
                   <div className="flex items-center justify-center w-full">
                     <label

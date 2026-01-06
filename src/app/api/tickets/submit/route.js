@@ -11,6 +11,11 @@ const serialize = (data) =>
     )
   );
 
+  const REQUIRED_ATTACHMENT_RULES = {
+  PRODUK: ['PRODUK KOMPETITOR', 'PRODUK ONDA', 'KUALITAS', 'KUANTITAS'],
+};
+
+
 
 export async function POST(request) {
   const session = await getServerSession(authOptions);
@@ -32,6 +37,22 @@ export async function POST(request) {
     no_telepon,
     attachments 
   } = await request.json();
+
+  // ----------------------------------------
+// VALIDASI LAMPIRAN WAJIB UNTUK KATEGORI TERTENTU
+// ----------------------------------------
+const isAttachmentRequired =
+  REQUIRED_ATTACHMENT_RULES[kategori]?.includes(sub_kategori);
+
+if (isAttachmentRequired && (!attachments || attachments.length === 0)) {
+  return NextResponse.json(
+    {
+      message: 'Lampiran/foto wajib diisi untuk kategori dan sub kategori ini.'
+    },
+    { status: 400 }
+  );
+}
+
 
   if (!title || !description || !kategori || !sub_kategori) {
     return NextResponse.json({ message: 'Data tidak lengkap.' }, { status: 400 });
