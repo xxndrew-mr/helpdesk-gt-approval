@@ -238,230 +238,305 @@ if (isAttachmentRequired && !file) {
           )}
 
           {/* Identitas Pengirim */}
-          <fieldset className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-            <legend className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700">
-              Identitas Pengirim ({effectiveUserRole})
-            </legend>
+              <fieldset className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <legend className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700">
+        Data Pengirim ({effectiveUserRole})
+      </legend>
 
-            <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="md:col-span-2 text-xs text-slate-500">
-                Login sebagai:{' '}
-                <span className="font-medium text-slate-800">
-                  {session.user.name}
-                </span>{' '}
-                <span className="text-slate-400">({session.user.email})</span>
-              </div>
+      <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
+        {/* INFO LOGIN */}
+        <div className="md:col-span-2 rounded-lg bg-white px-3 py-2 text-xs text-slate-600">
+          Anda login sebagai{' '}
+          <span className="font-semibold text-slate-900">
+            {session.user.name}
+          </span>{' '}
+          <span className="text-slate-400">({session.user.email})</span>
+        </div>
 
-              {effectiveUserRole === 'Salesman' && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-800">
-                      Nama Salesman <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={namaPengisi}
-                      onChange={(e) => setNamaPengisi(e.target.value)}
-                      required
-                      placeholder="Masukkan nama Anda"
-                      className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-800">
-                      Nama Toko <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={toko}
-                      onChange={(e) => setToko(e.target.value)}
-                      required
-                      placeholder="Toko yang sedang dikunjungi"
-                      className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-                    />
-                  </div>
-                </>
-              )}
-
-              {effectiveUserRole === 'Agen' && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-800">
-                      Nama Pengisi <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={namaPengisi}
-                      onChange={(e) => setNamaPengisi(e.target.value)}
-                      required
-                      placeholder="Siapa yang mengisi form ini?"
-                      className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-800">
-                      Jabatan <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={jabatan}
-                      onChange={(e) => setJabatan(e.target.value)}
-                      required
-                      placeholder="Contoh: Owner, Staff, Istri Owner"
-                      className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-                    />
-                  </div>
-                </>
-              )}
-
-              {/* NOMOR TELEPON / WA (WAJIB UNTUK SEMUA ROLE) */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-800">
-                  Nomor Telepon / WA <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="tel"
-                  value={noTelepon}
-                  onChange={(e) => setNoTelepon(e.target.value)}
-                  required
-                  placeholder="Contoh: 0812xxxxxxx"
-                  className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-                />
-              </div>
+        {/* SALES */}
+        {effectiveUserRole === 'Salesman' && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-slate-800">
+                Nama Sales
+                <span className="ml-1 text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={namaPengisi}
+                onChange={(e) => setNamaPengisi(e.target.value)}
+                required
+                placeholder="Nama Anda"
+                className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900
+                          shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+              />
             </div>
-          </fieldset>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-800">
+                Nama Toko
+                <span className="ml-1 text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={toko}
+                onChange={(e) => setToko(e.target.value)}
+                required
+                placeholder="Nama toko yang dikunjungi"
+                className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900
+                          shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+              />
+            </div>
+          </>
+        )}
+
+        {/* AGEN */}
+        {effectiveUserRole === 'Agen' && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-slate-800">
+                Nama Pengisi
+                <span className="ml-1 text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={namaPengisi}
+                onChange={(e) => setNamaPengisi(e.target.value)}
+                required
+                placeholder="Nama Anda"
+                className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900
+                          shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-800">
+                Peran di Toko
+                <span className="ml-1 text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={jabatan}
+                onChange={(e) => setJabatan(e.target.value)}
+                required
+                placeholder="Contoh: Pemilik, Karyawan"
+                className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900
+                          shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+              />
+            </div>
+          </>
+        )}
+
+        {/* NOMOR HP */}
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-slate-800">
+            Nomor Telepon / WhatsApp
+            <span className="ml-1 text-rose-500">*</span>
+          </label>
+          <input
+            type="tel"
+            value={noTelepon}
+            onChange={(e) => setNoTelepon(e.target.value)}
+            required
+            placeholder="Contoh: 0812 3456 7890"
+            className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900
+                      shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+          />
+          <p className="mt-1 text-[11px] text-slate-500">
+            Nomor ini akan digunakan jika kami perlu menghubungi Anda.
+          </p>
+        </div>
+      </div>
+    </fieldset>
+
 
           {/* Detail  */}
-          <fieldset className="rounded-2xl border border-slate-200 bg-white p-4">
-            <legend className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
-              Detail Request
-            </legend>
+          <fieldset className="rounded-2xl border border-slate-200 bg-white p-5">
+  <legend className="rounded-full border border-slate-200 bg-slate-50 px-4 py-1.5 text-xs font-semibold text-slate-700">
+    Detail Permintaan
+  </legend>
 
-            <div className="mt-3 space-y-5">
-              {/* Field Judul DIHAPUS */}
+  <div className="mt-4 space-y-6">
+    {/* KATEGORI */}
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div>
+        <label className="block text-sm font-medium text-slate-800">
+          Kategori Permintaan <span className="text-rose-500">*</span>
+        </label>
+        <p className="mt-0.5 text-xs text-slate-500">
+          Pilih jenis kendala utama yang ingin Anda laporkan
+        </p>
+        <select
+          value={selectedKategori}
+          onChange={(e) => {
+            setSelectedKategori(e.target.value);
+            setSelectedSubKategori('');
+          }}
+          required
+          className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+        >
+          <option value="">Pilih kategori...</option>
+          {Object.keys(categories).map((kat) => (
+            <option key={kat} value={kat}>
+              {kat}
+            </option>
+          ))}
+        </select>
+      </div>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div>
-                  <label className="block text-sm font-medium text-slate-800">
-                    Kategori
-                  </label>
-                  <select
-                    value={selectedKategori}
-                    onChange={(e) => {
-                      setSelectedKategori(e.target.value);
-                      setSelectedSubKategori('');
-                    }}
-                    required
-                    className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-                  >
-                    <option value="">Pilih Kategori...</option>
-                    {Object.keys(categories).map((kat) => (
-                      <option key={kat} value={kat}>
-                        {kat}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-800">
-                    Sub Kategori
-                  </label>
-                  <select
-                    value={selectedSubKategori}
-                    onChange={(e) => setSelectedSubKategori(e.target.value)}
-                    required
-                    disabled={!selectedKategori}
-                    className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm disabled:bg-slate-50 disabled:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-                  >
-                    <option value="">Pilih Sub Kategori...</option>
-                    {subKategoriOptions.map((subKat) => (
-                      <option key={subKat} value={subKat}>
-                        {subKat}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+      <div>
+        <label className="block text-sm font-medium text-slate-800">
+          Sub Kategori <span className="text-rose-500">*</span>
+        </label>
+        <p className="mt-0.5 text-xs text-slate-500">
+          Detail spesifik dari kategori yang dipilih
+        </p>
+        <select
+          value={selectedSubKategori}
+          onChange={(e) => setSelectedSubKategori(e.target.value)}
+          required
+          disabled={!selectedKategori}
+          className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm disabled:bg-slate-50 disabled:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+        >
+          <option value="">Pilih sub kategori...</option>
+          {subKategoriOptions.map((subKat) => (
+            <option key={subKat} value={subKat}>
+              {subKat}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-800">
-                  Deskripsi Lengkap
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  required
-                  rows={5}
-                  className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-                  placeholder="Jelaskan kondisi di lapangan, lokasi, detail kendala, dan kebutuhan Anda."
-                />
-              </div>
+    {/* DESKRIPSI */}
+    <div>
+      <label className="block text-sm font-medium text-slate-800">
+        Deskripsi Lengkap <span className="text-rose-500">*</span>
+      </label>
+      <p className="mt-0.5 text-xs text-slate-500">
+        Jelaskan kondisi di lapangan agar tim dapat memproses lebih cepat
+      </p>
+      <textarea
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        required
+        rows={5}
+        placeholder="Contoh: Lokasi toko, kondisi saat ini, kendala yang terjadi, serta kebutuhan atau harapan Anda."
+        className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+      />
+    </div>
 
-              {/* Lampiran / Foto (Opsional) */}
-              <div>
-               <label className="block text-sm font-medium mb-2">
-  Lampiran / Foto
-  {isAttachmentRequired && (
-    <span className="text-rose-500"> *</span>
-  )}
-</label>
+    {/* LAMPIRAN */}
+    <div>
+      <label className="block text-sm font-medium text-slate-800 mb-1">
+        Lampiran Pendukung
+        {isAttachmentRequired && (
+          <span className="text-rose-500"> *</span>
+        )}
+      </label>
+      <p className="text-xs text-slate-500 mb-3">
+        Unggah foto atau dokumen pendukung untuk memperjelas kondisi
+      </p>
 
-                {!file ? (
-                  <div className="flex items-center justify-center w-full">
-                    <label
-                      htmlFor="dropzone-file"
-                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
-                    >
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <CloudArrowUpIcon className="w-8 h-8 mb-2 text-gray-400" />
-                        <p className="mb-2 text-sm text-gray-500">
-                          <span className="font-semibold">
-                            Klik untuk upload
-                          </span>{' '}
-                          atau drag file
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          PNG, JPG, PDF (Max. 5MB)
-                        </p>
-                      </div>
-                      <input
-                        id="dropzone-file"
-                        type="file"
-                        className="hidden"
-                        onChange={handleFileChange}
-                        accept="image/*,application/pdf"
-                      />
-                    </label>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-md">
-                    <div className="flex items-center gap-3 overflow-hidden">
-                      <PaperClipIcon className="h-5 w-5 text-blue-600 flex-shrink-0" />
-                      <span className="text-sm font-medium text-blue-900 truncate max-w-[200px]">
-                        {file.name}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setFile(null)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <XMarkIcon className="h-5 w-5" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </fieldset>
+      {!file ? (
+        <label
+          htmlFor="dropzone-file"
+          className="flex flex-col items-center justify-center w-full h-36 cursor-pointer rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 transition-colors"
+        >
+          <CloudArrowUpIcon className="h-8 w-8 text-slate-400 mb-2" />
+          <p className="text-sm text-slate-600">
+            <span className="font-semibold text-indigo-600">
+              Klik untuk upload
+            </span>{' '}
+            atau drag & drop file
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            PNG, JPG, atau PDF • Maksimal 5MB
+          </p>
+          <input
+            id="dropzone-file"
+            type="file"
+            className="hidden"
+            onChange={handleFileChange}
+            accept="image/*,application/pdf"
+          />
+        </label>
+      ) : (
+        <div className="flex items-center justify-between rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3">
+          <div className="flex items-center gap-3 overflow-hidden">
+            <PaperClipIcon className="h-5 w-5 text-indigo-600 flex-shrink-0" />
+            <span className="truncate text-sm font-medium text-indigo-900 max-w-[220px]">
+              {file.name}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setFile(null)}
+            className="text-rose-500 hover:text-rose-700"
+          >
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        </div>
+      )}
+    </div>
+  </div>
+</fieldset>
 
           {/* Tombol Submit */}
           <button
-            type="submit"
-            disabled={isLoading}
-            className="flex w-full items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-200 transition hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 disabled:cursor-not-allowed disabled:bg-slate-400"
-          >
-            {isLoading ? 'Mengirim...' : 'Submit Request'}
-          </button>
+  type="submit"
+  disabled={isLoading}
+  className="
+    group
+    relative
+    flex w-full items-center justify-center gap-2
+    rounded-xl
+    bg-gradient-to-r from-indigo-600 to-indigo-500
+    px-4 py-3
+    text-sm font-semibold text-white
+    shadow-lg shadow-indigo-200
+    transition-all duration-200
+    hover:from-indigo-500 hover:to-indigo-400
+    active:scale-[0.98]
+    focus-visible:outline-none
+    focus-visible:ring-2 focus-visible:ring-indigo-500
+    focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50
+    disabled:cursor-not-allowed
+    disabled:from-slate-400 disabled:to-slate-400
+    disabled:shadow-none
+  "
+>
+  {isLoading ? (
+    <>
+      <svg
+        className="h-4 w-4 animate-spin text-white"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+        />
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+        />
+      </svg>
+      <span>Mengirim...</span>
+    </>
+  ) : (
+    <>
+      <span>Kirim</span>
+    </>
+  )}
+</button>
+
         </form>
       </div>
     </div>

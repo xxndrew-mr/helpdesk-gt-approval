@@ -24,13 +24,14 @@ export default function MyTicketsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [selectedMonth, setSelectedMonth] = useState('');      // YYYY-MM
-  const [selectedCategory, setSelectedCategory] = useState(''); // kategori
-  const [searchQuery, setSearchQuery] = useState('');          // search bar
+  const [selectedMonth, setSelectedMonth] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const loadHistory = async () => {
     setError(null);
     setIsLoading(true);
+
     try {
       const res = await fetch('/api/tickets/my-history');
       if (!res.ok) throw new Error('Gagal mengambil data riwayat');
@@ -47,11 +48,10 @@ export default function MyTicketsPage() {
     loadHistory();
   }, []);
 
-  // List kategori unik untuk dropdown
   const kategoriOptions = useMemo(() => {
     const setCat = new Set(
       tickets
-        .map((t) => t.kategori) // langsung dari Ticket.kategori
+        .map((t) => t.kategori)
         .filter(Boolean)
     );
     return Array.from(setCat);
@@ -61,21 +61,19 @@ export default function MyTicketsPage() {
     const d = new Date(ticket.createdAt);
     if (isNaN(d.getTime())) return false;
 
-    // FILTER BULAN
     if (selectedMonth) {
       const monthStr =
         d.getFullYear().toString() +
         '-' +
-        String(d.getMonth() + 1).padStart(2, '0'); // YYYY-MM
+        String(d.getMonth() + 1).padStart(2, '0');
+
       if (monthStr !== selectedMonth) return false;
     }
 
-    // FILTER KATEGORI
     if (selectedCategory && ticket.kategori !== selectedCategory) {
       return false;
     }
 
-    // FILTER SEARCH (judul, desc, nama_pengisi, no_telepon, toko, kategori, type)
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
 
@@ -146,76 +144,75 @@ export default function MyTicketsPage() {
                 searchQuery ? `Pencarian: "${searchQuery}"` : null,
               ]
                 .filter(Boolean)
-                .join(' · ')
-                || 'Anda dapat memfilter riwayat berdasarkan bulan, kategori, dan kata kunci.'}
+                .join(' · ') ||
+                'Anda dapat memfilter riwayat berdasarkan bulan, kategori, dan kata kunci.'}
             </p>
           </div>
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:flex-wrap">
-            {/* Search bar */}
-            <div className="flex items-center gap-1">
-              <span className="hidden sm:inline text-[11px] text-slate-500">
-                Cari:
-              </span>
-              <input
-                type="text"
-                placeholder="Cari judul, pengirim, toko..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full sm:w-52 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-              />
-            </div>
-
-            {/* Filter kategori */}
-            <div className="flex items-center gap-1">
-              <span className="hidden sm:inline text-[11px] text-slate-500">
-                Kategori:
-              </span>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full sm:w-40 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-              >
-                <option value="">Semua</option>
-                {kategoriOptions.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Filter bulan (tahun tetap implicit via YYYY-MM) */}
-            <div className="flex items-center gap-1">
-              <span className="hidden sm:inline text-[11px] text-slate-500">
-                Bulan:
-              </span>
-              <input
-                type="month"
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-              />
-            </div>
-
-            {/* Tombol reset semua filter */}
-            {(selectedMonth || selectedCategory || searchQuery) && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedMonth('');
-                  setSelectedCategory('');
-                  setSearchQuery('');
-                }}
-                className="text-[11px] text-slate-500 hover:text-slate-700"
-              >
-                Reset filter
-              </button>
-            )}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end sm:flex-wrap">
+    
+          <div className="relative w-full sm:w-60">
+            <input
+              type="text"
+              placeholder="Cari judul, toko, pengirim..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 pl-9 text-sm text-slate-900 shadow-sm
+                        focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+            />
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+              🔍
+            </span>
           </div>
+
+          {/* KATEGORI */}
+          <div className="w-full sm:w-44">
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm
+                        focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+            >
+              <option value="">Semua Kategori</option>
+              {kategoriOptions.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* BULAN */}
+          <div className="w-full sm:w-40">
+            <input
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm
+                        focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+            />
+          </div>
+
+          {/* RESET */}
+          {(selectedMonth || selectedCategory || searchQuery) && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedMonth('');
+                setSelectedCategory('');
+                setSearchQuery('');
+              }}
+              className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-600
+                        transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600"
+            >
+              Reset
+            </button>
+          )}
         </div>
 
-        {/* LIST / KONTEN */}
+        </div>
+
+        {/* LIST */}
         {isLoading ? (
           <div className="flex items-center justify-center py-10 text-sm text-slate-500">
             <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-[2px] border-slate-300 border-t-indigo-500" />
@@ -239,14 +236,13 @@ export default function MyTicketsPage() {
                   key={ticket.ticket_id}
                   className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm transition hover:border-indigo-200 hover:shadow-md"
                 >
-                  {/* Header: judul + status */}
+                  {/* Header */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <h2 className="text-sm font-semibold text-slate-900 line-clamp-2">
                         {ticket.title}
                       </h2>
 
-                      {/* Baris meta 1: type, kategori, tanggal */}
                       <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500">
                         <span className="font-medium text-indigo-600">
                           {ticket.type}
@@ -265,75 +261,98 @@ export default function MyTicketsPage() {
                         </span>
                       </div>
 
-                      {/* Baris meta 2: NAMA, NO TELP, TOKO (dibikin jelas) */}
-                      <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-[11px] text-slate-700">
-                        <span>
-                          <span className="font-semibold text-slate-900">
-                            Pengirim:
-                          </span>{' '}
-                          {namaPengisi}
-                        </span>
-                        <span>
-                          <span className="font-semibold text-slate-900">
-                            No. HP:
-                          </span>{' '}
-                          {noTelepon}
-                        </span>
-                        <span>
-                          <span className="font-semibold text-slate-900">
-                            Toko:
-                          </span>{' '}
-                          {toko}
-                        </span>
-                      </div>
-                    </div>
+                      <div className="mt-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
+                        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                          Informasi Pengirim
+                        </p>
 
-                    <span
-                      className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ${getStatusClass(
-                        ticket.status
-                      )}`}
-                    >
-                      {ticket.status}
-                    </span>
-                  </div>
+                        <div className="grid gap-3 sm:grid-cols-3">
+                          <div>
+                            <p className="text-[10px] text-slate-500">Nama Pengirim</p>
+                            <p className="mt-0.5 text-sm font-semibold text-slate-900">
+                              {namaPengisi}
+                            </p>
+                          </div>
 
-                  {/* Deskripsi */}
-                  <p className="mt-3 text-xs leading-relaxed text-slate-700">
-                    {ticket.detail?.description || '(Tidak ada deskripsi)'}
-                  </p>
+                          <div>
+                            <p className="text-[10px] text-slate-500">Nomor HP</p>
+                            <p className="mt-0.5 text-sm font-semibold text-slate-900">
+                              {noTelepon}
+                            </p>
+                          </div>
 
-                  {/* Lampiran */}
-                  {ticket.detail?.attachments_json &&
-                    Array.isArray(ticket.detail.attachments_json) &&
-                    ticket.detail.attachments_json.length > 0 && (
-                      <div className="mt-4">
-                        <h4 className="mb-2 flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                          <PaperClipIcon className="h-3 w-3" /> Lampiran
-                        </h4>
-                        <div className="flex flex-wrap gap-2">
-                          {ticket.detail.attachments_json.map((file, idx) => (
-                            <a
-                              key={idx}
-                              href={file.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-100"
-                            >
-                              <PaperClipIcon className="h-4 w-4" />
-                              <span className="max-w-[150px] truncate">
-                                {file.name}
-                              </span>
-                            </a>
-                          ))}
+                          <div>
+                            <p className="text-[10px] text-slate-500">Nama Toko</p>
+                            <p className="mt-0.5 text-sm font-semibold text-slate-900">
+                              {toko}
+                            </p>
+                          </div>
                         </div>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* ================= DETAIL PERMINTAAN ================= */}
+                  <div className="mt-4 rounded-xl border border-slate-200 bg-white px-4 py-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                        Detail Permintaan
+                      </p>
+
+                      {ticket.detail?.attachments_json?.length > 0 && (
+                        <span className="text-[10px] text-slate-400">
+                          {ticket.detail.attachments_json.length} lampiran
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Deskripsi */}
+                    {ticket.detail?.description ? (
+                      <p className="text-sm leading-relaxed text-slate-800">
+                        {ticket.detail.description}
+                      </p>
+                    ) : (
+                      <p className="text-sm italic text-slate-400">
+                        Tidak ada keterangan tambahan dari pengirim.
+                      </p>
                     )}
 
-                  {/* PIC saat ini */}
+                    {/* Lampiran */}
+                    {ticket.detail?.attachments_json &&
+                      Array.isArray(ticket.detail.attachments_json) &&
+                      ticket.detail.attachments_json.length > 0 && (
+                        <div className="pt-3 border-t border-slate-100">
+                          <p className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                            <PaperClipIcon className="h-3 w-3" />
+                            Lampiran
+                          </p>
+
+                          <div className="flex flex-wrap gap-2">
+                            {ticket.detail.attachments_json.map((file, idx) => (
+                              <a
+                                key={idx}
+                                href={file.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+                              >
+                                <PaperClipIcon className="h-4 w-4 text-slate-400 group-hover:text-indigo-600" />
+                                <span className="max-w-[160px] truncate">
+                                  {file.name}
+                                </span>
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                  </div>
+
+
                   <div className="mt-3 border-top border-slate-100 pt-2">
                     <p className="text-[11px] font-semibold text-slate-600">
                       PIC Saat Ini
                     </p>
+
                     {ticket.assignments?.length > 0 ? (
                       <p className="mt-0.5 text-xs text-slate-800">
                         {ticket.assignments[0].user.name} •{' '}
@@ -346,40 +365,58 @@ export default function MyTicketsPage() {
                     )}
                   </div>
 
-                  {/* Riwayat aksi */}
                   {ticket.logs && ticket.logs.length > 0 && (
-                    <details className="group mt-3">
-                      <summary className="flex cursor-pointer select-none items-center gap-1 text-[11px] text-indigo-600">
-                        <span className="underline-offset-2 group-open:underline">
-                          Lihat riwayat aksi ({ticket.logs.length})
-                        </span>
-                        <span className="text-[9px] text-slate-400 transition-transform group-open:rotate-90">
-                          ▶
+                    <details className="group mt-4 rounded-xl border border-slate-200 bg-white">
+                      <summary className="flex cursor-pointer select-none items-center justify-between px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex h-2 w-2 rounded-full bg-indigo-500" />
+                          <span className="text-sm font-semibold text-slate-900">
+                            Riwayat Aktivitas
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            ({ticket.logs.length})
+                          </span>
+                        </div>
+
+                        <span className="text-[10px] text-slate-400 transition-transform group-open:rotate-180">
+                          ▼
                         </span>
                       </summary>
-                      <ul className="mt-2 max-h-32 space-y-2 overflow-y-auto pr-1">
-                        {ticket.logs.map((log) => (
-                          <li
-                            key={log.log_id}
-                            className="rounded-lg border border-slate-200 bg-slate-50 p-2"
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-medium text-slate-900">
-                                {log.actor.name}
-                              </span>
-                              <span className="text-[10px] text-slate-500">
-                                {log.action_type}
-                              </span>
-                            </div>
-                            <div className="mt-0.5 text-[11px] italic text-slate-700">
-                              "{log.notes}"
-                            </div>
-                            <div className="mt-0.5 text-[10px] text-slate-400">
-                              {new Date(log.timestamp).toLocaleString('id-ID')}
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
+
+                      <div className="border-t border-slate-100 px-4 py-3">
+                        <ul className="relative space-y-4 max-h-56 overflow-y-auto pr-2">
+                          {ticket.logs.map((log, index) => (
+                            <li key={log.log_id} className="relative pl-6">
+                              {index !== ticket.logs.length - 1 && (
+                                <span className="absolute left-[6px] top-6 h-full w-px bg-slate-200" />
+                              )}
+
+                              <span className="absolute left-0 top-1.5 h-3 w-3 rounded-full border-2 border-indigo-500 bg-white" />
+
+                              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-semibold text-slate-900">
+                                    {log.actor.name}
+                                  </span>
+                                  <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-medium text-indigo-700">
+                                    {log.action_type}
+                                  </span>
+                                </div>
+
+                                {log.notes && (
+                                  <p className="mt-1 text-xs text-slate-700 leading-relaxed">
+                                    {log.notes}
+                                  </p>
+                                )}
+
+                                <p className="mt-1 text-[10px] text-slate-400">
+                                  {new Date(log.timestamp).toLocaleString('id-ID')}
+                                </p>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     </details>
                   )}
                 </div>

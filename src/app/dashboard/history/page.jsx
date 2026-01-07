@@ -220,104 +220,114 @@ export default function ActionHistoryPage() {
 
       {/* BAR FILTER – sekarang mirip MyTickets */}
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="text-xs text-slate-500">
-          Menampilkan{' '}
-          <span className="font-semibold text-slate-700">
-            {filteredTickets.length}
-          </span>{' '}
-          dari{' '}
-          <span className="font-semibold text-slate-700">{tickets.length}</span>{' '}
-          Request yang pernah Anda proses.
-          <div className="mt-1 text-[11px] text-slate-500">
-            {[
-              selectedMonth !== 'all' && selectedMonth
-                ? `Bulan: ${selectedMonth}`
-                : null,
-              selectedCategory ? `Kategori: ${selectedCategory}` : null,
-              searchQuery ? `Pencarian: "${searchQuery}"` : null,
-            ]
-              .filter(Boolean)
-              .join(' · ') ||
-              'Anda dapat memfilter riwayat berdasarkan bulan, kategori, dan kata kunci.'}
-          </div>
-        </div>
+  {/* LEFT: Title + Info */}
+  <div>
+    <h2 className="text-sm font-semibold text-slate-800">
+      Riwayat Request Diproses
+    </h2>
 
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:flex-wrap">
-          {/* Search bar */}
-          <div className="flex items-center gap-1">
-            <span className="hidden sm:inline text-[11px] text-slate-500">
-              Cari:
-            </span>
-            <input
-              type="text"
-              placeholder="Cari judul, pengirim, toko..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full sm:w-52 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-            />
-          </div>
+    <p className="mt-1 text-xs sm:text-sm text-slate-500">
+      Menampilkan{' '}
+      <span className="font-semibold text-slate-700">
+        {filteredTickets.length}
+      </span>{' '}
+      dari{' '}
+      <span className="font-semibold text-slate-700">
+        {tickets.length}
+      </span>{' '}
+      request.
+    </p>
 
-          {/* Filter kategori */}
-          <div className="flex items-center gap-1">
-            <span className="hidden sm:inline text-[11px] text-slate-500">
-              Kategori:
-            </span>
-            <select
-              value={selectedCategory}
-              onChange={(e) => {
-                setSelectedCategory(e.target.value);
-                setExpandedId(null);
-              }}
-              className="w-full sm:w-40 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-            >
-              <option value="">Semua</option>
-              {kategoriOptions.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
+    <p className="mt-0.5 text-[11px] text-slate-500">
+      {[
+        selectedMonth !== 'all' && selectedMonth
+          ? `Bulan: ${selectedMonth}`
+          : null,
+        selectedCategory ? `Kategori: ${selectedCategory}` : null,
+        searchQuery ? `Pencarian: "${searchQuery}"` : null,
+      ]
+        .filter(Boolean)
+        .join(' · ') ||
+        'Gunakan filter untuk mencari request berdasarkan bulan, kategori, atau kata kunci.'}
+    </p>
+  </div>
 
-          {/* Filter bulan (logic asli) */}
-          <div className="flex items-center gap-1">
-            <span className="hidden sm:inline text-[11px] text-slate-500">
-              Bulan:
-            </span>
-            <select
-              value={selectedMonth}
-              onChange={(e) => {
-                setSelectedMonth(e.target.value);
-                setExpandedId(null); // tetap seperti sebelumnya
-              }}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-            >
-              <option value="all">Semua bulan</option>
-              {monthOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
+  {/* RIGHT: FILTER */}
+  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end sm:flex-wrap">
+    {/* SEARCH */}
+    <div className="relative w-full sm:w-60">
+      <input
+        type="text"
+        placeholder="Cari judul, toko, pengirim..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 pl-9 text-sm text-slate-900 shadow-sm
+                   focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+      />
+      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+        🔍
+      </span>
+    </div>
 
-          {/* Reset filter */}
-          {(selectedMonth !== 'all' || selectedCategory || searchQuery) && (
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedMonth('all');
-                setSelectedCategory('');
-                setSearchQuery('');
-                setExpandedId(null);
-              }}
-              className="text-[11px] text-slate-500 hover:text-slate-700"
-            >
-              Reset filter
-            </button>
-          )}
-        </div>
-      </div>
+    {/* KATEGORI */}
+    <div className="w-full sm:w-44">
+      <select
+        value={selectedCategory}
+        onChange={(e) => {
+          setSelectedCategory(e.target.value);
+          setExpandedId(null);
+        }}
+        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm
+                   focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+      >
+        <option value="">Semua Kategori</option>
+        {kategoriOptions.map((cat) => (
+          <option key={cat} value={cat}>
+            {cat}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    {/* BULAN */}
+    <div className="w-full sm:w-40">
+      <select
+        value={selectedMonth}
+        onChange={(e) => {
+          setSelectedMonth(e.target.value);
+          setExpandedId(null);
+        }}
+        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm
+                   focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+      >
+        <option value="all">Semua Bulan</option>
+        {monthOptions.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    {/* RESET */}
+    {(selectedMonth !== 'all' || selectedCategory || searchQuery) && (
+      <button
+        type="button"
+        onClick={() => {
+          setSelectedMonth('all');
+          setSelectedCategory('');
+          setSearchQuery('');
+          setExpandedId(null);
+        }}
+        className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-600
+                   transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600"
+      >
+        Reset
+      </button>
+    )}
+  </div>
+</div>
+
 
       {/* STATE TANPA DATA */}
       {tickets.length === 0 ? (
@@ -331,172 +341,170 @@ export default function ActionHistoryPage() {
       ) : (
         // GRID CARD KECIL + EXPAND DETAIL
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredTickets.map((ticket) => {
-            const baseDate = ticket.updatedAt || ticket.createdAt;
-            const isExpanded = expandedId === ticket.ticket_id;
+  {filteredTickets.map((ticket) => {
+    const isExpanded = expandedId === ticket.ticket_id;
+    const baseDate = ticket.updatedAt || ticket.createdAt;
 
-            const namaPengisi = ticket.nama_pengisi || '-';
-            const noTelepon = ticket.no_telepon || '-';
-            const toko = ticket.toko || '-';
-            const agen = ticket.submittedBy?.name || '-';
+    const namaPengisi = ticket.nama_pengisi || '-';
+    const noTelepon = ticket.no_telepon || '-';
+    const toko = ticket.toko || '-';
+    const agen = ticket.submittedBy?.name || '-';
 
-            return (
-              <div
-                key={ticket.ticket_id}
-                className={`group relative flex flex-col rounded-2xl border bg-white p-4 text-xs shadow-sm transition hover:shadow-md cursor-pointer ${
-                  isExpanded
-                    ? 'border-indigo-500 bg-indigo-50/70'
-                    : 'border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40'
-                }`}
-                onClick={() =>
-                  setExpandedId(isExpanded ? null : ticket.ticket_id)
-                }
-              >
-                {/* HEADER KECIL */}
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h3 className="line-clamp-2 text-[11px] font-semibold text-slate-900">
-                      {ticket.title}
-                    </h3>
-                    <div className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-slate-500">
-                      <span className="rounded-full bg-slate-50 px-2 py-0.5 font-medium text-slate-700">
-                        #{ticket.ticket_id}
-                      </span>
-                      <span>•</span>
-                      <span className="rounded-full bg-indigo-50 px-2 py-0.5 font-medium text-indigo-700">
-                        {ticket.kategori}
-                      </span>
-                      {ticket.sub_kategori && (
-                        <>
-                          <span>•</span>
-                          <span className="rounded-full bg-indigo-50 px-2 py-0.5 font-medium text-indigo-700">
-                            {ticket.sub_kategori}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex-shrink-0">
-                    {getStatusBadge(ticket.status)}
-                  </div>
-                </div>
+    return (
+      <div
+        key={ticket.ticket_id}
+        onClick={() =>
+          setExpandedId(isExpanded ? null : ticket.ticket_id)
+        }
+        className={`cursor-pointer rounded-2xl border bg-white p-4 text-xs transition shadow-sm
+          ${
+            isExpanded
+              ? 'border-indigo-500 bg-indigo-50/60'
+              : 'border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40'
+          }
+        `}
+      >
+        {/* ================= HEADER ================= */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold text-slate-900 line-clamp-2">
+              {ticket.title}
+            </h3>
 
-                {/* META mirip MyTickets: tanggal + agen + pengirim/no hp/toko */}
-                <div className="mt-2 text-[10px] text-slate-600 space-y-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <span>{formatDate(baseDate)}</span>
-                    <span className="truncate max-w-[140px] text-right">
-                      Agen: {agen}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-x-4 gap-y-0.5">
-                    <span>
-                      <span className="font-semibold text-slate-900">
-                        Pengirim:
-                      </span>{' '}
-                      {namaPengisi}
-                    </span>
-                    <span>
-                      <span className="font-semibold text-slate-900">
-                        No. HP:
-                      </span>{' '}
-                      {noTelepon}
-                    </span>
-                    <span>
-                      <span className="font-semibold text-slate-900">
-                        Toko:
-                      </span>{' '}
-                      {toko}
-                    </span>
-                  </div>
-                </div>
+            <div className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-slate-500">
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
+                #{ticket.ticket_id}
+              </span>
 
-                {/* DETAIL MUNCUL SAAT DI-CLICK */}
-                {isExpanded && (
-                  <div className="mt-3 space-y-3 rounded-xl bg-white/70 p-3 text-[11px] text-slate-700 border border-slate-100">
-                    {/* Deskripsi lengkap */}
-                    <div>
-                      <div className="mb-1 text-[10px] font-semibold text-slate-500 uppercase">
-                        Deskripsi
-                      </div>
-                      <p className="leading-relaxed">
-                        {ticket.detail?.description || '(Tidak ada deskripsi)'}
-                      </p>
-                    </div>
-
-                    {/* Lampiran */}
-                    {ticket.detail?.attachments_json &&
-                      Array.isArray(ticket.detail.attachments_json) &&
-                      ticket.detail.attachments_json.length > 0 && (
-                        <div>
-                          <div className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                            <PaperClipIcon className="h-3 w-3" />
-                            Lampiran
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {ticket.detail.attachments_json.map((file, idx) => (
-                              <a
-                                key={idx}
-                                href={file.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-[11px] text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-100"
-                              >
-                                <PaperClipIcon className="h-4 w-4" />
-                                <span className="max-w-[140px] truncate font-medium">
-                                  {file.name}
-                                </span>
-                              </a>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                    {/* Posisi tiket saat ini */}
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2">
-                      <div className="text-[10px] text-slate-500">
-                        Terakhir diupdate:{' '}
-                        <span className="font-medium text-slate-700">
-                          {formatDate(baseDate)}
-                        </span>
-                      </div>
-
-                      {ticket.status === 'Done' ||
-                      ticket.status === 'Rejected' ? (
-                        <span className="inline-flex items=center gap-1 rounded-full bg-slate-50 px-3 py-1 text-[10px] font-medium text-slate-500">
-                          Request ditutup
-                        </span>
-                      ) : (
-                        <div className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-[10px] font-medium text-amber-800">
-                          <ArrowPathIcon className="h-3 w-3" />
-                          <span>
-                            Menunggu:{' '}
-                            {ticket.assignments?.[0]?.user?.name || 'Sistem'}{' '}
-                            {ticket.assignments?.[0]?.user?.role?.role_name
-                              ? `(${ticket.assignments[0].user.role.role_name})`
-                              : ''}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Indikator klik */}
-                <div className="mt-2 flex items=center justify-end text-[10px] text-slate-400">
-                  <span className="mr-1">
-                    {isExpanded ? 'Sembunyikan detail' : 'Lihat detail'}
+              {ticket.kategori && (
+                <>
+                  <span>•</span>
+                  <span className="rounded-full bg-indigo-50 px-2 py-0.5 font-medium text-indigo-700">
+                    {ticket.kategori}
                   </span>
-                  <ClockIcon
-                    className={`h-3 w-3 transition-transform ${
-                      isExpanded ? 'rotate-90' : ''
-                    }`}
-                  />
+                </>
+              )}
+
+              <span>•</span>
+              <span>{formatDate(baseDate)}</span>
+            </div>
+          </div>
+
+          {getStatusBadge(ticket.status)}
+        </div>
+
+        {/* ================= INFO PENGIRIM ================= */}
+        <div className="mt-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            Informasi Pengirim
+          </p>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div>
+              <p className="text-[10px] text-slate-500">Nama</p>
+              <p className="mt-0.5 text-sm font-semibold text-slate-900">
+                {namaPengisi}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-[10px] text-slate-500">No. HP</p>
+              <p className="mt-0.5 text-sm font-semibold text-slate-900">
+                {noTelepon}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-[10px] text-slate-500">Nama Toko</p>
+              <p className="mt-0.5 text-sm font-semibold text-slate-900">
+                {toko}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ================= DETAIL (EXPAND) ================= */}
+        {isExpanded && (
+          <div className="mt-4 space-y-3 rounded-xl border border-slate-200 bg-white px-4 py-4">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                Detail Permintaan
+              </p>
+
+              {ticket.detail?.attachments_json?.length > 0 && (
+                <span className="text-[10px] text-slate-400">
+                  {ticket.detail.attachments_json.length} lampiran
+                </span>
+              )}
+            </div>
+
+            {/* DESKRIPSI */}
+            {ticket.detail?.description ? (
+              <p className="text-sm leading-relaxed text-slate-800">
+                {ticket.detail.description}
+              </p>
+            ) : (
+              <p className="text-sm italic text-slate-400">
+                Tidak ada keterangan tambahan dari pengirim.
+              </p>
+            )}
+
+            {/* LAMPIRAN */}
+            {ticket.detail?.attachments_json?.length > 0 && (
+              <div className="pt-3 border-t border-slate-100">
+                <p className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <PaperClipIcon className="h-3 w-3" />
+                  Lampiran
+                </p>
+
+                <div className="flex flex-wrap gap-2">
+                  {ticket.detail.attachments_json.map((file, idx) => (
+                    <a
+                      key={idx}
+                      href={file.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+                    >
+                      <PaperClipIcon className="h-4 w-4 text-slate-400 group-hover:text-indigo-600" />
+                      <span className="max-w-[160px] truncate">
+                        {file.name}
+                      </span>
+                    </a>
+                  ))}
                 </div>
               </div>
-            );
-          })}
+            )}
+
+            {/* PIC */}
+            <div className="pt-2 border-t border-slate-100">
+              <p className="text-[11px] font-semibold text-slate-600">
+                Penanggung Jawab Saat Ini
+              </p>
+
+              {ticket.assignments?.length > 0 ? (
+                <p className="mt-0.5 text-xs text-slate-800">
+                  {ticket.assignments[0].user.name} •{' '}
+                  {ticket.assignments[0].user.role.role_name}
+                </p>
+              ) : (
+                <p className="mt-0.5 text-[11px] italic text-slate-400">
+                  Permintaan sudah selesai
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ================= FOOTER ================= */}
+        <div className="mt-3 flex items-center justify-end text-[10px] text-slate-400">
+          {isExpanded ? 'Tutup detail' : 'Lihat detail'}
         </div>
+      </div>
+    );
+  })}
+</div>
+
       )}
     </div>
   );
