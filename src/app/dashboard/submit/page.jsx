@@ -487,23 +487,19 @@ if (isAttachmentRequired && !file) {
   type="submit"
   disabled={isLoading}
   className="
-    group
-    relative
     flex w-full items-center justify-center gap-2
     rounded-xl
-    bg-gradient-to-r from-indigo-600 to-indigo-500
+    bg-indigo-600
     px-4 py-3
     text-sm font-semibold text-white
-    shadow-lg shadow-indigo-200
-    transition-all duration-200
-    hover:from-indigo-500 hover:to-indigo-400
+    shadow-sm
+    transition
+    hover:bg-indigo-700
     active:scale-[0.98]
-    focus-visible:outline-none
-    focus-visible:ring-2 focus-visible:ring-indigo-500
-    focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50
+    focus:outline-none
+    focus:ring-2 focus:ring-indigo-500/40
     disabled:cursor-not-allowed
-    disabled:from-slate-400 disabled:to-slate-400
-    disabled:shadow-none
+    disabled:bg-slate-400
   "
 >
   {isLoading ? (
@@ -531,11 +527,10 @@ if (isAttachmentRequired && !file) {
       <span>Mengirim...</span>
     </>
   ) : (
-    <>
-      <span>Kirim</span>
-    </>
+    <span>Kirim</span>
   )}
 </button>
+
 
         </form>
       </div>
