@@ -11,7 +11,9 @@ const serialize = (data) =>
     )
   );
 
-// FUNGSI: Mengambil tiket riwayat
+// ================================
+// GET HISTORY TICKETS (ROLE AWARE + MULTI DIVISI)
+// ================================
 export async function GET(request) {
   const session = await getServerSession(authOptions);
 
@@ -22,12 +24,19 @@ export async function GET(request) {
   const userId = session.user.id;
   const userRole = session.user.role;
 
-  // =========================
-  // FILTER OTOMATIS BERDASARKAN ROLE
-  // =========================
+  const { searchParams } = new URL(request.url);
+  const divisionIdsParam = searchParams.get('division_ids');
+
+  // parse ?division_ids=1,2,3
+  const divisionIds = divisionIdsParam
+    ? divisionIdsParam.split(',').map((id) => parseInt(id, 10))
+    : [];
+
   let whereClause = {};
 
-  // Role operasional → hanya tiket yang pernah dia proses
+  // =========================
+  // ROLE OPERASIONAL (AGEN, SALES, DLL)
+  // =========================
   if (userRole !== 'Viewer' && userRole !== 'Administrator') {
     whereClause = {
       logs: {
@@ -37,7 +46,21 @@ export async function GET(request) {
       },
     };
   }
-  // Viewer & Administrator → lihat semua ticket (no filter)
+
+  // =========================
+  // VIEWER / ADMIN → BOLEH FILTER DIVISI
+  // =========================
+  if (
+    (userRole === 'Viewer' || userRole === 'Administrator') &&
+    divisionIds.length > 0
+  ) {
+    whereClause = {
+      ...whereClause,
+      division_id: {
+        in: divisionIds,
+      },
+    };
+  }
 
   try {
     const tickets = await prisma.ticket.findMany({

@@ -67,6 +67,16 @@ function UserForm({
     division_id: initialData?.division_id || '',
     pic_omi_id: initialData?.pic_omi_id || '',
   });
+  const [viewerDivisions, setViewerDivisions] = useState(
+  initialData?.viewer_division_ids || []
+);
+const toggleViewerDivision = (divisionId) => {
+  setViewerDivisions((prev) =>
+    prev.includes(divisionId)
+      ? prev.filter((id) => id !== divisionId)
+      : [...prev, divisionId]
+  );
+};
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -87,9 +97,17 @@ function UserForm({
   )?.role_name;
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit(formData);
+  e.preventDefault();
+
+  const payload = {
+    ...formData,
+    viewer_division_ids:
+      roleName === 'Viewer' ? viewerDivisions : [],
   };
+
+  onSubmit(payload);
+};
+
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -248,6 +266,37 @@ function UserForm({
                 </select>
               </div>
             )}
+            {roleName === 'Viewer' && (
+  <Card className="border-slate-200 bg-slate-50">
+    <CardHeader>
+      <p className="text-xs font-semibold uppercase tracking-wider text-slate-700">
+        Akses Divisi Viewer
+      </p>
+      <CardDescription className="text-xs text-slate-500">
+        Pilih divisi yang boleh dilihat oleh user Viewer.
+      </CardDescription>
+    </CardHeader>
+    <CardContent className="space-y-2">
+      {divisions.map((div) => (
+        <label
+          key={div.division_id}
+          className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+        >
+          <input
+            type="checkbox"
+            checked={viewerDivisions.includes(div.division_id)}
+            onChange={() => toggleViewerDivision(div.division_id)}
+            className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+          />
+          <span className="text-slate-700">
+            {div.division_name}
+          </span>
+        </label>
+      ))}
+    </CardContent>
+  </Card>
+)}
+
 
             {['Salesman', 'Agen'].includes(roleName) && (
               <div>
