@@ -69,6 +69,10 @@ if (isAttachmentRequired && (!attachments || attachments.length === 0)) {
     return NextResponse.json({ message: 'Agen wajib mengisi Nama Pengisi dan Jabatan.' }, { status: 400 });
   }
 
+  if (user.role === 'Salesman' && (!nama_pengisi)) {
+    return NextResponse.json({ message: 'Salesman wajib mengisi Nama Sales' }, { status: 400 });
+  }
+
   if (
     user.role === 'Salesman' &&
     ['KIRIMAN', 'RETURAN'].includes(sub_kategori)
