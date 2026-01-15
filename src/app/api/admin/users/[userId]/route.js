@@ -4,28 +4,30 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getServerSession } from 'next-auth/next';
 import bcrypt from 'bcryptjs';
 
-// FUNGSI: Mengedit (UPDATE) user
-export async function PUT(request, context) {
+// ================================
+// UPDATE USER
+// ================================
+export async function PUT(request, { params }) {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== 'Administrator') {
     return NextResponse.json({ message: 'Tidak diizinkan' }, { status: 403 });
   }
 
   try {
-    const { userId } = await context.params;
+    const userId = parseInt(params.userId, 10);
     const body = await request.json();
+
     const {
       name,
-      username, // <-- BARU
+      username,
       email,
       password,
       role_id,
       division_id,
-      pic_omi_id, // <-- BARU
-      status // Opsional (untuk aktifkan kembali)
+      pic_omi_id,
+      status
     } = body;
 
-    // Cek data dasar
     if (!name || !username || !role_id) {
       return NextResponse.json(
         { message: 'Nama, username, dan role wajib diisi' },
@@ -33,7 +35,6 @@ export async function PUT(request, context) {
       );
     }
 
-    // Siapkan data untuk di-update
     let dataToUpdate = {
       name,
       username,
@@ -43,37 +44,36 @@ export async function PUT(request, context) {
       pic_omi_id: pic_omi_id ? parseInt(pic_omi_id, 10) : null,
     };
 
-    // Jika status dikirim (misal untuk mengaktifkan kembali)
     if (status) {
-        dataToUpdate.status = status;
+      dataToUpdate.status = status;
     }
 
-    // --- Logika Ganti Password (HANYA JIKA DIISI) ---
     if (password && password.length > 0) {
       const hashedPassword = await bcrypt.hash(password, 10);
       dataToUpdate.password = hashedPassword;
     }
 
     const updatedUser = await prisma.user.update({
-      where: { user_id: parseInt(userId, 10) },
+      where: { user_id: userId },
       data: dataToUpdate,
       include: {
         role: true,
         division: true,
         picOmi: { select: { name: true } }
-      },
+      }
     });
 
     return NextResponse.json(updatedUser);
+
   } catch (error) {
-    // Tangani error username/email duplikat
     if (error.code === 'P2002') {
-       const target = error.meta?.target?.[0] || 'Field';
+      const target = error.meta?.target?.[0] || 'Field';
       return NextResponse.json(
         { message: `${target} ini sudah digunakan oleh akun lain.` },
-        { status: 409 } 
+        { status: 409 }
       );
     }
+
     console.error('Gagal mengupdate user:', error);
     return NextResponse.json(
       { message: 'Gagal mengupdate user', error: error.message },
@@ -82,31 +82,28 @@ export async function PUT(request, context) {
   }
 }
 
-// FUNGSI: Menonaktifkan (DELETE) user
-export async function DELETE(request, context) {
+// ================================
+// SOFT DELETE (INACTIVE)
+// ================================
+export async function DELETE(request, { params }) {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== 'Administrator') {
     return NextResponse.json({ message: 'Tidak diizinkan' }, { status: 403 });
   }
 
   try {
-    const { userId } = await context.params;
-    const userIdNum = parseInt(userId, 10);
+    const userId = parseInt(params.userId, 10);
 
-    // Keamanan: Cek agar admin tidak bisa menghapus akunnya sendiri
-    if (session.user.id === userIdNum) {
+    if (session.user.id === userId) {
       return NextResponse.json(
         { message: 'Anda tidak bisa menonaktifkan akun Anda sendiri.' },
         { status: 400 }
       );
     }
 
-    // BUKAN MENGHAPUS, TAPI MENG-UPDATE STATUS
     const updatedUser = await prisma.user.update({
-      where: { user_id: userIdNum },
-      data: {
-        status: 'Inactive', // Set status menjadi Inactive
-      },
+      where: { user_id: userId },
+      data: { status: 'Inactive' },
       include: {
         role: true,
         division: true,
@@ -114,11 +111,11 @@ export async function DELETE(request, context) {
       }
     });
 
-    return NextResponse.json(
-      { message: 'User berhasil dinonaktifkan', user: updatedUser },
-      { status: 200 }
-    );
-    
+    return NextResponse.json({
+      message: 'User berhasil dinonaktifkan',
+      user: updatedUser
+    });
+
   } catch (error) {
     console.error('Gagal menonaktifkan user:', error);
     return NextResponse.json(

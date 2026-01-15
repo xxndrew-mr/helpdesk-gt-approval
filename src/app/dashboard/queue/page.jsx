@@ -74,7 +74,7 @@ function TriageActions({ ticketId, onSuccess, onError }) {
         disabled={isLoading}
         className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-400"
       >
-        {isLoading ? 'Memproses...' : 'Tindak Lanjuti Request'}
+        {isLoading ? 'Memproses...' : 'Perlu Ditindaklanjuti'}
       </button>
 
       <button
@@ -82,7 +82,7 @@ function TriageActions({ ticketId, onSuccess, onError }) {
         disabled={isLoading}
         className="inline-flex items-center justify-center rounded-xl border border-sky-200 bg-sky-50 px-4 py-2 text-xs font-semibold text-sky-700 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isLoading ? 'Memproses...' : 'Ubah Menjadi Feedback'}
+        {isLoading ? 'Memproses...' : 'Hanya Informasi'}
       </button>
     </div>
   </div>

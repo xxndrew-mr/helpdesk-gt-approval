@@ -15,19 +15,18 @@ import {
 // === KATEGORI ===
 const categories = {
   PRODUK: [
-    'PRODUK KOMPETITOR',
-    'PRODUK ONDA',
-    'KUALITAS',
-    'KUANTITAS',
+    'IDE PRODUK BARU',
+    'KUALITAS PRODUK',
+    'ISI/PACKAGING',
   ],
   STOK: ['STOK', 'KIRIMAN', 'RETURAN'],
   PROGRAM: ['INSENTIF', 'HADIAH PROGRAM', 'SKEMA PROGRAM'],
-  TOOLS: ['FLYER PROGRAM', 'PERALATAN', 'LAINNYA'],
+  'TOOLS/LAINNYA': ['FLYER PROGRAM', 'PERALATAN', 'LAINNYA'],
 };
 
 // === RULE LAMPIRAN WAJIB (INI YANG KEMARIN BELUM ADA) ===
 const REQUIRED_ATTACHMENT_RULES = {
-  PRODUK: ['KUALITAS', 'KUANTITAS', 'PRODUK ONDA', 'PRODUK KOMPETITOR'],
+  PRODUK: ['KUALITAS PRODUK', 'ISI/PACKAGING', 'IDE PRODUK BARU', 'PRODUK KOMPETITOR'],
 };
 
 // ===================================
@@ -101,13 +100,6 @@ export default function SubmitTicketPage() {
       setIsLoading(false);
       return;
     }
-
-    if (session.user.role === 'Salesman' && (!namaPengisi || !toko)) {
-      setError('Salesman wajib mengisi Nama Sales dan Nama Toko.');
-      setIsLoading(false);
-      return;
-    }
-
     // VALIDASI NOMOR TELEPON (WAJIB, SAMA DENGAN BACKEND)
     if (!noTelepon) {
       setError('Nomor Telepon/WA wajib diisi.');
@@ -259,13 +251,11 @@ if (isAttachmentRequired && !file) {
             <div>
               <label className="block text-sm font-medium text-slate-800">
                 Nama Sales
-                <span className="ml-1 text-rose-500">*</span>
               </label>
               <input
                 type="text"
                 value={namaPengisi}
                 onChange={(e) => setNamaPengisi(e.target.value)}
-                required
                 placeholder="Nama Anda"
                 className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900
                           shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"

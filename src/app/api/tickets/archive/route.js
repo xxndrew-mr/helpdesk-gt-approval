@@ -3,30 +3,44 @@ import { NextResponse } from 'next/server';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getServerSession } from 'next-auth/next';
 
-// FUNGSI: Mengambil Arsip Pribadi
-export async function GET(request) {
+export async function GET() {
   const session = await getServerSession(authOptions);
+
   if (!session) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
   try {
+    const isViewer = session.user.role === 'Viewer';
+
     const assignments = await prisma.ticketAssignment.findMany({
       where: {
-        user_id: session.user.id,      // Hanya milik user ini
-        status: 'Archived',            // Hanya status Archived
+        status: 'Archived',
         assignment_type: 'Feedback_Review',
+
+        // 🔐 Jika bukan viewer → hanya arsip milik sendiri
+        ...(isViewer
+          ? {} 
+          : { user_id: session.user.id }
+        ),
       },
       include: {
+        user: {
+          select: {
+            name: true,
+            role: true,
+            division: true,
+          },
+        },
         ticket: {
           include: {
             submittedBy: {
-              select: { name: true },
+              select: { name: true, division: true },
             },
             detail: {
               select: {
                 description: true,
-                attachments_json: true, // ⬅️ tambahkan ini supaya lampiran ikut
+                attachments_json: true,
               },
             },
           },
@@ -38,6 +52,6 @@ export async function GET(request) {
     return NextResponse.json(assignments);
   } catch (error) {
     console.error('Error fetching archive:', error);
-    return NextResponse.json({ message: 'Error server.' }, { status: 500 });
+    return NextResponse.json({ message: 'Error server' }, { status: 500 });
   }
 }

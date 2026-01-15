@@ -12,7 +12,7 @@ const serialize = (data) =>
   );
 
   const REQUIRED_ATTACHMENT_RULES = {
-  PRODUK: ['PRODUK KOMPETITOR', 'PRODUK ONDA', 'KUALITAS', 'KUANTITAS'],
+  PRODUK: ['IDE PRODUK BARU', 'KUALITAS PRODUK', 'ISI PACKAGING',],
 };
 
 
@@ -67,10 +67,6 @@ if (isAttachmentRequired && (!attachments || attachments.length === 0)) {
 
   if (user.role === 'Agen' && (!nama_pengisi || !jabatan)) {
     return NextResponse.json({ message: 'Agen wajib mengisi Nama Pengisi dan Jabatan.' }, { status: 400 });
-  }
-
-  if (user.role === 'Salesman' && (!nama_pengisi || !toko)) {
-    return NextResponse.json({ message: 'Salesman wajib mengisi Nama Sales dan Toko.' }, { status: 400 });
   }
 
   if (

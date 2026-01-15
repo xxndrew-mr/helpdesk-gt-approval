@@ -77,6 +77,7 @@ export default function DashboardLayout({ children }) {
         'Acting Manager',
         'Acting PIC',
         'User Feedback',
+        'Viewer',
       ],
     },
     {
@@ -101,7 +102,7 @@ export default function DashboardLayout({ children }) {
       href: '/dashboard/history',
       label: 'Riwayat Aksi',
       icon: ClockIcon,
-      roles: ['PIC OMI', 'Sales Manager', 'Acting Manager', 'Acting PIC'],
+      roles: ['PIC OMI', 'Sales Manager', 'Acting Manager', 'Acting PIC','Viewer'],
     },
     {
       href: '/dashboard/admin/users',
@@ -119,11 +120,11 @@ export default function DashboardLayout({ children }) {
       href: '/dashboard/admin/analytics',
       label: 'Dashboard Analitik',
       icon: ChartBarIcon,
-      roles:['Administrator'],
+      roles:['Administrator', 'Viewer'],
     },
   ];
 
-  const FEEDBACK_ALLOWED = ['Sales Manager', 'User Feedback'];
+  const FEEDBACK_ALLOWED = ['Sales Manager', 'User Feedback', 'Viewer'];
   const FEEDBACK_ROUTES = [
     '/dashboard/feedback',
     '/dashboard/bookmarks',

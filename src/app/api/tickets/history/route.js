@@ -11,7 +11,7 @@ const serialize = (data) =>
     )
   );
 
-// FUNGSI: Mengambil tiket yang PERNAH diproses oleh user yang login
+// FUNGSI: Mengambil tiket riwayat
 export async function GET(request) {
   const session = await getServerSession(authOptions);
 
@@ -20,24 +20,33 @@ export async function GET(request) {
   }
 
   const userId = session.user.id;
+  const userRole = session.user.role;
+
+  // =========================
+  // FILTER OTOMATIS BERDASARKAN ROLE
+  // =========================
+  let whereClause = {};
+
+  // Role operasional → hanya tiket yang pernah dia proses
+  if (userRole !== 'Viewer' && userRole !== 'Administrator') {
+    whereClause = {
+      logs: {
+        some: {
+          actor_user_id: userId,
+        },
+      },
+    };
+  }
+  // Viewer & Administrator → lihat semua ticket (no filter)
 
   try {
     const tickets = await prisma.ticket.findMany({
-      where: {
-        // tiket di mana user ini pernah membuat log (pernah proses sesuatu)
-        logs: {
-          some: {
-            actor_user_id: userId,
-          },
-        },
-      },
+      where: whereClause,
       include: {
-        // ⛔ tadinya cuma { description: true }
-        // ✅ sekarang kirim juga attachments_json
         detail: {
           select: {
             description: true,
-            attachments_json: true, // <--- ini kuncinya
+            attachments_json: true,
           },
         },
         submittedBy: {
@@ -48,7 +57,6 @@ export async function GET(request) {
             },
           },
         },
-        // log terakhir (kalau nanti mau dipakai buat info tambahan)
         logs: {
           orderBy: { timestamp: 'desc' },
           take: 1,
@@ -56,7 +64,6 @@ export async function GET(request) {
             actor: { select: { name: true } },
           },
         },
-        // penugasan saat ini (siapa yang pegang “bola”)
         assignments: {
           where: { status: 'Pending' },
           include: {
@@ -70,12 +77,11 @@ export async function GET(request) {
         },
       },
       orderBy: {
-        updatedAt: 'desc', // yang terbaru di atas
+        updatedAt: 'desc',
       },
     });
 
     return NextResponse.json(serialize(tickets));
-
   } catch (error) {
     console.error('Gagal mengambil riwayat aksi:', error);
     return NextResponse.json(

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import {
   ClockIcon,
   CheckCircleIcon,
@@ -8,6 +9,7 @@ import {
   ArrowPathIcon,
   PaperClipIcon,
 } from '@heroicons/react/24/outline';
+
 
 // Helper: Format tanggal
 const formatDate = (dateString) => {
@@ -78,6 +80,9 @@ const getMonthLabel = (dateString) => {
 };
 
 export default function ActionHistoryPage() {
+  const { data: session } = useSession();
+  const userRole = session?.user?.role;
+  const isViewer = userRole === 'Viewer';
   const [tickets, setTickets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -207,12 +212,15 @@ export default function ActionHistoryPage() {
           </span>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-white">
-              Riwayat Aksi Saya
-            </h1>
-            <p className="mt-1 text-sm text-indigo-100">
-              Daftar Request yang pernah Anda proses, setujui, kembalikan, atau
-              tolak.
-            </p>
+  {isViewer ? 'Monitoring Request' : 'Riwayat Aksi Saya'}
+</h1>
+
+<p className="mt-1 text-sm text-indigo-100">
+  {isViewer
+    ? 'Daftar seluruh request dan feedback dari semua divisi untuk keperluan monitoring dan evaluasi.'
+    : 'Daftar Request yang pernah Anda proses, setujui, kembalikan, atau tolak.'}
+</p>
+
           </div>
         </div>
         <div className="absolute -bottom-10 -right-10 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
@@ -223,8 +231,9 @@ export default function ActionHistoryPage() {
   {/* LEFT: Title + Info */}
   <div>
     <h2 className="text-sm font-semibold text-slate-800">
-      Riwayat Request Diproses
-    </h2>
+  {isViewer ? 'Monitoring Request & Feedback' : 'Riwayat Request Diproses'}
+</h2>
+
 
     <p className="mt-1 text-xs sm:text-sm text-slate-500">
       Menampilkan{' '}
