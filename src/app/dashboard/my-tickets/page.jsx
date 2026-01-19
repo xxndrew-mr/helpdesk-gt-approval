@@ -102,7 +102,7 @@ export default function MyTicketsPage() {
         <div className="space-y-1.5">
           <p className="inline-flex items-center text-[11px] font-semibold uppercase tracking-[0.2em] text-indigo-100/90">
             <LayoutDashboard className="w-4 h-4 mr-2" />
-            Helpdesk GT · Riwayat Request
+            Onda Care · Riwayat Request
           </p>
 
           <h1 className="text-2xl sm:text-3xl font-semibold leading-tight">

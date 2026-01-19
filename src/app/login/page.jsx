@@ -82,7 +82,7 @@ export default function LoginPage() {
               </div>
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-indigo-200/80">
-                  Helpdesk GT
+                  ONDA CARE
                 </p>
                 <p className="text-sm font-semibold text-indigo-50">
                   PT Onda Mega Integra
@@ -90,18 +90,19 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-50">
-              Satu portal untuk semua{' '}
-              <span className="bg-gradient-to-r from-indigo-300 to-sky-300 bg-clip-text text-transparent">
-                request &amp; feedback
-              </span>
-              .
-            </h1>
+                      <h1 className="text-3xl font-semibold tracking-tight text-slate-50">
+            Aplikasi saran dan masukan{' '}
+            <span className="bg-gradient-to-r from-indigo-300 to-sky-300 bg-clip-text text-transparent">
+              salesman produk ONDA
+            </span>
+            .
+          </h1>
 
-            <p className="mt-4 text-sm leading-relaxed text-slate-300/90">
-              Pantau request, feedback, dan tingkatkan kolaborasi antar
-              tim di lingkungan PT Onda Mega Integra.
-            </p>      
+          <p className="mt-4 text-sm leading-relaxed text-slate-300/90">
+            Portal resmi bagi salesman untuk menyampaikan saran, kendala, dan ide
+            pengembangan produk agar komunikasi dengan tim internal ONDA lebih cepat,
+            terarah, dan terdokumentasi.
+          </p>
           </div>
         </div>
 
@@ -120,7 +121,7 @@ export default function LoginPage() {
                 />
               </div>
               <p className="text-xs uppercase tracking-[0.20em] text-indigo-600 font-medium">
-                Helpdesk GT
+                ONDA CARE
               </p>
               <p className="mt-1 text-sm font-semibold text-slate-800">
                 PT Onda Mega Integra
@@ -130,7 +131,7 @@ export default function LoginPage() {
             <Card className="border-slate-200 bg-white shadow-xl">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-semibold text-slate-900">
-                  Masuk ke Helpdesk GT
+                  Masuk ke Onda Care
                 </CardTitle>
                 <CardDescription className="text-xs text-slate-600">
                   Gunakan kredensial yang diberikan oleh admin untuk mengakses dashboard.
@@ -222,7 +223,7 @@ export default function LoginPage() {
             </Card>
 
             <p className="mt-4 text-center text-[11px] text-slate-500">
-              © {new Date().getFullYear()} PT Onda Mega Integra · Helpdesk GT
+              © {new Date().getFullYear()} PT Onda Mega Integra · Onda Care
             </p>
           </div>
         </div>

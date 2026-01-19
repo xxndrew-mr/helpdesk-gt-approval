@@ -534,7 +534,7 @@ export default function AdminUsersPage() {
                 Kelola Akun Pengguna
               </CardTitle>
               <CardDescription className="mt-1 text-xs sm:text-sm text-slate-700">
-                Atur akun, role, dan akses pengguna Helpdesk GT dengan tampilan
+                Atur akun, role, dan akses pengguna Onda Care dengan tampilan
                 yang konsisten.
               </CardDescription>
             </div>

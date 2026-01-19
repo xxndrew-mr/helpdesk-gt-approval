@@ -315,7 +315,7 @@ export default function DashboardLayout({ children }) {
             </div>
 
             <div className="flex flex-col leading-tight">
-              <span className="text-sm font-semibold text-white">Helpdesk GT</span>
+              <span className="text-sm font-semibold text-white">Onda Care</span>
               <span className="text-[11px] tracking-wide text-white/80">
                 PT. ONDA MEGA INTEGRA
               </span>
@@ -387,7 +387,7 @@ export default function DashboardLayout({ children }) {
                   </div>
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold text-white">
-                      Helpdesk GT
+                      Onda Care
                     </span>
                     <span className="text-[11px] text-blue-100">
                       PT. ONDA MEGA INTEGRA

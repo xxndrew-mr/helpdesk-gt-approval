@@ -14,7 +14,7 @@ import {
 import {
   Card,
   CardHeader,
-  CardTitle,
+  CardTitle, 
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
@@ -41,7 +41,7 @@ export default function DashboardPage() {
         <div className="space-y-1">
           <p className="inline-flex items-center text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-700/80">
             <LayoutDashboard className="mr-2 h-4 w-4" />
-            Helpdesk GT · Menu Utama
+            Onda Care · Menu Utama
           </p>
           <CardTitle className="text-xl sm:text-2xl text-slate-900">
             Selamat datang, {user.name}
@@ -83,7 +83,7 @@ export default function DashboardPage() {
             Panduan Singkat Penggunaan
           </CardTitle>
           <CardDescription className="mt-1 text-xs sm:text-sm text-slate-600">
-            Penjelasan singkat menu yang bisa Anda gunakan di Helpdesk GT.
+            Penjelasan singkat menu yang bisa Anda gunakan di Onda Care.
           </CardDescription>
         </div>
       </CardHeader>

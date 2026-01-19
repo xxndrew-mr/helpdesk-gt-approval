@@ -28,7 +28,7 @@ export default function AnalyticsPage() {
           style={{ border: 0 }}
           allowFullScreen
           className="absolute top-0 left-0 w-full h-full"
-          title="Laporan Analisis Helpdesk"
+          title="Laporan Analisis Onda Care"
           sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
         />
       </div>
