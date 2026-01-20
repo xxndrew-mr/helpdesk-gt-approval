@@ -1,72 +1,32 @@
-// Lokasi: src/lib/smartRouting.js
-
 export const routingMap = {
-  // === PRODUK ===
-  'PRODUK KOMPETITOR': {
-    am_division: 'Divisi Operation', // GM Operation
-    ap_division: 'Divisi Prodev'     // Staff Prodev
-  },
-  'PRODUK ONDA': {
+  PRODUK: {
     am_division: 'Divisi Operation',
-    ap_division: 'Divisi Prodev'
-  },
-  // --- UPDATE BARU SESUAI REQUEST ---
-  'KUANTITAS': {
-    am_division: 'Divisi Operation', // GM Operation
-    ap_division: 'Divisi Prodev'     // Staff Prodev
-  },
-  'KUALITAS': {
-    am_division: 'Divisi Operation', // GM Operation
-    ap_division: 'Divisi Prodev'     // Staff Prodev
-  },
-  // ----------------------------------
-
-  // === STOK ===
-  'STOK': { // Jaga-jaga jika ejaan berbeda
-    am_division: 'Divisi Operation', 
-    ap_division: 'Divisi Supply Chain' 
-  },
-  'KIRIMAN': {
-    am_division: 'Divisi Operation',
-    ap_division: 'Divisi Supply Chain'
-  },
-  'RETURAN': {
-    am_division: 'Divisi Operation',
-    ap_division: 'Divisi Supply Chain'
+    ap_division: 'Divisi Prodev',
   },
 
-  // === PROGRAM ===
-  'HADIAH PROGRAM': {
-    am_division: 'Divisi Marketing Pusat', 
-    ap_division: 'Divisi Marketing Pusat'  
-  },
-  'SKEMA PROGRAM': {
+  'PROGRAM PENJUALAN': {
     am_division: 'Divisi Marketing Pusat',
-    ap_division: 'Divisi Marketing Pusat'
-  },
-  'INSENTIF': {
-    am_division: 'Divisi Sales Operation', 
-    ap_division: 'Divisi Sales Operation'  
+    ap_division: 'Divisi Marketing Pusat',
   },
 
-  // === TOOLS ===
-  'FLYER PROGRAM': {
+  KOMISI: {
     am_division: 'Divisi Sales Operation',
-    ap_division: 'Divisi Sales Operation'
+    ap_division: 'Divisi Sales Operation',
   },
-  'PERALATAN': {
+
+  'TOOLS PENJUALAN': {
     am_division: 'Divisi Sales Operation',
-    ap_division: 'Divisi Sales Operation'
+    ap_division: 'Divisi Sales Operation',
   },
-  'LAINNYA': {
+
+  LAINNYA: {
     am_division: 'Divisi Operation',
-    ap_division: 'Divisi Supply Chain'
-  }
+    ap_division: 'Divisi Operation',
+  },
 };
 
-export function getRoutingTarget(subKategori) {
-  if (!subKategori) return null;
-  // Normalisasi input (uppercase) agar tidak sensitif huruf besar/kecil
-  const key = subKategori.toUpperCase();
+export function getRoutingTarget(kategori) {
+  if (!kategori) return null;
+  const key = kategori.toUpperCase();
   return routingMap[key] || null;
 }

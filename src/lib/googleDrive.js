@@ -1,10 +1,18 @@
 import { google } from 'googleapis';
 
+const privateKey = process.env.GDRIVE_PRIVATE_KEY
+  ? process.env.GDRIVE_PRIVATE_KEY.replace(/\\n/g, '\n')
+  : null;
+
+if (!privateKey) {
+  throw new Error('GDRIVE_PRIVATE_KEY belum diset di .env.local');
+}
+
 const auth = new google.auth.GoogleAuth({
   credentials: {
     project_id: process.env.GDRIVE_PROJECT_ID,
     client_email: process.env.GDRIVE_CLIENT_EMAIL,
-    private_key: process.env.GDRIVE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    private_key: privateKey,
   },
   scopes: ['https://www.googleapis.com/auth/drive'],
 });

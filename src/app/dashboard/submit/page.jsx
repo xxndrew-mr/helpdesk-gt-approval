@@ -13,23 +13,13 @@ import {
 
 // === KATEGORI BARU (UPDATE SAJA BAGIAN INI) ===
 // === KATEGORI ===
-const categories = {
-  PRODUK: [
-    'IDE PRODUK BARU',
-    'KUALITAS PRODUK',
-    'ISI/PACKAGING',
-  ],
-  STOK: ['STOK', 'KIRIMAN', 'RETURAN'],
-  PROGRAM: ['INSENTIF', 'HADIAH PROGRAM', 'SKEMA PROGRAM'],
-  'TOOLS/LAINNYA': ['FLYER PROGRAM', 'PERALATAN', 'LAINNYA'],
-};
-
-// === RULE LAMPIRAN WAJIB (INI YANG KEMARIN BELUM ADA) ===
-const REQUIRED_ATTACHMENT_RULES = {
-  PRODUK: ['KUALITAS PRODUK', 'ISI/PACKAGING', 'IDE PRODUK BARU', 'PRODUK KOMPETITOR'],
-};
-
-// ===================================
+const categories = [
+  'PRODUK',
+  'PROGRAM PENJUALAN',
+  'KOMISI',
+  'TOOLS PENJUALAN',
+  'LAINNYA',
+];
 
 export default function SubmitTicketPage() {
   const { data: session } = useSession();
@@ -38,7 +28,7 @@ export default function SubmitTicketPage() {
   // State untuk form
   const [description, setDescription] = useState('');
   const [selectedKategori, setSelectedKategori] = useState('');
-  const [selectedSubKategori, setSelectedSubKategori] = useState('');
+  const isAttachmentRequired = selectedKategori === 'PRODUK';
 
   // --- STATE PROFIL SUBMITTER ---
   const [namaPengisi, setNamaPengisi] = useState('');
@@ -69,18 +59,10 @@ export default function SubmitTicketPage() {
   const [success, setSuccess] = useState(null);
 
   const userRole = session?.user?.role;
-  const isAttachmentRequired =
-  REQUIRED_ATTACHMENT_RULES[selectedKategori]?.includes(selectedSubKategori);
+  
 
 
   // Sub kategori: filter KIRIMAN & RETURAN untuk Salesman (hanya di kategori STOK)
-  const rawSubKategoriOptions = selectedKategori ? categories[selectedKategori] : [];
-  const subKategoriOptions = rawSubKategoriOptions.filter((subKat) => {
-    if (userRole === 'Salesman' && selectedKategori === 'STOK') {
-      return subKat !== 'KIRIMAN' && subKat !== 'RETURAN';
-    }
-    return true;
-  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -145,12 +127,7 @@ if (isAttachmentRequired && !file) {
       }
 
       // === AUTO-GENERATE TITLE SESUAI KATEGORI ===
-      const autoTitle =
-        selectedKategori && selectedSubKategori
-          ? `${selectedKategori} - ${selectedSubKategori}`
-          : selectedKategori ||
-            selectedSubKategori ||
-            (description ? description.slice(0, 50) : 'Request');
+      const autoTitle = selectedKategori || description.slice(0, 50);
 
       // === LANGKAH 2: submit tiket ke /api/tickets/submit ===
       const res = await fetch('/api/tickets/submit', {
@@ -160,7 +137,6 @@ if (isAttachmentRequired && !file) {
           title: autoTitle,
           description,
           kategori: selectedKategori,
-          sub_kategori: selectedSubKategori,
           nama_pengisi: namaPengisi || null,
           jabatan: jabatan || null,
           toko: toko || null,
@@ -177,7 +153,6 @@ if (isAttachmentRequired && !file) {
       setSuccess('Request berhasil disubmit!');
       setDescription('');
       setSelectedKategori('');
-      setSelectedSubKategori('');
       setNamaPengisi('');
       setJabatan('');
       setToko('');
@@ -361,38 +336,14 @@ if (isAttachmentRequired && !file) {
           value={selectedKategori}
           onChange={(e) => {
             setSelectedKategori(e.target.value);
-            setSelectedSubKategori('');
           }}
           required
           className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
         >
           <option value="">Pilih kategori...</option>
-          {Object.keys(categories).map((kat) => (
+          {categories.map((kat) => (
             <option key={kat} value={kat}>
               {kat}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-slate-800">
-          Sub Kategori <span className="text-rose-500">*</span>
-        </label>
-        <p className="mt-0.5 text-xs text-slate-500">
-          Detail spesifik dari kategori yang dipilih
-        </p>
-        <select
-          value={selectedSubKategori}
-          onChange={(e) => setSelectedSubKategori(e.target.value)}
-          required
-          disabled={!selectedKategori}
-          className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm disabled:bg-slate-50 disabled:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-        >
-          <option value="">Pilih sub kategori...</option>
-          {subKategoriOptions.map((subKat) => (
-            <option key={subKat} value={subKat}>
-              {subKat}
             </option>
           ))}
         </select>

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getServerSession } from 'next-auth/next';
 import { sendTicketAssignedEmail } from '@/lib/email';
+import { getRoutingTarget } from '@/lib/smartRouting';
 
 const serialize = (data) =>
   JSON.parse(
@@ -11,50 +12,33 @@ const serialize = (data) =>
     )
   );
 
-  const REQUIRED_ATTACHMENT_RULES = {
-  PRODUK: ['IDE PRODUK BARU', 'KUALITAS PRODUK', 'ISI PACKAGING',],
-};
-
-
+// Lampiran wajib hanya untuk kategori PRODUK
+const REQUIRED_ATTACHMENT_RULES = ['PRODUK'];
 
 export async function POST(request) {
   const session = await getServerSession(authOptions);
-  
+
   if (!session || !['Salesman', 'Agen'].includes(session.user.role)) {
     return NextResponse.json({ message: 'Akses ditolak.' }, { status: 403 });
   }
 
   const user = session.user;
 
-  const { 
-    title, 
-    description, 
-    kategori, 
-    sub_kategori, 
-    nama_pengisi, 
-    jabatan, 
-    toko, 
+  const {
+    title,
+    description,
+    kategori,
+    nama_pengisi,
+    jabatan,
+    toko,
     no_telepon,
-    attachments 
+    attachments,
   } = await request.json();
 
-  // ----------------------------------------
-// VALIDASI LAMPIRAN WAJIB UNTUK KATEGORI TERTENTU
-// ----------------------------------------
-const isAttachmentRequired =
-  REQUIRED_ATTACHMENT_RULES[kategori]?.includes(sub_kategori);
-
-if (isAttachmentRequired && (!attachments || attachments.length === 0)) {
-  return NextResponse.json(
-    {
-      message: 'Lampiran/foto wajib diisi untuk kategori dan sub kategori ini.'
-    },
-    { status: 400 }
-  );
-}
-
-
-  if (!title || !description || !kategori || !sub_kategori) {
+  // ===============================
+  // VALIDASI DASAR
+  // ===============================
+  if (!title || !description || !kategori) {
     return NextResponse.json({ message: 'Data tidak lengkap.' }, { status: 400 });
   }
 
@@ -66,23 +50,47 @@ if (isAttachmentRequired && (!attachments || attachments.length === 0)) {
   }
 
   if (user.role === 'Agen' && (!nama_pengisi || !jabatan)) {
-    return NextResponse.json({ message: 'Agen wajib mengisi Nama Pengisi dan Jabatan.' }, { status: 400 });
-  }
-
-  if (user.role === 'Salesman' && (!nama_pengisi)) {
-    return NextResponse.json({ message: 'Salesman wajib mengisi Nama Sales' }, { status: 400 });
-  }
-
-  if (
-    user.role === 'Salesman' &&
-    ['KIRIMAN', 'RETURAN'].includes(sub_kategori)
-  ) {
     return NextResponse.json(
-      { message: 'Salesman tidak boleh memilih sub kategori KIRIMAN atau RETURAN. Sub kategori tersebut hanya untuk Agen.' },
+      { message: 'Agen wajib mengisi Nama Pengisi dan Jabatan.' },
       { status: 400 }
     );
   }
 
+  if (user.role === 'Salesman' && !nama_pengisi) {
+    return NextResponse.json(
+      { message: 'Salesman wajib mengisi Nama Sales.' },
+      { status: 400 }
+    );
+  }
+
+  // ===============================
+  // VALIDASI LAMPIRAN
+  // ===============================
+  const isAttachmentRequired = REQUIRED_ATTACHMENT_RULES.includes(kategori);
+
+  if (isAttachmentRequired && (!attachments || attachments.length === 0)) {
+    return NextResponse.json(
+      { message: 'Lampiran/foto wajib diisi untuk kategori PRODUK.' },
+      { status: 400 }
+    );
+  }
+
+  // ===============================
+  // SMART ROUTING (VALIDASI)
+  // ===============================
+  const routing = getRoutingTarget(kategori);
+
+  if (!routing) {
+    return NextResponse.json(
+      { message: 'Routing untuk kategori ini belum tersedia.' },
+      { status: 400 }
+    );
+  }
+
+  // ===============================
+  // AMBIL PIC OMI DARI USER
+  // (AMAN: belum ubah struktur assignment)
+  // ===============================
   const submitterData = await prisma.user.findUnique({
     where: { user_id: user.id },
   });
@@ -97,31 +105,32 @@ if (isAttachmentRequired && (!attachments || attachments.length === 0)) {
   }
 
   try {
-    // ----------------------------------------
-    // TRANSAKSI: CREATE TICKET + GET PIC USER
-    // ----------------------------------------
     const { ticket, picOmiUser } = await prisma.$transaction(async (tx) => {
-      
       const ticket = await tx.ticket.create({
-        data: {
-          title,
-          submitted_by_user_id: user.id,
-          type: 'Pending',
-          status: 'Open',
-          kategori,
-          sub_kategori,
-          nama_pengisi: nama_pengisi || null,
-          jabatan: jabatan || null,
-          toko: toko || null,
-          no_telepon,
-        },
-      });
+  data: {
+    title,
+    type: 'Pending',
+    status: 'Open',
+    kategori,
+    sub_kategori: null,
+    nama_pengisi: nama_pengisi || null,
+    jabatan: jabatan || null,
+    toko: toko || null,
+    no_telepon,
+
+    // ✅ INI YANG WAJIB
+    submittedBy: {
+      connect: { user_id: user.id },
+    },
+  },
+});
+
 
       await tx.ticketDetail.create({
-        data: { 
-          ticket_id: ticket.ticket_id, 
-          description, 
-          attachments_json: attachments || [] 
+        data: {
+          ticket_id: ticket.ticket_id,
+          description,
+          attachments_json: attachments || [],
         },
       });
 
@@ -130,9 +139,10 @@ if (isAttachmentRequired && (!attachments || attachments.length === 0)) {
           ticket_id: ticket.ticket_id,
           actor_user_id: user.id,
           action_type: 'Submit',
-          notes: user.role === 'Salesman' 
-            ? `Tiket dibuat oleh Sales ${nama_pengisi} (${no_telepon}) untuk ${toko}.` 
-            : `Tiket dibuat oleh ${nama_pengisi} (${jabatan}) (${no_telepon}).`,
+          notes:
+            user.role === 'Salesman'
+              ? `Tiket dibuat oleh Sales ${nama_pengisi} (${no_telepon}) untuk ${toko}.`
+              : `Tiket dibuat oleh ${nama_pengisi} (${jabatan}) (${no_telepon}).`,
         },
       });
 
@@ -153,28 +163,26 @@ if (isAttachmentRequired && (!attachments || attachments.length === 0)) {
       return { ticket, picOmiUser };
     });
 
-    // ----------------------------------------
-    // EMAIL NOTIFICATION
-    // ----------------------------------------
+    // ===============================
+    // EMAIL
+    // ===============================
     if (picOmiUser?.email) {
       sendTicketAssignedEmail({
         to: picOmiUser.email,
         subject: `Request Pending Baru`,
         ticket,
-        extraText: `Anda ditugaskan sebagai Sales Regional untuk request ini.`,
+        extraText: `Anda ditugaskan sebagai PIC untuk request ini.`,
       }).catch((err) => console.error('Gagal kirim email PIC OMI:', err));
     }
 
     return NextResponse.json(
-  { message: 'Sukses', ticket: serialize(ticket) },
-  { status: 201 }
-);
-
-
+      { message: 'Sukses', ticket: serialize(ticket) },
+      { status: 201 }
+    );
   } catch (error) {
     console.error('Gagal submit tiket:', error);
     return NextResponse.json(
-      { message: 'Error server.', error: error.message }, 
+      { message: 'Error server.', error: error.message },
       { status: 500 }
     );
   }

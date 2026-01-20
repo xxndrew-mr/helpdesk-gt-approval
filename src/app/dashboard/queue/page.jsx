@@ -454,7 +454,8 @@ export default function QueuePage() {
           Tidak ada tugas yang perlu ditindaklanjuti saat ini.
         </p>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="flex flex-col gap-4">
+
           {assignments.map((assignment) => {
             const isSelected = selectedId === assignment.assignment_id;
 
@@ -521,126 +522,131 @@ export default function QueuePage() {
                   </p>
                 )}
 
-                {isSelected && (
-                  <div className="mt-4 border-t border-slate-200 pt-4">
-                    {/* Meta Detail */}
-                    <div className="mb-3 grid gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 sm:grid-cols-2">
-                    {/* Pengirim */}
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wide text-slate-500">
-                        Pengirim
-                      </p>
-                      <p className="mt-0.5 text-sm font-semibold text-slate-900">
-                        {pengirim}
-                      </p>
-                    </div>
+                            <div
+              className={`overflow-hidden transition-all duration-500 ease-in-out transform
+                ${isSelected ? 'max-h-[2000px] opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-2'}
+              `}
+            >
+              <div className="mt-4 border-t border-slate-200 pt-4">
 
-                    {/* No HP */}
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wide text-slate-500">
-                        Nomor HP
-                      </p>
-                      <p className="mt-0.5 text-sm font-semibold text-slate-900">
-                        {noTelepon}
-                      </p>
-                    </div>
-                  </div>
-
-
-                    {/* Keterangan Permintaan */}
-                  <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                      Keterangan Permintaan
+                {/* Meta Detail */}
+                <div className="mb-3 grid gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 sm:grid-cols-2">
+                  {/* Pengirim */}
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wide text-slate-500">
+                      Pengirim
                     </p>
-
-                    {assignment.ticket.detail?.description ? (
-                      <p className="text-sm leading-relaxed text-slate-800 whitespace-pre-line">
-                        {assignment.ticket.detail.description}
-                      </p>
-                    ) : (
-                      <p className="text-sm italic text-slate-400">
-                        Pengirim belum menuliskan keterangan tambahan.
-                      </p>
-                    )}
+                    <p className="mt-0.5 text-sm font-semibold text-slate-900">
+                      {pengirim}
+                    </p>
                   </div>
 
-                  {/* Lampiran */}
-                  {Array.isArray(assignment.ticket.detail?.attachments_json) &&
-                    assignment.ticket.detail.attachments_json.length > 0 && (
-                      <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                        <div className="mb-2 flex items-center gap-2">
-                          <PaperClipIcon className="h-4 w-4 text-indigo-500" />
-                          <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                            Lampiran Pendukung
-                          </h4>
-                          <span className="text-[10px] text-slate-400">
-                            ({assignment.ticket.detail.attachments_json.length})
-                          </span>
-                        </div>
+                  {/* No HP */}
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wide text-slate-500">
+                      Nomor HP
+                    </p>
+                    <p className="mt-0.5 text-sm font-semibold text-slate-900">
+                      {noTelepon}
+                    </p>
+                  </div>
+                </div>
 
-                        <div className="flex flex-wrap gap-2">
-                          {assignment.ticket.detail.attachments_json.map((file, idx) => (
-                            <a
-                              key={idx}
-                              href={file.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="group flex items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-2 text-xs font-medium text-indigo-700 shadow-sm transition-all hover:border-indigo-300 hover:bg-indigo-100"
-                            >
-                              <PaperClipIcon className="h-4 w-4 shrink-0" />
-                              <span className="max-w-[160px] truncate">
-                                {file.name}
-                              </span>
-                              <span className="ml-auto text-[10px] text-indigo-400 opacity-0 transition group-hover:opacity-100">
-                                Buka
-                              </span>
-                            </a>
-                          ))}
-                        </div>
+                {/* Keterangan Permintaan */}
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                  <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    Keterangan Permintaan
+                  </p>
+
+                  {assignment.ticket.detail?.description ? (
+                    <p className="text-sm leading-relaxed text-slate-800 whitespace-pre-line">
+                      {assignment.ticket.detail.description}
+                    </p>
+                  ) : (
+                    <p className="text-sm italic text-slate-400">
+                      Pengirim belum menuliskan keterangan tambahan.
+                    </p>
+                  )}
+                </div>
+
+                {/* Lampiran */}
+                {Array.isArray(assignment.ticket.detail?.attachments_json) &&
+                  assignment.ticket.detail.attachments_json.length > 0 && (
+                    <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                      <div className="mb-2 flex items-center gap-2">
+                        <PaperClipIcon className="h-4 w-4 text-indigo-500" />
+                        <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                          Lampiran Pendukung
+                        </h4>
+                        <span className="text-[10px] text-slate-400">
+                          ({assignment.ticket.detail.attachments_json.length})
+                        </span>
                       </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        {assignment.ticket.detail.attachments_json.map((file, idx) => (
+                          <a
+                            key={idx}
+                            href={file.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group flex items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-2 text-xs font-medium text-indigo-700 shadow-sm transition-all hover:border-indigo-300 hover:bg-indigo-100"
+                          >
+                            <PaperClipIcon className="h-4 w-4 shrink-0" />
+                            <span className="max-w-[160px] truncate">
+                              {file.name}
+                            </span>
+                            <span className="ml-auto text-[10px] text-indigo-400 opacity-0 transition group-hover:opacity-100">
+                              Buka
+                            </span>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                {/* Actions */}
+                <div className="mt-4">
+                  {session?.user?.role === 'PIC OMI' &&
+                    assignment.ticket.type === 'Pending' && (
+                      <TriageActions
+                        ticketId={assignment.ticket.ticket_id}
+                        onSuccess={loadQueue}
+                        onError={setActionError}
+                      />
                     )}
 
+                  {session?.user?.role === 'Sales Manager' &&
+                    assignment.ticket.type === 'Request' && (
+                      <SalesManagerActions
+                        ticketId={assignment.ticket.ticket_id}
+                        onSuccess={loadQueue}
+                        onError={setActionError}
+                      />
+                    )}
 
-                    {/* Actions */}
-                    <div className="mt-4">
-                      {session?.user?.role === 'PIC OMI' &&
-                        assignment.ticket.type === 'Pending' && (
-                          <TriageActions
-                            ticketId={assignment.ticket.ticket_id}
-                            onSuccess={loadQueue}
-                            onError={setActionError}
-                          />
-                        )}
+                  {session?.user?.role === 'Acting Manager' &&
+                    assignment.ticket.type === 'Request' && (
+                      <ActingManagerActions
+                        ticketId={assignment.ticket.ticket_id}
+                        onSuccess={loadQueue}
+                        onError={setActionError}
+                      />
+                    )}
 
-                      {session?.user?.role === 'Sales Manager' &&
-                        assignment.ticket.type === 'Request' && (
-                          <SalesManagerActions
-                            ticketId={assignment.ticket.ticket_id}
-                            onSuccess={loadQueue}
-                            onError={setActionError}
-                          />
-                        )}
+                  {session?.user?.role === 'Acting PIC' &&
+                    assignment.ticket.type === 'Request' && (
+                      <ActingPicActions
+                        ticketId={assignment.ticket.ticket_id}
+                        onSuccess={loadQueue}
+                        onError={setActionError}
+                      />
+                    )}
+                </div>
 
-                      {session?.user?.role === 'Acting Manager' &&
-                        assignment.ticket.type === 'Request' && (
-                          <ActingManagerActions
-                            ticketId={assignment.ticket.ticket_id}
-                            onSuccess={loadQueue}
-                            onError={setActionError}
-                          />
-                        )}
+              </div>
+            </div>
 
-                      {session?.user?.role === 'Acting PIC' &&
-                        assignment.ticket.type === 'Request' && (
-                          <ActingPicActions
-                            ticketId={assignment.ticket.ticket_id}
-                            onSuccess={loadQueue}
-                            onError={setActionError}
-                          />
-                        )}
-                    </div>
-                  </div>
-                )}
               </div>
             );
           })}

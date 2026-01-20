@@ -35,7 +35,7 @@ export default function HomePage() {
                           />
                         </div>
           <h1 className="mt-3 text-sm font-semibold tracking-wide text-slate-800">
-            Helpdesk GT
+            Onda Care
           </h1>
           <p className="text-[11px] text-slate-500">
             PT Onda Mega Integra

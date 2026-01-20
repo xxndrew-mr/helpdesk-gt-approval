@@ -58,8 +58,9 @@ export async function POST(request, context) {
       });
 
       if (action === 'approve') {
-        const subKategori = currentAssignment.ticket.sub_kategori;
-        const target = getRoutingTarget(subKategori);
+       const kategori = currentAssignment.ticket.kategori;
+      const target = getRoutingTarget(kategori);
+
 
         if (!target) throw new Error(`Mapping routing tidak ditemukan untuk sub kategori: ${subKategori}`);
 

@@ -51,7 +51,7 @@ model Ticket {
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
   kategori             String
-  sub_kategori         String
+  sub_kategori         String?
   jabatan              String?
   toko                 String?
   nama_pengisi         String?

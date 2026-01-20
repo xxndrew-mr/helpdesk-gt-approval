@@ -14,7 +14,17 @@ export async function PUT(request, { params }) {
   }
 
   try {
-    const userId = parseInt(params.userId, 10);
+    // 🔥 NEXT 15/16 FIX (WAJIB)
+    const { userId } = await params;
+    const id = parseInt(userId, 10);
+
+    if (!id) {
+      return NextResponse.json(
+        { message: 'User ID tidak valid' },
+        { status: 400 }
+      );
+    }
+
     const body = await request.json();
 
     const {
@@ -35,26 +45,22 @@ export async function PUT(request, { params }) {
       );
     }
 
-    let dataToUpdate = {
+    const dataToUpdate = {
       name,
       username,
       email: email || null,
       role_id: parseInt(role_id, 10),
       division_id: division_id ? parseInt(division_id, 10) : null,
       pic_omi_id: pic_omi_id ? parseInt(pic_omi_id, 10) : null,
+      ...(status && { status })
     };
 
-    if (status) {
-      dataToUpdate.status = status;
-    }
-
-    if (password && password.length > 0) {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      dataToUpdate.password = hashedPassword;
+    if (password) {
+      dataToUpdate.password = await bcrypt.hash(password, 10);
     }
 
     const updatedUser = await prisma.user.update({
-      where: { user_id: userId },
+      where: { user_id: id },
       data: dataToUpdate,
       include: {
         role: true,
@@ -83,7 +89,7 @@ export async function PUT(request, { params }) {
 }
 
 // ================================
-// SOFT DELETE (INACTIVE)
+// SOFT DELETE
 // ================================
 export async function DELETE(request, { params }) {
   const session = await getServerSession(authOptions);
@@ -92,9 +98,18 @@ export async function DELETE(request, { params }) {
   }
 
   try {
-    const userId = parseInt(params.userId, 10);
+    // 🔥 NEXT 15/16 FIX (WAJIB)
+    const { userId } = await params;
+    const id = parseInt(userId, 10);
 
-    if (session.user.id === userId) {
+    if (!id) {
+      return NextResponse.json(
+        { message: 'User ID tidak valid' },
+        { status: 400 }
+      );
+    }
+
+    if (session.user.id === id) {
       return NextResponse.json(
         { message: 'Anda tidak bisa menonaktifkan akun Anda sendiri.' },
         { status: 400 }
@@ -102,7 +117,7 @@ export async function DELETE(request, { params }) {
     }
 
     const updatedUser = await prisma.user.update({
-      where: { user_id: userId },
+      where: { user_id: id },
       data: { status: 'Inactive' },
       include: {
         role: true,

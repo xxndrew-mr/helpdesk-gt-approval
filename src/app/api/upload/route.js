@@ -1,12 +1,9 @@
-// Lokasi: src/app/api/upload/route.js
-
 import { NextResponse } from 'next/server';
-import { drive, makeFilePublic } from '../../../lib/googleDrive';
+import { drive, makeFilePublic } from '@/lib/googleDrive';
 import { Readable } from 'stream';
 
 export const runtime = 'nodejs';
 
-// Helper: convert Buffer to stream
 function bufferToStream(buffer) {
   return Readable.from(buffer);
 }
@@ -17,52 +14,45 @@ export async function POST(request) {
     const file = data.get('file');
 
     if (!file) {
-      return NextResponse.json(
-        { message: 'Tidak ada file yang diunggah' },
-        { status: 400 }
-      );
+      return NextResponse.json({ message: 'File tidak ditemukan' }, { status: 400 });
     }
 
-    // ✅ FOLDER ID LANGSUNG (SUDAH BENAR)
-    const FOLDER_ID = '1k2ACUnNGbKEKypw3rLmXRHHKMmrRo80z';
-    const folderId = FOLDER_ID;
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ message: 'Maksimal file 10MB' }, { status: 400 });
+    }
 
-    // Konversi File -> Stream
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const fileStream = bufferToStream(buffer);
+    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+    if (!allowedTypes.includes(file.type)) {
+      return NextResponse.json({ message: 'Format tidak didukung' }, { status: 400 });
+    }
 
-    // Upload ke Google Drive (Shared Drive)
-    const response = await drive.files.create({
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const stream = Readable.from(buffer);
+
+    const res = await drive.files.create({
       supportsAllDrives: true,
       requestBody: {
         name: file.name,
-        parents: [folderId],
+        parents: ['1k2ACUnNGbKEKypw3rLmXRHHKMmrRo80z'],
       },
       media: {
         mimeType: file.type,
-        body: fileStream,
+        body: stream,
       },
-      fields: 'id, webViewLink, webContentLink',
+      fields: 'id, webViewLink',
     });
 
-    const uploadedFile = response.data;
+    await makeFilePublic(res.data.id);
 
-    // Jadikan file public
-    await makeFilePublic(uploadedFile.id);
+    return NextResponse.json({
+      fileId: res.data.id,
+      fileUrl: res.data.webViewLink,
+    });
 
+  } catch (err) {
+    console.error('Upload error:', err);
     return NextResponse.json(
-      {
-        message: 'File berhasil diupload',
-        fileId: uploadedFile.id,
-        fileUrl: uploadedFile.webViewLink,
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error('Upload error:', error);
-    return NextResponse.json(
-      { message: 'Gagal mengupload file ke Google Drive' },
+      { message: err.message || 'Upload gagal' },
       { status: 500 }
     );
   }
