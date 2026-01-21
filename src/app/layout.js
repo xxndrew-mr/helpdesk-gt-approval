@@ -5,8 +5,8 @@ import AuthProvider from './AuthProvider'; // <-- IMPORT
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'Helpdesk App',
-  description: 'Aplikasi Helpdesk GT',
+  title: 'Onda Care',
+  description: 'Aplikasi Onda Care',
 };
 
 export default function RootLayout({ children }) {
