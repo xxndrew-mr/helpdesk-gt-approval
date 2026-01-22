@@ -2,7 +2,15 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { KeyIcon, LockClosedIcon, CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { 
+  KeyIcon, 
+  LockClosedIcon, 
+  CheckCircleIcon, 
+  ExclamationTriangleIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  ArrowPathIcon 
+} from '@heroicons/react/24/outline';
 
 export default function ChangePasswordPage() {
   const router = useRouter();
@@ -11,6 +19,12 @@ export default function ChangePasswordPage() {
     newPassword: '',
     confirmPassword: '',
   });
+  
+  // State untuk show/hide password
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -58,126 +72,177 @@ export default function ChangePasswordPage() {
   };
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-10">
-      {/* Header */}
-      <div className="mb-6 flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50">
-          <KeyIcon className="h-6 w-6 text-indigo-600" />
+    <div className="mx-auto max-w-xl px-4 py-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Header Section */}
+      <div className="mb-8 flex flex-col items-center text-center sm:flex-row sm:items-center sm:text-left gap-4">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 shadow-sm border border-blue-100">
+          <KeyIcon className="h-7 w-7" />
         </div>
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">
-            Ganti Password
+          <h1 className="text-2xl font-bold text-slate-900">
+            Pengaturan Keamanan
           </h1>
           <p className="text-sm text-slate-500">
-            Pastikan password baru Anda kuat dan mudah diingat.
+            Ganti kata sandi Anda secara berkala untuk menjaga keamanan akun.
           </p>
         </div>
       </div>
 
-      {/* Card */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <form onSubmit={handleSubmit} className="space-y-5">
-
-          {/* Error */}
+      {/* Main Card */}
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/50">
+        <div className="bg-slate-50/50 border-b border-slate-100 px-6 py-4">
+          <h2 className="text-sm font-semibold text-slate-700">Formulir Perubahan Password</h2>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Status Messages */}
           {error && (
-            <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              <ExclamationTriangleIcon className="h-5 w-5 flex-shrink-0 mt-0.5" />
-              <span>{error}</span>
+            <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 animate-in zoom-in-95 duration-300">
+              <ExclamationTriangleIcon className="h-5 w-5 flex-shrink-0" />
+              <p className="font-medium">{error}</p>
             </div>
           )}
 
-          {/* Success */}
           {success && (
-            <div className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-              <CheckCircleIcon className="h-5 w-5 flex-shrink-0 mt-0.5" />
-              <span>{success}</span>
+            <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700 animate-in zoom-in-95 duration-300">
+              <CheckCircleIcon className="h-5 w-5 flex-shrink-0" />
+              <p className="font-medium">{success}</p>
             </div>
           )}
 
-          {/* Password Lama */}
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+          {/* Password Saat Ini */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-slate-700">
               Password Saat Ini
             </label>
-            <div className="relative">
-              <LockClosedIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <div className="relative group">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors">
+                <LockClosedIcon className="h-5 w-5" />
+              </div>
               <input
-                type="password"
+                type={showCurrent ? "text" : "password"}
                 name="currentPassword"
                 value={formData.currentPassword}
                 onChange={handleChange}
                 required
                 placeholder="Masukkan password lama"
-                className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/30 pl-10 pr-12 py-3 text-sm transition-all focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 shadow-sm"
               />
+              <button
+                type="button"
+                onClick={() => setShowCurrent(!showCurrent)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+              >
+                {showCurrent ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+              </button>
             </div>
           </div>
 
+          <div className="h-px bg-slate-100 w-full" />
+
           {/* Password Baru */}
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+          <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-slate-700">
               Password Baru
             </label>
-            <div className="relative">
-              <LockClosedIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <div className="relative group">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors">
+                <KeyIcon className="h-5 w-5" />
+              </div>
               <input
-                type="password"
+                type={showNew ? "text" : "password"}
                 name="newPassword"
                 value={formData.newPassword}
                 onChange={handleChange}
                 required
                 minLength={8}
                 placeholder="Minimal 8 karakter"
-                className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/30 pl-10 pr-12 py-3 text-sm transition-all focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 shadow-sm"
               />
+              <button
+                type="button"
+                onClick={() => setShowNew(!showNew)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+              >
+                {showNew ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+              </button>
             </div>
-            <p className="mt-1 text-xs text-slate-500">
-              Gunakan kombinasi huruf, angka, dan simbol untuk keamanan lebih baik.
+            <p className="text-[11px] text-slate-500 px-1">
+              Tips: Gunakan kombinasi huruf besar, kecil, dan angka.
             </p>
           </div>
 
-          {/* Konfirmasi */}
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+          {/* Konfirmasi Password */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-slate-700">
               Konfirmasi Password Baru
             </label>
-            <div className="relative">
-              <LockClosedIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <div className="relative group">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors">
+                <CheckCircleIcon className="h-5 w-5" />
+              </div>
               <input
-                type="password"
+                type={showConfirm ? "text" : "password"}
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
                 placeholder="Ulangi password baru"
-                className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/30 pl-10 pr-12 py-3 text-sm transition-all focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 shadow-sm"
               />
+              <button
+                type="button"
+                onClick={() => setShowConfirm(!showConfirm)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+              >
+                {showConfirm ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+              </button>
             </div>
           </div>
 
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="
-              group relative flex w-full items-center justify-center gap-2
-              rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500
-              px-4 py-3 text-sm font-semibold text-white
-              shadow-lg shadow-indigo-200
-              transition-all duration-200
-              hover:from-indigo-500 hover:to-indigo-400
-              active:scale-[0.98]
-              focus-visible:outline-none
-              focus-visible:ring-2 focus-visible:ring-indigo-500
-              focus-visible:ring-offset-2
-              disabled:cursor-not-allowed
-              disabled:from-slate-400 disabled:to-slate-400
-              disabled:shadow-none
-            "
-          >
-            {isLoading ? 'Memproses perubahan...' : 'Perbarui Password'}
-          </button>
+          {/* Action Button */}
+          <div className="pt-2">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="
+                relative flex w-full items-center justify-center gap-3
+                rounded-xl bg-blue-600 px-4 py-3.5 text-sm font-bold text-white
+                shadow-lg shadow-blue-200 transition-all duration-200
+                hover:bg-blue-700 hover:shadow-blue-300
+                active:scale-[0.98]
+                disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none
+              "
+            >
+              {isLoading ? (
+                <>
+                  <ArrowPathIcon className="h-5 w-5 animate-spin" />
+                  Memproses...
+                </>
+              ) : (
+                'Simpan Perubahan Password'
+              )}
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="mt-3 w-full text-center text-xs font-medium text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              Batal dan Kembali
+            </button>
+          </div>
         </form>
+      </div>
+
+      {/* Footer Info */}
+      <div className="mt-8 rounded-xl bg-amber-50 border border-amber-100 p-4">
+        <div className="flex gap-3">
+          <ExclamationTriangleIcon className="h-5 w-5 text-amber-600 flex-shrink-0" />
+          <p className="text-xs leading-relaxed text-amber-800">
+            <span className="font-bold uppercase">Catatan Penting:</span> Setelah mengganti password, sesi aktif Anda di perangkat lain mungkin akan berakhir. Simpan password baru Anda di tempat yang aman.
+          </p>
+        </div>
       </div>
     </div>
   );
