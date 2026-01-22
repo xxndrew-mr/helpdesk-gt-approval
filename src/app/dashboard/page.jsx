@@ -125,24 +125,27 @@ export default function DashboardPage() {
       ) : (
         /* --- 2. DASHBOARD OPERASIONAL (BLUE THEME) --- */
         <>
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-900 p-8 text-white shadow-2xl">
-            <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-              <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest backdrop-blur-md ring-1 ring-white/20">
-                  <Zap className="h-3 w-3 text-yellow-400 fill-yellow-400" /> Sistem Onda Care Online
-                </div>
-                <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Halo, {user.name?.split(' ')[0]}! 👋</h1>
-                <p className="text-blue-100/80 text-sm sm:text-base max-w-md">
-                  Anda masuk sebagai <span className="font-bold text-white uppercase">{role}</span> 
-                  {user.division && <> di Divisi <span className="font-bold text-white">{user.division}</span></>}
-                </p>
-              </div>
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-lg shadow-inner ring-1 ring-white/20">
-                <ShieldCheck className="h-8 w-8 text-white" />
-              </div>
-            </div>
-            <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/5 blur-3xl" />
-          </div>
+         {/* --- HERO SECTION SALES (VERSI FIX IPHONE) --- */}
+<div className="relative isolate transform-gpu overflow-hidden rounded-3xl bg-blue-800 bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-900 p-8 text-white shadow-2xl">
+  <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+    <div className="space-y-2">
+      <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest backdrop-blur-md ring-1 ring-white/20">
+        <Zap className="h-3 w-3 text-yellow-400 fill-yellow-400" /> Sistem Onda Care Online
+      </div>
+      <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Halo, {user.name?.split(' ')[0]}! 👋</h1>
+      <p className="text-blue-100/80 text-sm sm:text-base max-w-md leading-relaxed">
+        Anda masuk sebagai <span className="font-bold text-white uppercase">{role}</span> 
+        {user.division && <> di Divisi <span className="font-bold text-white">{user.division}</span></>}
+      </p>
+    </div>
+    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-lg shadow-inner ring-1 ring-white/20">
+      <ShieldCheck className="h-8 w-8 text-white" />
+    </div>
+  </div>
+  
+  {/* Dekorasi blur: Diturunkan dari blur-3xl ke blur-2xl dan opacity ditambah sedikit agar terbaca Safari */}
+  <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+</div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2 space-y-6">

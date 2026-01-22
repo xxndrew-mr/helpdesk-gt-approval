@@ -138,7 +138,7 @@ export default function ActionHistoryPage() {
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-700">
       
       {/* --- HERO HEADER --- */}
-      <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-blue-700 to-indigo-900 p-8 text-white shadow-xl">
+      <div className="relative isolate transform-gpu overflow-hidden rounded-[32px] bg-blue-800 bg-gradient-to-br from-blue-700 to-indigo-900 p-8 text-white shadow-xl">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-blue-200 mb-2">
