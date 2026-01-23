@@ -70,7 +70,8 @@ export const authOptions = {
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id;
-        session.user.username = token.username; // Kirim ke session
+        session.user.username = token.username;
+        session.user.name = token.name; // Kirim ke session
         session.user.role = token.role;
         session.user.divisionName = token.divisionName;
         session.user.divisionId = token.divisionId;
