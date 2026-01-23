@@ -33,10 +33,8 @@ export default function SubmitTicketPage() {
   const [selectedKategori, setSelectedKategori] = useState('');
   const isAttachmentRequired = selectedKategori === 'PRODUK';
 
-  const [namaPengisi, setNamaPengisi] = useState('');
   const [jabatan, setJabatan] = useState('');
   const [toko, setToko] = useState('');
-  const [noTelepon, setNoTelepon] = useState('');
 
   const [file, setFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -66,16 +64,6 @@ export default function SubmitTicketPage() {
       return;
     }
 
-    if (session.user.role === 'Agen' && (!namaPengisi || !jabatan)) {
-      setError('Agen wajib mengisi Nama Pengisi dan Jabatan.');
-      setIsLoading(false);
-      return;
-    }
-    if (!noTelepon) {
-      setError('Nomor Telepon/WA wajib diisi.');
-      setIsLoading(false);
-      return;
-    }
     if (isAttachmentRequired && !file) {
       setError('Lampiran / foto wajib diisi untuk kategori PRODUK.');
       setIsLoading(false);
@@ -105,10 +93,8 @@ export default function SubmitTicketPage() {
           title: autoTitle,
           description,
           kategori: selectedKategori,
-          nama_pengisi: namaPengisi || null,
           jabatan: jabatan || null,
           toko: toko || null,
-          no_telepon: noTelepon,
           attachments,
         }),
       });
@@ -119,10 +105,8 @@ export default function SubmitTicketPage() {
       setSuccess('Laporan Anda berhasil dikirim ke sistem.');
       setDescription('');
       setSelectedKategori('');
-      setNamaPengisi('');
       setJabatan('');
       setToko('');
-      setNoTelepon('');
       setFile(null);
 
       setTimeout(() => {
@@ -195,13 +179,12 @@ export default function SubmitTicketPage() {
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-slate-700">Nama Lengkap <span className="text-red-500">*</span></label>
                 <input
-                  type="text"
-                  value={namaPengisi}
-                  onChange={(e) => setNamaPengisi(e.target.value)}
-                  required
-                  placeholder="Nama pengisi laporan"
-                  className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none"
-                />
+  type="text"
+  value={session.user.name || ''}
+  readOnly
+  className="w-full rounded-xl border border-slate-200 bg-slate-100 px-4 py-2.5 text-sm text-slate-600 cursor-not-allowed"
+/>
+
               </div>
 
               {effectiveUserRole === 'Salesman' ? (
@@ -236,13 +219,12 @@ export default function SubmitTicketPage() {
                   <PhoneIcon className="h-4 w-4" /> No. Telepon / WhatsApp <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="tel"
-                  value={noTelepon}
-                  onChange={(e) => setNoTelepon(e.target.value)}
-                  required
-                  placeholder="Contoh: 08123456789"
-                  className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none"
-                />
+  type="tel"
+  value={session.user.phone || ''}
+  readOnly
+  className="w-full rounded-xl border border-slate-200 bg-slate-100 px-4 py-2.5 text-sm text-slate-600 cursor-not-allowed"
+/>
+
               </div>
             </div>
           </section>

@@ -49,6 +49,7 @@ const Badge = ({ children, color }) => {
 function UserForm({ title, buttonText, initialData, roles, divisions, picOmis, onSubmit, onClose, isLoading }) {
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
+    phone: initialData?.phone || '',
     username: initialData?.username || '',
     email: initialData?.email || '',
     password: '',
@@ -101,6 +102,21 @@ function UserForm({ title, buttonText, initialData, roles, divisions, picOmis, o
               <label className="text-[11px] font-bold uppercase text-slate-500">Nama Lengkap / Toko</label>
               <input type="text" name="name" value={formData.name} onChange={handleChange} required className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all" />
             </div>
+            <div>
+  <label className="text-[11px] font-bold uppercase text-slate-500">
+    No Telepon / WhatsApp
+  </label>
+  <input
+    type="text"
+    name="phone"
+    value={formData.phone}
+    onChange={handleChange}
+    required
+    placeholder="08xxxxxxxxxx"
+    className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
+  />
+</div>
+
             <div>
               <label className="text-[11px] font-bold uppercase text-slate-500">Username</label>
               <div className="relative mt-1">

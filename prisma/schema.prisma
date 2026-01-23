@@ -22,20 +22,24 @@ model Division {
 model User {
   user_id          Int                @id @default(autoincrement())
   name             String
+  phone            String?            // 🆕 nomor telp user (diisi admin)
   email            String?            @unique
   password         String
+  username         String             @unique
   role_id          Int?
   division_id      Int?
   status           String             @default("Active")
   pic_omi_id       Int?
-  username         String             @unique
+
   submittedTickets Ticket[]           @relation("SubmittedBy")
   assignments      TicketAssignment[] @relation("AssignedTo")
   logs             TicketLog[]        @relation("Actor")
+
   division         Division?          @relation(fields: [division_id], references: [division_id])
+  role             Role?              @relation(fields: [role_id], references: [role_id])
+
   picOmi           User?              @relation("PicOmiHandler", fields: [pic_omi_id], references: [user_id])
   handledUsers     User[]             @relation("PicOmiHandler")
-  role             Role?              @relation(fields: [role_id], references: [role_id])
 
   @@index([role_id])
   @@index([division_id])
@@ -46,17 +50,23 @@ model Ticket {
   ticket_id            BigInt             @id @default(autoincrement())
   title                String
   submitted_by_user_id Int
+
   type                 String             @default("Pending")
   status               String             @default("Open")
+
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
+
   kategori             String
   sub_kategori         String?
   jabatan              String?
   toko                 String?
-  nama_pengisi         String?
-  no_telepon           String?
+
+  nama_pengisi         String?             // snapshot nama saat submit
+  no_telepon           String?             // snapshot no telp saat submit
+
   submittedBy          User               @relation("SubmittedBy", fields: [submitted_by_user_id], references: [user_id])
+
   assignments          TicketAssignment[]
   detail               TicketDetail?
   logs                 TicketLog[]
@@ -74,12 +84,13 @@ model TicketDetail {
 }
 
 model TicketLog {
-  log_id        BigInt   @id @default(autoincrement())
+  log_id        BigInt    @id @default(autoincrement())
   ticket_id     BigInt
   actor_user_id Int
   action_type   String
   notes         String?
   timestamp     DateTime @default(now())
+
   actor         User     @relation("Actor", fields: [actor_user_id], references: [user_id])
   ticket        Ticket   @relation(fields: [ticket_id], references: [ticket_id], onDelete: Cascade)
 
@@ -94,6 +105,7 @@ model TicketAssignment {
   assignment_type String
   status          String   @default("Pending")
   createdAt       DateTime @default(now())
+
   ticket          Ticket   @relation(fields: [ticket_id], references: [ticket_id], onDelete: Cascade)
   user            User     @relation("AssignedTo", fields: [user_id], references: [user_id])
 

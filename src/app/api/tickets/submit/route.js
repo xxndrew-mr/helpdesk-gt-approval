@@ -12,7 +12,6 @@ const serialize = (data) =>
     )
   );
 
-// Lampiran wajib hanya untuk kategori PRODUK
 const REQUIRED_ATTACHMENT_RULES = ['PRODUK'];
 
 export async function POST(request) {
@@ -28,10 +27,8 @@ export async function POST(request) {
     title,
     description,
     kategori,
-    nama_pengisi,
     jabatan,
     toko,
-    no_telepon,
     attachments,
   } = await request.json();
 
@@ -42,23 +39,41 @@ export async function POST(request) {
     return NextResponse.json({ message: 'Data tidak lengkap.' }, { status: 400 });
   }
 
-  if (!no_telepon) {
+  // ===============================
+  // AMBIL DATA USER (SUMBER UTAMA)
+  // ===============================
+  const submitter = await prisma.user.findUnique({
+    where: { user_id: user.id },
+    select: {
+      name: true,
+      phone: true,
+      pic_omi_id: true,
+    },
+  });
+
+  if (!submitter) {
     return NextResponse.json(
-      { message: 'Nomor Telepon/WA wajib diisi.' },
+      { message: 'User tidak ditemukan.' },
+      { status: 404 }
+    );
+  }
+
+  if (!submitter.phone) {
+    return NextResponse.json(
+      { message: 'Nomor telepon belum diisi oleh Admin.' },
       { status: 400 }
     );
   }
 
-  if (user.role === 'Agen' && (!nama_pengisi || !jabatan)) {
-    return NextResponse.json(
-      { message: 'Agen wajib mengisi Nama Pengisi dan Jabatan.' },
-      { status: 400 }
-    );
-  }
+  const nama_pengisi = submitter.name;
+  const no_telepon = submitter.phone;
 
-  if (user.role === 'Salesman' && !nama_pengisi) {
+  // ===============================
+  // VALIDASI KHUSUS ROLE
+  // ===============================
+  if (user.role === 'Agen' && !jabatan) {
     return NextResponse.json(
-      { message: 'Salesman wajib mengisi Nama Sales.' },
+      { message: 'Agen wajib mengisi Jabatan.' },
       { status: 400 }
     );
   }
@@ -70,36 +85,28 @@ export async function POST(request) {
 
   if (isAttachmentRequired && (!attachments || attachments.length === 0)) {
     return NextResponse.json(
-      { message: 'Lampiran/foto wajib diisi untuk kategori PRODUK.' },
+      { message: 'Lampiran wajib diisi untuk kategori PRODUK.' },
       { status: 400 }
     );
   }
 
   // ===============================
-  // SMART ROUTING (VALIDASI)
+  // SMART ROUTING
   // ===============================
   const routing = getRoutingTarget(kategori);
 
   if (!routing) {
     return NextResponse.json(
-      { message: 'Routing untuk kategori ini belum tersedia.' },
+      { message: 'Routing kategori belum tersedia.' },
       { status: 400 }
     );
   }
 
-  // ===============================
-  // AMBIL PIC OMI DARI USER
-  // (AMAN: belum ubah struktur assignment)
-  // ===============================
-  const submitterData = await prisma.user.findUnique({
-    where: { user_id: user.id },
-  });
-
-  const assignedPicOmiId = submitterData.pic_omi_id;
+  const assignedPicOmiId = submitter.pic_omi_id;
 
   if (!assignedPicOmiId) {
     return NextResponse.json(
-      { message: 'Akun ini belum dihubungkan ke PIC OMI. Hubungi Admin.' },
+      { message: 'Akun belum dihubungkan ke PIC OMI. Hubungi Admin.' },
       { status: 500 }
     );
   }
@@ -107,24 +114,23 @@ export async function POST(request) {
   try {
     const { ticket, picOmiUser } = await prisma.$transaction(async (tx) => {
       const ticket = await tx.ticket.create({
-  data: {
-    title,
-    type: 'Pending',
-    status: 'Open',
-    kategori,
-    sub_kategori: null,
-    nama_pengisi: nama_pengisi || null,
-    jabatan: jabatan || null,
-    toko: toko || null,
-    no_telepon,
+        data: {
+          title,
+          type: 'Pending',
+          status: 'Open',
+          kategori,
+          sub_kategori: null,
 
-    // ✅ INI YANG WAJIB
-    submittedBy: {
-      connect: { user_id: user.id },
-    },
-  },
-});
+          nama_pengisi,
+          jabatan: jabatan || null,
+          toko: toko || null,
+          no_telepon,
 
+          submittedBy: {
+            connect: { user_id: user.id },
+          },
+        },
+      });
 
       await tx.ticketDetail.create({
         data: {

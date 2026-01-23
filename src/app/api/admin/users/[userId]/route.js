@@ -5,7 +5,7 @@ import { getServerSession } from 'next-auth/next';
 import bcrypt from 'bcryptjs';
 
 // ================================
-// UPDATE USER
+// UPDATE USER (ADMIN)
 // ================================
 export async function PUT(request, { params }) {
   const session = await getServerSession(authOptions);
@@ -14,7 +14,6 @@ export async function PUT(request, { params }) {
   }
 
   try {
-    // 🔥 NEXT 15/16 FIX (WAJIB)
     const { userId } = await params;
     const id = parseInt(userId, 10);
 
@@ -31,6 +30,7 @@ export async function PUT(request, { params }) {
       name,
       username,
       email,
+      phone, // ✅ TAMBAHAN
       password,
       role_id,
       division_id,
@@ -49,6 +49,7 @@ export async function PUT(request, { params }) {
       name,
       username,
       email: email || null,
+      phone: phone || null, // ✅ SIMPAN NO TELP
       role_id: parseInt(role_id, 10),
       division_id: division_id ? parseInt(division_id, 10) : null,
       pic_omi_id: pic_omi_id ? parseInt(pic_omi_id, 10) : null,
@@ -72,69 +73,9 @@ export async function PUT(request, { params }) {
     return NextResponse.json(updatedUser);
 
   } catch (error) {
-    if (error.code === 'P2002') {
-      const target = error.meta?.target?.[0] || 'Field';
-      return NextResponse.json(
-        { message: `${target} ini sudah digunakan oleh akun lain.` },
-        { status: 409 }
-      );
-    }
-
-    console.error('Gagal mengupdate user:', error);
+    console.error('Gagal update user:', error);
     return NextResponse.json(
-      { message: 'Gagal mengupdate user', error: error.message },
-      { status: 500 }
-    );
-  }
-}
-
-// ================================
-// SOFT DELETE
-// ================================
-export async function DELETE(request, { params }) {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== 'Administrator') {
-    return NextResponse.json({ message: 'Tidak diizinkan' }, { status: 403 });
-  }
-
-  try {
-    // 🔥 NEXT 15/16 FIX (WAJIB)
-    const { userId } = await params;
-    const id = parseInt(userId, 10);
-
-    if (!id) {
-      return NextResponse.json(
-        { message: 'User ID tidak valid' },
-        { status: 400 }
-      );
-    }
-
-    if (session.user.id === id) {
-      return NextResponse.json(
-        { message: 'Anda tidak bisa menonaktifkan akun Anda sendiri.' },
-        { status: 400 }
-      );
-    }
-
-    const updatedUser = await prisma.user.update({
-      where: { user_id: id },
-      data: { status: 'Inactive' },
-      include: {
-        role: true,
-        division: true,
-        picOmi: { select: { name: true } }
-      }
-    });
-
-    return NextResponse.json({
-      message: 'User berhasil dinonaktifkan',
-      user: updatedUser
-    });
-
-  } catch (error) {
-    console.error('Gagal menonaktifkan user:', error);
-    return NextResponse.json(
-      { message: 'Gagal menonaktifkan user', error: error.message },
+      { message: 'Gagal update user', error: error.message },
       { status: 500 }
     );
   }

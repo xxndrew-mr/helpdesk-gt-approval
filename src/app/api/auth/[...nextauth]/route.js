@@ -63,6 +63,7 @@ export const authOptions = {
         token.role = user.role?.role_name || null;
         token.divisionName = user.division?.division_name || null; 
         token.divisionId = user.division_id || null;
+        token.phone = user.phone;
       }
       return token;
     },
@@ -73,6 +74,7 @@ export const authOptions = {
         session.user.role = token.role;
         session.user.divisionName = token.divisionName;
         session.user.divisionId = token.divisionId;
+        session.user.phone = token.phone;
       }
       return session;
     },
