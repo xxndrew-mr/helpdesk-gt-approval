@@ -104,6 +104,16 @@ export async function POST(request) {
 
   const assignedPicOmiId = submitter.pic_omi_id;
 
+// ambil semua PIC OMI SS (global)
+const picOmiSSUsers = await prisma.user.findMany({
+  where: {
+    role: { role_name: 'PIC OMI (SS)' },
+    status: 'Active',
+  },
+  select: { user_id: true, email: true, name: true },
+});
+
+
   if (!assignedPicOmiId) {
     return NextResponse.json(
       { message: 'Akun belum dihubungkan ke PIC OMI. Hubungi Admin.' },
@@ -152,14 +162,27 @@ export async function POST(request) {
         },
       });
 
-      await tx.ticketAssignment.create({
-        data: {
-          ticket_id: ticket.ticket_id,
-          user_id: assignedPicOmiId,
-          assignment_type: 'Active',
-          status: 'Pending',
-        },
-      });
+      const assignments = [
+  {
+    ticket_id: ticket.ticket_id,
+    user_id: assignedPicOmiId,
+    assignment_type: 'Active',
+    status: 'Pending',
+  },
+];
+
+// tambahkan PIC OMI SS
+for (const ss of picOmiSSUsers) {
+  assignments.push({
+    ticket_id: ticket.ticket_id,
+    user_id: ss.user_id,
+    assignment_type: 'Active',
+    status: 'Pending',
+  });
+}
+
+await tx.ticketAssignment.createMany({ data: assignments });
+
 
       const picOmiUser = await tx.user.findUnique({
         where: { user_id: assignedPicOmiId },
@@ -180,6 +203,7 @@ export async function POST(request) {
         extraText: `Anda ditugaskan sebagai PIC untuk request ini.`,
       }).catch((err) => console.error('Gagal kirim email PIC OMI:', err));
     }
+    
 
     return NextResponse.json(
       { message: 'Sukses', ticket: serialize(ticket) },

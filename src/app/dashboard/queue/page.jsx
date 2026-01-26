@@ -285,7 +285,14 @@ export default function QueuePage() {
           </div>
         ) : (
           assignments.map((assignment) => {
-            const isSelected = selectedId === assignment.assignment_id;
+  const isSelected = selectedId === assignment.assignment_id;
+
+  // ✅ TARO DI SINI
+  const isActiveAssignment = assignment.assignment_type === 'Active';
+  const isPicOmi = ['PIC OMI', 'PIC OMI (SS)'].includes(session?.user?.role);
+
+
+
             return (
               <div
                 key={assignment.assignment_id}
@@ -370,9 +377,14 @@ export default function QueuePage() {
                          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-tighter">Panel Keputusan</span>
                       </div>
                       
-                      {session?.user?.role === 'PIC OMI' && assignment.ticket.type === 'Pending' && (
-                        <TriageActions ticketId={assignment.ticket.ticket_id} onSuccess={loadQueue} onError={setActionError} />
-                      )}
+                      {isPicOmi && isActiveAssignment && (
+  <TriageActions
+    ticketId={assignment.ticket.ticket_id}
+    onSuccess={loadQueue}
+    onError={setActionError}
+  />
+)}
+
                       {session?.user?.role === 'Sales Manager' && assignment.ticket.type === 'Request' && (
                         <SalesManagerActions ticketId={assignment.ticket.ticket_id} onSuccess={loadQueue} onError={setActionError} />
                       )}

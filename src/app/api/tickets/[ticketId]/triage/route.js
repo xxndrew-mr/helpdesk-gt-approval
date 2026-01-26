@@ -6,31 +6,28 @@ import { getRoutingTarget } from '@/lib/smartRouting';
 import { sendTicketAssignedEmail } from '@/lib/email';
 
 export async function POST(request, context) {
-
-  // =====================================
-  // FIX WAJIB: params harus di-await lewat context.params
-  // =====================================
   const params = await context.params;
   const rawId = params.ticketId;
 
-  // ===== VALIDASI ticketId =====
+  // ===== VALIDASI =====
   if (!rawId || isNaN(Number(rawId))) {
-    return NextResponse.json(
-      { message: 'Ticket ID tidak valid.' },
-      { status: 400 }
-    );
+    return NextResponse.json({ message: 'Ticket ID tidak valid.' }, { status: 400 });
   }
 
   const ticketId = BigInt(rawId);
 
   // ===== SESSION =====
   const session = await getServerSession(authOptions);
-
-  if (!session || session.user.role !== 'PIC OMI') {
-    return NextResponse.json({ message: 'Anda tidak diizinkan.' }, { status: 403 });
+  if (!session) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
-  const picOmiUser = session.user;
+  const role = session.user.role;
+  const isSS = role === 'PIC OMI (SS)';
+
+  if (!['PIC OMI', 'PIC OMI (SS)'].includes(role)) {
+    return NextResponse.json({ message: 'Anda tidak diizinkan.' }, { status: 403 });
+  }
 
   const { type, notes } = await request.json();
 
@@ -41,48 +38,73 @@ export async function POST(request, context) {
     );
   }
 
-  // ===== CEK ASSIGNMENT =====
-  const currentAssignment = await prisma.ticketAssignment.findFirst({
-    where: {
-      ticket_id: ticketId,
-      user_id: picOmiUser.id,
-      assignment_type: 'Active',
-      status: 'Pending',
-    },
-    include: {
-      ticket: {
-        include: { submittedBy: true },
+  // ============================================
+  // 🔥 CEK ASSIGNMENT (BEDA LOGIC!)
+  // ============================================
+  let currentAssignment;
+
+  if (isSS) {
+    // PIC OMI (SS) = GLOBAL TRIAGER
+    currentAssignment = await prisma.ticketAssignment.findFirst({
+      where: {
+        ticket_id: ticketId,
+        status: 'Pending',
+        assignment_type: 'Active',
       },
-    },
-  });
+      include: {
+        ticket: { include: { submittedBy: true } },
+      },
+    });
+  } else {
+    // PIC OMI biasa = HARUS assigned
+    currentAssignment = await prisma.ticketAssignment.findFirst({
+      where: {
+        ticket_id: ticketId,
+        user_id: Number(session.user.id),
+        status: 'Pending',
+        assignment_type: 'Active',
+      },
+      include: {
+        ticket: { include: { submittedBy: true } },
+      },
+    });
+  }
 
   if (!currentAssignment) {
     return NextResponse.json(
-      { message: 'Anda tidak ditugaskan untuk tiket ini.' },
+      { message: 'Ticket sudah diproses atau tidak valid.' },
       { status: 403 }
     );
   }
 
   try {
     const result = await prisma.$transaction(async (tx) => {
+      // ===== UPDATE TICKET =====
       const updatedTicket = await tx.ticket.update({
         where: { ticket_id: ticketId },
         data: {
-          type: type,
+          type,
           status: 'Open',
         },
       });
 
-      await tx.ticketAssignment.delete({
-        where: { assignment_id: currentAssignment.assignment_id },
+      // ===== TUTUP SEMUA ACTIVE ASSIGNMENT =====
+      await tx.ticketAssignment.updateMany({
+        where: {
+          ticket_id: ticketId,
+          assignment_type: 'Active',
+          status: 'Pending',
+        },
+        data: { status: 'Done' },
       });
 
+      // ===== LOG =====
       await tx.ticketLog.create({
         data: {
           ticket_id: ticketId,
-          actor_user_id: picOmiUser.id,
+          actor_user_id: session.user.id,
           action_type: 'Triase',
-          notes: `Triase sebagai: ${type}. Catatan: ${notes || '-'}`,
+          notes: `Triase oleh ${role}: ${type}. Catatan: ${notes || '-'}`,
         },
       });
 
@@ -94,6 +116,7 @@ export async function POST(request, context) {
       let feedbackUsers = [];
 
       if (type === 'Request') {
+        // ===== SALES MANAGER =====
         salesManagerUser = await tx.user.findFirst({
           where: {
             role: { role_name: 'Sales Manager' },
@@ -114,11 +137,12 @@ export async function POST(request, context) {
           });
         }
       } else {
+        // ===== FEEDBACK FLOW =====
         salesManagerUser = await tx.user.findFirst({
           where: {
             role: { role_name: 'Sales Manager' },
-            division_id: submitterDivisionId,
             status: 'Active',
+            division_id: submitterDivisionId,
           },
           select: { user_id: true, email: true, name: true },
         });
@@ -163,6 +187,7 @@ export async function POST(request, context) {
       return { updatedTicket, salesManagerUser, feedbackUsers };
     });
 
+    // ===== EMAIL =====
     const ticketNumber = rawId;
 
     if (result.salesManagerUser?.email) {
@@ -170,7 +195,7 @@ export async function POST(request, context) {
         to: result.salesManagerUser.email,
         subject: `${type} baru (#${ticketNumber})`,
         ticket: result.updatedTicket,
-        extraText: `Anda mendapatkan tugas baru dari Sales Regional.`,
+        extraText: `Anda mendapatkan tugas baru dari PIC OMI.`,
       });
     }
 
@@ -182,7 +207,7 @@ export async function POST(request, context) {
           to: fbUser.email,
           subject: `Feedback baru (#${ticketNumber})`,
           ticket: result.updatedTicket,
-          extraText: `Anda mendapatkan tugas untuk review feedback.`,
+          extraText: `Anda mendapatkan tugas review feedback.`,
         });
       }
     }

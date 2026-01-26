@@ -67,11 +67,11 @@ export default function DashboardLayout({ children }) {
   }
 
   const menuItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: HomeIcon, roles: ['Administrator', 'Salesman', 'Agen', 'PIC OMI', 'Sales Manager', 'Acting Manager', 'Acting PIC', 'User Feedback', 'Viewer'] },
+    { href: '/dashboard', label: 'Dashboard', icon: HomeIcon, roles: ['Administrator', 'Salesman', 'Agen', 'PIC OMI', 'Sales Manager', 'Acting Manager', 'Acting PIC', 'User Feedback', 'Viewer', 'PIC OMI (SS)'] },
     { href: '/dashboard/submit', label: 'Submit Baru', icon: DocumentPlusIcon, roles: ['Salesman', 'Agen'] },
     { href: '/dashboard/my-tickets', label: 'Riwayat Saya', icon: TicketIcon, roles: ['Salesman', 'Agen'] },
-    { href: '/dashboard/queue', label: userRole === 'PIC OMI' ? 'Antrian Triase' : 'Antrian Tugas', icon: ClipboardDocumentListIcon, roles: ['PIC OMI', 'Sales Manager', 'Acting Manager', 'Acting PIC'] },
-    { href: '/dashboard/history', label: 'Riwayat Aksi', icon: ClockIcon, roles: ['PIC OMI', 'Sales Manager', 'Acting Manager', 'Acting PIC', 'Viewer'] },
+    { href: '/dashboard/queue', label: userRole === 'PIC OMI' ? 'Antrian Triase' : 'Antrian Tugas', icon: ClipboardDocumentListIcon, roles: ['PIC OMI', 'PIC OMI (SS)', 'Sales Manager', 'Acting Manager', 'Acting PIC'] },
+    { href: '/dashboard/history', label: 'Riwayat Aksi', icon: ClockIcon, roles: ['PIC OMI', 'PIC OMI (SS)', 'Sales Manager', 'Acting Manager', 'Acting PIC', 'Viewer'] },
     { href: '/dashboard/admin/users', label: 'User Management', icon: UsersIcon, roles: ['Administrator'] },
     { href: '/dashboard/admin/analytics', label: 'Analitik', icon: ChartBarIcon, roles: ['Administrator', 'Viewer'] },
   ];

@@ -19,6 +19,8 @@ export async function GET(request) {
   if (!session) {
     return NextResponse.json({ message: 'Anda harus login' }, { status: 401 });
   }
+  const isSS = session.user.role === 'PIC OMI (SS)';
+
 
   const { searchParams } = new URL(request.url);
   const assignmentType = searchParams.get('type');
@@ -32,49 +34,52 @@ export async function GET(request) {
 
   try {
     const assignments = await prisma.ticketAssignment.findMany({
-      where: {
-        user_id: Number(session.user.id),   // pastikan numeric
+  where: isSS
+    ? {
+        assignment_type: assignmentType,
+        status: 'Pending',
+        user: {
+          role: { role_name: 'PIC OMI' },
+        },
+      }
+    : {
+        user_id: Number(session.user.id),
         assignment_type: assignmentType,
         status: 'Pending',
       },
-      include: {
-        ticket: {
+  include: {
+    user: {
+      select: {
+        user_id: true,
+        name: true,
+      },
+    },
+    ticket: {
+      select: {
+        ticket_id: true,
+        title: true,
+        type: true,
+        status: true,
+        createdAt: true,
+        kategori: true,
+        sub_kategori: true,
+        jabatan: true,
+        toko: true,
+        nama_pengisi: true,
+        no_telepon: true,
+        submittedBy: { select: { name: true } },
+        detail: {
           select: {
-            // FIELD SCALAR TICKET
-            ticket_id: true,
-            title: true,
-            type: true,
-            status: true,
-            createdAt: true,
-            kategori: true,
-            sub_kategori: true,
-            jabatan: true,
-            toko: true,
-            nama_pengisi: true,
-            no_telepon: true,
-
-            // RELASI SUBMITTER (AGEN)
-            submittedBy: {
-              select: {
-                name: true,
-              },
-            },
-
-            // DETAIL (DESKRIPSI + LAMPIRAN)
-            detail: {
-              select: {
-                description: true,
-                attachments_json: true,
-              },
-            },
+            description: true,
+            attachments_json: true,
           },
         },
       },
-      // urutkan berdasarkan waktu assignment dibuat (TicketAssignment.createdAt)
-      orderBy: {
-        createdAt: 'asc',
-      },
-    });
+    },
+  },
+  orderBy: { createdAt: 'asc' },
+});
+
 
     return NextResponse.json(serialize(assignments));
 
