@@ -23,14 +23,8 @@ export async function POST(request) {
 
   const user = session.user;
 
-  const {
-    title,
-    description,
-    kategori,
-    jabatan,
-    toko,
-    attachments,
-  } = await request.json();
+  const { title, description, kategori, jabatan, toko, attachments } =
+    await request.json();
 
   // ===============================
   // VALIDASI DASAR
@@ -40,7 +34,7 @@ export async function POST(request) {
   }
 
   // ===============================
-  // AMBIL DATA USER (SUMBER UTAMA)
+  // AMBIL DATA USER
   // ===============================
   const submitter = await prisma.user.findUnique({
     where: { user_id: user.id },
@@ -52,10 +46,7 @@ export async function POST(request) {
   });
 
   if (!submitter) {
-    return NextResponse.json(
-      { message: 'User tidak ditemukan.' },
-      { status: 404 }
-    );
+    return NextResponse.json({ message: 'User tidak ditemukan.' }, { status: 404 });
   }
 
   if (!submitter.phone) {
@@ -94,57 +85,38 @@ export async function POST(request) {
   // SMART ROUTING
   // ===============================
   const routing = getRoutingTarget(kategori);
-
   if (!routing) {
-    return NextResponse.json(
-      { message: 'Routing kategori belum tersedia.' },
-      { status: 400 }
-    );
+    return NextResponse.json({ message: 'Routing kategori belum tersedia.' }, { status: 400 });
   }
 
   const assignedPicOmiId = submitter.pic_omi_id;
-
-// ambil semua PIC OMI SS (global)
-const picOmiSSUsers = await prisma.user.findMany({
-  where: {
-    role: { role_name: 'PIC OMI (SS)' },
-    status: 'Active',
-  },
-  select: { user_id: true, email: true, name: true },
-});
-
-
   if (!assignedPicOmiId) {
-    return NextResponse.json(
-      { message: 'Akun belum dihubungkan ke PIC OMI. Hubungi Admin.' },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: 'Akun belum dihubungkan ke PIC OMI. Hubungi Admin.', status: 500 });
   }
 
   try {
-    const { ticket, picOmiUser } = await prisma.$transaction(async (tx) => {
-      const ticket = await tx.ticket.create({
+    // ===============================
+    // TRANSACTION KECIL: Hanya ticket, detail, log
+    // ===============================
+    const ticket = await prisma.$transaction(async (tx) => {
+      const t = await tx.ticket.create({
         data: {
           title,
           type: 'Pending',
           status: 'Open',
           kategori,
           sub_kategori: null,
-
           nama_pengisi,
           jabatan: jabatan || null,
           toko: toko || null,
           no_telepon,
-
-          submittedBy: {
-            connect: { user_id: user.id },
-          },
+          submittedBy: { connect: { user_id: user.id } },
         },
       });
 
       await tx.ticketDetail.create({
         data: {
-          ticket_id: ticket.ticket_id,
+          ticket_id: t.ticket_id,
           description,
           attachments_json: attachments || [],
         },
@@ -152,7 +124,7 @@ const picOmiSSUsers = await prisma.user.findMany({
 
       await tx.ticketLog.create({
         data: {
-          ticket_id: ticket.ticket_id,
+          ticket_id: t.ticket_id,
           actor_user_id: user.id,
           action_type: 'Submit',
           notes:
@@ -162,58 +134,49 @@ const picOmiSSUsers = await prisma.user.findMany({
         },
       });
 
-      const assignments = [
-  {
-    ticket_id: ticket.ticket_id,
-    user_id: assignedPicOmiId,
-    assignment_type: 'Active',
-    status: 'Pending',
-  },
-];
-
-// tambahkan PIC OMI SS
-for (const ss of picOmiSSUsers) {
-  assignments.push({
-    ticket_id: ticket.ticket_id,
-    user_id: ss.user_id,
-    assignment_type: 'Active',
-    status: 'Pending',
-  });
-}
-
-await tx.ticketAssignment.createMany({ data: assignments });
-
-
-      const picOmiUser = await tx.user.findUnique({
-        where: { user_id: assignedPicOmiId },
-        select: { email: true, name: true },
-      });
-
-      return { ticket, picOmiUser };
+      return t;
     });
 
     // ===============================
-    // EMAIL
+    // AMBIL PIC OMI SS & PIC OMI USER di luar transaction
+    // ===============================
+    const picOmiSSUsers = await prisma.user.findMany({
+      where: { role: { role_name: 'PIC OMI (SS)' }, status: 'Active' },
+      select: { user_id: true, email: true, name: true },
+    });
+
+    const assignments = [
+      { ticket_id: ticket.ticket_id, user_id: assignedPicOmiId, assignment_type: 'Active', status: 'Pending' },
+      ...picOmiSSUsers.map((ss) => ({
+        ticket_id: ticket.ticket_id,
+        user_id: ss.user_id,
+        assignment_type: 'Active',
+        status: 'Pending',
+      })),
+    ];
+
+    prisma.ticketAssignment.createMany({ data: assignments }).catch(console.error);
+
+    const picOmiUser = await prisma.user.findUnique({
+      where: { user_id: assignedPicOmiId },
+      select: { email: true, name: true },
+    });
+
+    // ===============================
+    // EMAIL FIRE-AND-FORGET
     // ===============================
     if (picOmiUser?.email) {
-      sendTicketAssignedEmail({
+      void sendTicketAssignedEmail({
         to: picOmiUser.email,
         subject: `Request Pending Baru`,
         ticket,
         extraText: `Anda ditugaskan sebagai PIC untuk request ini.`,
       }).catch((err) => console.error('Gagal kirim email PIC OMI:', err));
     }
-    
 
-    return NextResponse.json(
-      { message: 'Sukses', ticket: serialize(ticket) },
-      { status: 201 }
-    );
+    return NextResponse.json({ message: 'Sukses', ticket: serialize(ticket) }, { status: 201 });
   } catch (error) {
     console.error('Gagal submit tiket:', error);
-    return NextResponse.json(
-      { message: 'Error server.', error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: 'Error server.', error: error.message }, { status: 500 });
   }
 }
