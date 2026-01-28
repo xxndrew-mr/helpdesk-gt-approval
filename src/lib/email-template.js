@@ -23,7 +23,7 @@ export function emailTemplate({ title, subtitle, message, ticketId, kategori, su
                       <tr>
                           <td style="padding:30px 25px; text-align:center; border-bottom:1px solid #efefef;">
 
-                              <img src="/logo-login.png"
+                              <img src="https://helpdesk-sc-onda.vercel.app/images/logo_email.webp"
                                   width="110" alt="OMI Logo"
                                   style="display:block; margin:0 auto 20px;"/>
 
