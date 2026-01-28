@@ -8,16 +8,17 @@ import bcrypt from 'bcryptjs';
 // UPDATE USER (ADMIN)
 // ================================
 export async function PUT(request, { params }) {
+  // ✅ FIX: unwrap params SEKALI
+  const { userId } = await params;
+  const id = parseInt(userId, 10);
+
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== 'Administrator') {
     return NextResponse.json({ message: 'Tidak diizinkan' }, { status: 403 });
   }
 
   try {
-    const { userId } = params;
-    const id = parseInt(userId, 10);
-
-    if (isNaN(id)){
+    if (isNaN(id)) {
       return NextResponse.json(
         { message: 'User ID tidak valid' },
         { status: 400 }
@@ -46,35 +47,34 @@ export async function PUT(request, { params }) {
     }
 
     // ================================
-// VALIDASI KHUSUS ROLE PIC OMI
-// ================================
-const role = await prisma.role.findUnique({
-  where: { role_id: parseInt(role_id, 10) },
-});
+    // VALIDASI KHUSUS ROLE PIC OMI
+    // ================================
+    const role = await prisma.role.findUnique({
+      where: { role_id: parseInt(role_id, 10) },
+    });
 
-if (!role) {
-  return NextResponse.json(
-    { message: 'Role tidak ditemukan' },
-    { status: 400 }
-  );
-}
+    if (!role) {
+      return NextResponse.json(
+        { message: 'Role tidak ditemukan' },
+        { status: 400 }
+      );
+    }
 
-// PIC OMI biasa → wajib punya division
-if (role.role_name === 'PIC OMI' && !division_id) {
-  return NextResponse.json(
-    { message: 'PIC OMI wajib memiliki divisi' },
-    { status: 400 }
-  );
-}
+    // PIC OMI biasa → wajib punya division
+    if (role.role_name === 'PIC OMI' && !division_id) {
+      return NextResponse.json(
+        { message: 'PIC OMI wajib memiliki divisi' },
+        { status: 400 }
+      );
+    }
 
-// PIC OMI SS → TIDAK BOLEH punya division
-if (role.role_name === 'PIC OMI (SS)' && division_id) {
-  return NextResponse.json(
-    { message: 'PIC OMI (SS) tidak boleh memiliki divisi' },
-    { status: 400 }
-  );
-}
-
+    // PIC OMI SS → TIDAK BOLEH punya division
+    if (role.role_name === 'PIC OMI (SS)' && division_id) {
+      return NextResponse.json(
+        { message: 'PIC OMI (SS) tidak boleh memiliki divisi' },
+        { status: 400 }
+      );
+    }
 
     const dataToUpdate = {
       name,
@@ -83,12 +83,11 @@ if (role.role_name === 'PIC OMI (SS)' && division_id) {
       phone: phone || null, // ✅ SIMPAN NO TELP
       role_id: parseInt(role_id, 10),
       division_id:
-  role.role_name === 'PIC OMI (SS)'
-    ? null
-    : division_id
-      ? parseInt(division_id, 10)
-      : null,
-
+        role.role_name === 'PIC OMI (SS)'
+          ? null
+          : division_id
+          ? parseInt(division_id, 10)
+          : null,
       pic_omi_id: pic_omi_id ? parseInt(pic_omi_id, 10) : null,
       ...(status && { status })
     };

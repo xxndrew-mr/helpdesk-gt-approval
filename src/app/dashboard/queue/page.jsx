@@ -55,9 +55,9 @@ function TriageActions({ ticketId, onSuccess, onError }) {
         className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none"
       />
       <div className="mt-4 flex flex-wrap gap-3">
-        <button onClick={() => handleSubmit('Request')} disabled={isLoading} className="rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 active:scale-95 transition-all disabled:bg-slate-300">
+        {/* <button onClick={() => handleSubmit('Request')} disabled={isLoading} className="rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 active:scale-95 transition-all disabled:bg-slate-300">
           {isLoading ? 'Memproses...' : 'Diteruskan (Request)'}
-        </button>
+        </button> */}
         <button onClick={() => handleSubmit('Feedback')} disabled={isLoading} className="rounded-xl bg-white border border-blue-200 px-5 py-2.5 text-xs font-bold text-blue-600 hover:bg-blue-50 transition-all">
           {isLoading ? 'Memproses...' : 'Hanya Informasi (Feedback)'}
         </button>
