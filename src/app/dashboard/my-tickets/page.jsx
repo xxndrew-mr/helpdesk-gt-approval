@@ -241,7 +241,7 @@ export default function MyTicketsPage() {
 
               {/* Card Footer - Timeline & PIC */}
               <div className="px-5 py-4 bg-white border-t border-slate-100">
-                <div className="flex items-center justify-between mb-4">
+                {/* <div className="flex items-center justify-between mb-4">
                    <div className="flex items-center gap-2">
                       <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
                         <UserIcon className="h-4 w-4 text-slate-500" />
@@ -253,7 +253,7 @@ export default function MyTicketsPage() {
                         </p>
                       </div>
                    </div>
-                </div>
+                </div> */}
 
                 {ticket.logs?.length > 0 && (
                   <details className="group border-t border-slate-50 pt-2">
