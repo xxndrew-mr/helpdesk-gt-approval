@@ -359,65 +359,178 @@ export default function AdminUsersPage() {
         </CardContent>
       </Card>
 
-      {/* Table Section */}
-      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
-        <table className="min-w-full divide-y divide-slate-100">
-          <thead className="bg-slate-50/50">
-            <tr>
-              <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Pengguna</th>
-              <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Akses & Role</th>
-              <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Status</th>
-              <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-50">
-            {isLoading ? (
-              <tr><td colSpan={4} className="py-20 text-center text-blue-600"><ArrowPathIcon className="h-8 w-8 animate-spin mx-auto mb-2 opacity-50" /> Memuat Data...</td></tr>
-            ) : filteredUsers.length === 0 ? (
-              <tr><td colSpan={4} className="py-20 text-center text-slate-400"><NoSymbolIcon className="h-10 w-10 mx-auto mb-3 opacity-20" /> Tidak ada user ditemukan.</td></tr>
-            ) : (
-              filteredUsers.map((user) => (
-                <tr key={user.user_id} className="group hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 flex-shrink-0 rounded-full bg-blue-600 flex items-center justify-center text-white font-black shadow-lg shadow-blue-600/20 group-hover:scale-110 transition-transform uppercase">
-                        {user.name.charAt(0)}
-                      </div>
-                      <div>
-                        <div className="text-sm font-bold text-slate-900">{user.name}</div>
-                        <div className="text-xs font-medium text-blue-600 tracking-tight">@{user.username}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col gap-1">
-                      <Badge>{user.role?.role_name}</Badge>
-                      <span className="text-[10px] font-bold text-slate-400 px-1 italic">
-                        {user.division?.division_name || 'Tanpa Divisi'}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <Badge color={user.status === 'Active' ? 'green' : 'red'}>{user.status}</Badge>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      <button onClick={() => setModalState({ isOpen: true, type: 'edit', user })} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all" title="Edit User">
-                        <PencilSquareIcon className="h-5 w-5" />
-                      </button>
-                      {session?.user?.id !== user.user_id && (
-                        <button onClick={() => handleToggleStatus(user.user_id, user.status, user.name)} className={`p-2 rounded-xl transition-all ${user.status === 'Active' ? 'text-slate-400 hover:text-red-600 hover:bg-red-50' : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'}`} title={user.status === 'Active' ? 'Nonaktifkan' : 'Aktifkan'}>
-                          {user.status === 'Active' ? <NoSymbolIcon className="h-5 w-5" /> : <CheckCircleIcon className="h-5 w-5" />}
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+      {/* ===================== */}
+{/* DESKTOP / WEB VIEW */}
+{/* ===================== */}
+<div className="hidden md:block overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
+  <table className="min-w-full divide-y divide-slate-100">
+    <thead className="bg-slate-50/50">
+      <tr>
+        <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Pengguna</th>
+        <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Akses & Role</th>
+        <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Status</th>
+        <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">Aksi</th>
+      </tr>
+    </thead>
+    <tbody className="divide-y divide-slate-50">
+      {isLoading ? (
+        <tr>
+          <td colSpan={4} className="py-20 text-center text-blue-600">
+            <ArrowPathIcon className="h-8 w-8 animate-spin mx-auto mb-2 opacity-50" />
+            Memuat Data...
+          </td>
+        </tr>
+      ) : filteredUsers.length === 0 ? (
+        <tr>
+          <td colSpan={4} className="py-20 text-center text-slate-400">
+            <NoSymbolIcon className="h-10 w-10 mx-auto mb-3 opacity-20" />
+            Tidak ada user ditemukan.
+          </td>
+        </tr>
+      ) : (
+        filteredUsers.map((user) => (
+          <tr key={user.user_id} className="group hover:bg-slate-50 transition-colors">
+            <td className="px-6 py-4">
+              <div className="flex items-center gap-4">
+                <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-black shadow-lg shadow-blue-600/20 uppercase">
+                  {user.name.charAt(0)}
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-slate-900">{user.name}</div>
+                  <div className="text-xs font-medium text-blue-600">@{user.username}</div>
+                </div>
+              </div>
+            </td>
+
+            <td className="px-6 py-4">
+              <div className="flex flex-col gap-1">
+                <Badge>{user.role?.role_name}</Badge>
+                <span className="text-[10px] font-bold text-slate-400 italic">
+                  {user.division?.division_name || 'Tanpa Divisi'}
+                </span>
+              </div>
+            </td>
+
+            <td className="px-6 py-4">
+              <Badge color={user.status === 'Active' ? 'green' : 'red'}>
+                {user.status}
+              </Badge>
+            </td>
+
+            <td className="px-6 py-4 text-right">
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setModalState({ isOpen: true, type: 'edit', user })}
+                  className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl"
+                >
+                  <PencilSquareIcon className="h-5 w-5" />
+                </button>
+
+                {session?.user?.id !== user.user_id && (
+                  <button
+                    onClick={() =>
+                      handleToggleStatus(user.user_id, user.status, user.name)
+                    }
+                    className={`p-2 rounded-xl ${
+                      user.status === 'Active'
+                        ? 'text-slate-400 hover:text-red-600 hover:bg-red-50'
+                        : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'
+                    }`}
+                  >
+                    {user.status === 'Active' ? (
+                      <NoSymbolIcon className="h-5 w-5" />
+                    ) : (
+                      <CheckCircleIcon className="h-5 w-5" />
+                    )}
+                  </button>
+                )}
+              </div>
+            </td>
+          </tr>
+        ))
+      )}
+    </tbody>
+  </table>
+</div>
+
+{/* ===================== */}
+{/* MOBILE VIEW */}
+{/* ===================== */}
+  <div className="md:hidden divide-y divide-slate-100 border border-slate-200 rounded-2xl overflow-hidden bg-white">
+  {isLoading ? (
+    <div className="py-20 text-center text-blue-600">
+      <ArrowPathIcon className="h-8 w-8 animate-spin mx-auto mb-2 opacity-50" />
+      Memuat Data...
+    </div>
+  ) : filteredUsers.length === 0 ? (
+    <div className="py-20 text-center text-slate-400">
+      <NoSymbolIcon className="h-10 w-10 mx-auto mb-3 opacity-20" />
+      Tidak ada user ditemukan.
+    </div>
+  ) : (
+    filteredUsers.map((user) => (
+      <div
+        key={user.user_id}
+        className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50"
+      >
+        {/* Avatar */}
+        <div className="h-9 w-9 flex-shrink-0 rounded-full bg-blue-600 flex items-center justify-center text-white font-black uppercase">
+          {user.name.charAt(0)}
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-slate-900 truncate">
+              {user.name}
+            </span>
+            <Badge
+              color={user.status === 'Active' ? 'green' : 'red'}
+              className="text-[10px]"
+            >
+              {user.status}
+            </Badge>
+          </div>
+
+          <div className="text-xs text-slate-500 truncate">
+            {user.role?.role_name} • {user.division?.division_name || 'Tanpa Divisi'}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setModalState({ isOpen: true, type: 'edit', user })}
+            className="p-2 text-slate-400 hover:text-blue-600 rounded-xl"
+          >
+            <PencilSquareIcon className="h-5 w-5" />
+          </button>
+
+          {session?.user?.id !== user.user_id && (
+            <button
+              onClick={() =>
+                handleToggleStatus(user.user_id, user.status, user.name)
+              }
+              className={`p-2 rounded-xl ${
+                user.status === 'Active'
+                  ? 'text-slate-400 hover:text-red-600'
+                  : 'text-slate-400 hover:text-emerald-600'
+              }`}
+            >
+              {user.status === 'Active' ? (
+                <NoSymbolIcon className="h-5 w-5" />
+              ) : (
+                <CheckCircleIcon className="h-5 w-5" />
+              )}
+            </button>
+          )}
+        </div>
       </div>
+    ))
+  )}
+</div>
+
+
 
       {/* Modal View */}
       <Transition appear show={modalState.isOpen} as={Fragment}>
