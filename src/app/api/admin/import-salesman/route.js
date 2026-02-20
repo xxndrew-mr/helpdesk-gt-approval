@@ -11,7 +11,7 @@ export async function POST(request) {
 
     if (!session || session.user.role !== 'Administrator') {
       return NextResponse.json(
-        { message: 'Tidak diizinkan' },
+        { message: 'Tidak diizinkan Lagi' },
         { status: 403 }
       );
     }
