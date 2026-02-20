@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import {
   CloudArrowUpIcon,
   PaperClipIcon,
@@ -31,6 +31,8 @@ export default function SubmitTicketPage() {
 
   const [description, setDescription] = useState('');
   const [selectedKategori, setSelectedKategori] = useState('');
+  const [phone, setPhone] = useState('');
+
   const isAttachmentRequired = selectedKategori === 'PRODUK';
 
   const [jabatan, setJabatan] = useState('');
@@ -96,6 +98,7 @@ export default function SubmitTicketPage() {
           jabatan: jabatan || null,
           toko: toko || null,
           attachments,
+          phone,
         }),
       });
 
@@ -215,17 +218,21 @@ export default function SubmitTicketPage() {
               )}
 
               <div className="md:col-span-2 space-y-1.5">
-                <label className="text-sm font-semibold text-slate-700 flex items-center gap-1">
-                  <PhoneIcon className="h-4 w-4" /> No. Telepon / WhatsApp <span className="text-red-500">*</span>
-                </label>
-                <input
-  type="tel"
-  value={session.user.phone || ''}
-  readOnly
-  className="w-full rounded-xl border border-slate-200 bg-slate-100 px-4 py-2.5 text-sm text-slate-600 cursor-not-allowed"
-/>
+  <label className="text-sm font-semibold text-slate-700 flex items-center gap-1">
+    <PhoneIcon className="h-4 w-4" />
+    No. Telepon / WhatsApp <span className="text-red-500">*</span>
+  </label>
 
-              </div>
+  <input
+    type="tel"
+    value={phone}
+    onChange={(e) => setPhone(e.target.value)}
+    placeholder="Masukkan nomor telepon"
+    required
+    className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+  />
+</div>
+
             </div>
           </section>
 

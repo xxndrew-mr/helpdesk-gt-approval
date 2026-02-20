@@ -23,8 +23,9 @@ export async function POST(request) {
 
   const user = session.user;
 
-  const { title, description, kategori, jabatan, toko, attachments } =
-    await request.json();
+  const { title, description, kategori, jabatan, toko, attachments, phone } =
+  await request.json();
+
 
   // ===============================
   // VALIDASI DASAR
@@ -49,15 +50,25 @@ export async function POST(request) {
     return NextResponse.json({ message: 'User tidak ditemukan.' }, { status: 404 });
   }
 
-  if (!submitter.phone) {
-    return NextResponse.json(
-      { message: 'Nomor telepon belum diisi oleh Admin.' },
-      { status: 400 }
-    );
-  }
+  
 
   const nama_pengisi = submitter.name;
-  const no_telepon = submitter.phone;
+  const no_telepon = submitter.phone || phone;
+
+  if (!no_telepon) {
+  return NextResponse.json(
+    { message: 'Nomor telepon wajib diisi.' },
+    { status: 400 }
+  );
+}
+
+if (!submitter.phone && phone) {
+  await prisma.user.update({
+    where: { user_id: user.id },
+    data: { phone },
+  });
+}
+
 
   // ===============================
   // VALIDASI KHUSUS ROLE

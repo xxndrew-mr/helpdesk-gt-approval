@@ -218,6 +218,30 @@ export default function AdminUsersPage() {
   const [filterRole, setFilterRole] = useState('');
   const [filterDivision, setFilterDivision] = useState('');
   const [notification, setNotification] = useState(null);
+  const handleUpload = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const res = await fetch('/api/admin/import-salesman', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.message);
+
+    showNotification('success', `Berhasil import ${data.inserted} user`);
+    loadData();
+  } catch (err) {
+    showNotification('error', err.message);
+  }
+};
+
 
   const showNotification = (type, message) => {
     setNotification({ type, message });
@@ -327,10 +351,28 @@ export default function AdminUsersPage() {
               </CardDescription>
             </div>
             
-            <button onClick={() => setModalState({ isOpen: true, type: 'create', user: null })} className="flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-blue-900 shadow-lg transition-all hover:scale-105 active:scale-95">
-              <UserPlusIcon className="h-5 w-5" />
-              Tambah User
-            </button>
+            <div className="flex gap-3">
+  {/* IMPORT CSV */}
+  <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg hover:bg-blue-700 transition-all">
+    Import CSV
+    <input
+      type="file"
+      accept=".csv"
+      className="hidden"
+      onChange={handleUpload}
+    />
+  </label>
+
+  {/* TAMBAH USER MANUAL */}
+  <button
+    onClick={() => setModalState({ isOpen: true, type: 'create', user: null })}
+    className="flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-blue-900 shadow-lg transition-all hover:scale-105 active:scale-95"
+  >
+    <UserPlusIcon className="h-5 w-5" />
+    Tambah User
+  </button>
+</div>
+
           </div>
           {/* Decorative Circles */}
           <div className="absolute -right-10 -bottom-10 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
