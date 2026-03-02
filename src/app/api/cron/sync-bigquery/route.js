@@ -27,9 +27,10 @@ export async function GET(request) {
     // 1️⃣ Ambil data dari PostgreSQL
     const tickets = await prisma.ticket.findMany({
   include: {
-    submittedBy: { select: { name: true } },
-    TicketDetail: true, // ⬅️ TAMBAH INI
-  },
+  submittedBy: { select: { name: true } },
+  detail: true, // ✅ sesuai schema
+},
+
 });
 
 
@@ -41,7 +42,7 @@ export async function GET(request) {
     const rows = tickets.map(t => ({
       ticket_id: Number(t.ticket_id),
       title: t.title,
-      description: t.TicketDetail?.description || null,
+      description: t.detail?.description || null,
       submitted_by: t.submittedBy?.name || 'Unknown',
       type: t.type,
       status: t.status,
