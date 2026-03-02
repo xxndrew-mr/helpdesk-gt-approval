@@ -44,6 +44,7 @@ async function syncTickets() {
   const rows = tickets.map(t => ({
     ticket_id: Number(t.ticket_id), // BigInt ke Number/Integer
     title: t.title,
+     description: t.detail?.description ?? null,
     submitted_by: t.submittedBy?.name || 'Unknown', // Denormalisasi nama user
     type: t.type,
     status: t.status,
@@ -71,6 +72,7 @@ async function syncTickets() {
     { name: 'nama_pengisi', type: 'STRING' },
     { name: 'jabatan', type: 'STRING' },
     { name: 'toko', type: 'STRING' },
+    { name: 'description', type: 'STRING' },
   ];
 
   await createTableIfNotExists('tickets_analytics', schema);
