@@ -26,10 +26,12 @@ export async function GET(request) {
 
     // 1️⃣ Ambil data dari PostgreSQL
     const tickets = await prisma.ticket.findMany({
-      include: {
-        submittedBy: { select: { name: true } },
-      },
-    });
+  include: {
+    submittedBy: { select: { name: true } },
+    TicketDetail: true, // ⬅️ TAMBAH INI
+  },
+});
+
 
     if (tickets.length === 0) {
       return NextResponse.json({ message: 'Tidak ada tiket untuk disinkronisasi.' });
@@ -39,6 +41,7 @@ export async function GET(request) {
     const rows = tickets.map(t => ({
       ticket_id: Number(t.ticket_id),
       title: t.title,
+      description: t.TicketDetail?.description || null,
       submitted_by: t.submittedBy?.name || 'Unknown',
       type: t.type,
       status: t.status,

@@ -53,21 +53,36 @@ export async function POST(request) {
   
 
   const nama_pengisi = submitter.name;
-  const no_telepon = submitter.phone || phone;
+const no_telepon = submitter.phone || phone;
 
-  if (!no_telepon) {
+if (!no_telepon) {
   return NextResponse.json(
     { message: 'Nomor telepon wajib diisi.' },
     { status: 400 }
   );
 }
 
+// ===============================
+// VALIDASI NOMOR TELEPON
+// ===============================
+const cleanPhone = no_telepon.trim();
+
+// hanya angka & minimal 9 digit
+if (!/^[0-9]+$/.test(cleanPhone) || cleanPhone.length < 9) {
+  return NextResponse.json(
+    { message: 'Nomor telepon harus berupa minimal 9 digit angka.' },
+    { status: 400 }
+  );
+}
+
+
 if (!submitter.phone && phone) {
   await prisma.user.update({
     where: { user_id: user.id },
-    data: { phone },
+    data: { phone: cleanPhone },
   });
 }
+
 
 
   // ===============================
@@ -120,7 +135,7 @@ if (!submitter.phone && phone) {
           nama_pengisi,
           jabatan: jabatan || null,
           toko: toko || null,
-          no_telepon,
+          no_telepon: cleanPhone,
           submittedBy: { connect: { user_id: user.id } },
         },
       });
@@ -138,10 +153,11 @@ if (!submitter.phone && phone) {
           ticket_id: t.ticket_id,
           actor_user_id: user.id,
           action_type: 'Submit',
-          notes:
-            user.role === 'Salesman'
-              ? `Tiket dibuat oleh Sales ${nama_pengisi} (${no_telepon}) untuk ${toko}.`
-              : `Tiket dibuat oleh ${nama_pengisi} (${jabatan}) (${no_telepon}).`,
+         notes:
+  user.role === 'Salesman'
+    ? `Tiket dibuat oleh Sales ${nama_pengisi} (${cleanPhone}) untuk ${toko}.`
+    : `Tiket dibuat oleh ${nama_pengisi} (${jabatan}) (${cleanPhone}).`,
+
         },
       });
 
