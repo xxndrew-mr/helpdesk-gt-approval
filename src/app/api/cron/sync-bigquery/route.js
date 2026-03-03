@@ -1,77 +1,120 @@
-import { NextResponse } from 'next/server';
 import { BigQuery } from '@google-cloud/bigquery';
-import prisma from '@/lib/prisma';
+import prisma from '/src/lib/prisma.js';
 
-export async function GET(request) {
+async function main() {
   try {
     console.log("=== SYNC BIGQUERY START ===");
-    console.log("NODE_ENV:", process.env.NODE_ENV);
 
-    // 🔹 Ambil data dari PostgreSQL
-    const tickets = await prisma.ticket.findMany({
-      include: {
-        submittedBy: { select: { name: true } },
-      },
-    });
-
-    if (tickets.length === 0) {
-      return NextResponse.json({
-        message: 'Tidak ada tiket untuk disinkronisasi.',
-      });
+    if (!process.env.GCP_PROJECT_ID || !process.env.GCP_CLIENT_EMAIL || !process.env.GCP_PRIVATE_KEY) {
+      throw new Error("GCP credentials atau PROJECT_ID belum diset di env");
     }
 
-    // 🔹 Transform data (hapus semua kemungkinan BigInt)
-    const rows = tickets.map((t) => ({
-      ticket_id: t.ticket_id ? Number(t.ticket_id) : null,
-      title: t.title ?? null,
-      submitted_by: t.submittedBy?.name ?? "Unknown",
-      type: t.type ?? null,
-      status: t.status ?? null,
-      created_at: t.createdAt
-        ? t.createdAt.toISOString().replace("Z", "")
-        : null,
-      updated_at: t.updatedAt
-        ? t.updatedAt.toISOString().replace("Z", "")
-        : null,
-      kategori: t.kategori ?? null,
-      sub_kategori: t.sub_kategori ?? null,
-      nama_pengisi: t.nama_pengisi ?? null,
-      jabatan: t.jabatan ?? null,
-      toko: t.toko ?? null,
-    }));
-
-    // 🔹 Init BigQuery
     const bigquery = new BigQuery({
       projectId: process.env.GCP_PROJECT_ID,
       credentials: {
         client_email: process.env.GCP_CLIENT_EMAIL,
-        private_key: process.env.GCP_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        private_key: process.env.GCP_PRIVATE_KEY.replace(/\\n/g, '\n'),
       },
     });
 
-    const dataset = bigquery.dataset('helpdesk_data');
-    const table = dataset.table('tickets_analytics');
+    const datasetId = 'helpdesk_data';
+    const tableId = 'tickets_analytics';
+    const dataset = bigquery.dataset(datasetId);
 
-    const [exists] = await table.exists();
-    if (!exists) {
-      throw new Error("Table tickets_analytics belum dibuat di BigQuery");
+    // Pastikan dataset ada
+    const [datasetExists] = await dataset.exists();
+    if (!datasetExists) {
+      console.log(`Dataset '${datasetId}' tidak ada. Membuat dataset...`);
+      await dataset.create();
+      console.log("✅ Dataset dibuat");
     }
 
-    // 🔹 Insert ke BigQuery
-    await table.insert(rows);
+    // Drop table lama
+    let table = dataset.table(tableId);
+    const [tableExists] = await table.exists();
+    if (tableExists) {
+      console.log("Dropping old table...");
+      await table.delete();
+      console.log("✅ Old table dropped");
+    }
 
-    console.log(`✅ Berhasil sync ${rows.length} baris`);
-
-    return NextResponse.json({
-      message: "Sinkronisasi Berhasil",
-      count: rows.length,
+    // Create table baru
+    console.log("Creating new table...");
+    await dataset.createTable(tableId, {
+      schema: [
+        { name: "ticket_id", type: "STRING" },
+        { name: "title", type: "STRING" },
+        { name: "description", type: "STRING" },
+        { name: "submitted_by", type: "STRING" },
+        { name: "type", type: "STRING" },
+        { name: "status", type: "STRING" },
+        { name: "created_at", type: "TIMESTAMP" },
+        { name: "updated_at", type: "TIMESTAMP" },
+        { name: "kategori", type: "STRING" },
+        { name: "nama_pengisi", type: "STRING" },
+        { name: "toko", type: "STRING" },
+      ],
     });
 
-  } catch (error) {
-    console.error("❌ ETL Error:", error);
-    return NextResponse.json(
-      { message: "Gagal sinkronisasi", error: error.message },
-      { status: 500 }
-    );
+    table = dataset.table(tableId);
+    for (let i = 0; i < 10; i++) {
+      const [exists] = await table.exists();
+      if (exists) break;
+      await new Promise(res => setTimeout(res, 2000));
+    }
+    console.log("✅ Table ready for insert");
+
+    // Ambil data dari Prisma
+    const tickets = await prisma.ticket.findMany({
+      include: {
+        submittedBy: { select: { name: true } },
+        detail: true,
+      },
+    });
+
+    console.log("Total tickets from DB:", tickets.length);
+
+    if (!tickets.length) {
+      console.log("⚠️ Tidak ada data untuk disinkronisasi");
+      return;
+    }
+
+    // Transform data, pastikan semua field valid
+    const rows = tickets.map((t, idx) => {
+      const createdAt = t.createdAt ? new Date(t.createdAt) : new Date();
+      const updatedAt = t.updatedAt ? new Date(t.updatedAt) : new Date();
+      const ticket_id = t.ticket_id ? String(t.ticket_id) : `ticket-${Math.random()}-${idx}`;
+
+      return {
+        ticket_id,
+        title: t.title ? String(t.title) : "(No Title)",
+        description: t.detail?.description ? String(t.detail.description) : "(No Description)",
+        submitted_by: t.submittedBy?.name ? String(t.submittedBy.name) : "Unknown",
+        type: t.type ? String(t.type) : "Pending",
+        status: t.status ? String(t.status) : "Open",
+        created_at: createdAt.toISOString(),
+        updated_at: updatedAt.toISOString(),
+        kategori: t.kategori ? String(t.kategori) : "(No Category)",
+        nama_pengisi: t.nama_pengisi ? String(t.nama_pengisi) : "Unknown",
+        toko: t.toko ? String(t.toko) : "Unknown",
+      };
+    });
+
+    console.log("Rows ready for BigQuery preview:", rows.slice(0, 3));
+
+    // Insert ke BigQuery, skip row invalid tapi log error
+    try {
+      await table.insert(rows, { ignoreUnknownValues: true, skipInvalidRows: true });
+      console.log(`✅ Sinkronisasi selesai, total rows attempted: ${rows.length}`);
+    } catch (insertErr) {
+      console.error("❌ Error saat insert ke BigQuery:", insertErr);
+    }
+
+  } catch (err) {
+    console.error("❌ FULL ETL ERROR:", err);
+  } finally {
+    await prisma.$disconnect();
   }
 }
+
+main();
