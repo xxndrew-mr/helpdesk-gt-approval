@@ -37,15 +37,35 @@ export async function GET(request) {
   // =========================
   // ROLE OPERASIONAL (AGEN, SALES, DLL)
   // =========================
-  if (userRole !== 'Viewer' && userRole !== 'Administrator') {
-    whereClause = {
-      logs: {
-        some: {
-          actor_user_id: userId,
+  // =========================
+// ROLE PIC OMI (SS)
+// =========================
+if (userRole === 'PIC OMI (SS)') {
+  whereClause = {
+    logs: {
+      some: {
+        actor: {
+          role: {
+            role_name: 'PIC OMI (SS)',
+          },
         },
       },
-    };
-  }
+    },
+  };
+}
+
+// =========================
+// ROLE OPERASIONAL LAIN
+// =========================
+else if (userRole !== 'Viewer' && userRole !== 'Administrator') {
+  whereClause = {
+    logs: {
+      some: {
+        actor_user_id: userId,
+      },
+    },
+  };
+}
 
   // =========================
   // VIEWER / ADMIN → BOLEH FILTER DIVISI
