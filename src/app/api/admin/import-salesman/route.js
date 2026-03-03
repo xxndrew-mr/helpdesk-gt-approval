@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
+import { authOptions } from '@/lib/auth';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import bcrypt from 'bcryptjs';
 import { parse } from 'csv-parse/sync';
 

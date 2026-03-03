@@ -2,8 +2,8 @@
 
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
+import { getServerSession } from 'next-auth';
 
 const serialize = (data) =>
   JSON.parse(

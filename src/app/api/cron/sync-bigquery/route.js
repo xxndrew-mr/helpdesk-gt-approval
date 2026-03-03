@@ -38,13 +38,14 @@ async function main() {
       console.log("✅ Old table dropped");
     }
 
-    // Create table baru
+    // Create table baru (hanya tambah notes)
     console.log("Creating new table...");
     await dataset.createTable(tableId, {
       schema: [
         { name: "ticket_id", type: "STRING" },
         { name: "title", type: "STRING" },
         { name: "description", type: "STRING" },
+        { name: "notes", type: "STRING" }, // ✅ TAMBAHAN SAJA
         { name: "submitted_by", type: "STRING" },
         { name: "type", type: "STRING" },
         { name: "status", type: "STRING" },
@@ -64,11 +65,15 @@ async function main() {
     }
     console.log("✅ Table ready for insert");
 
-    // Ambil data dari Prisma
+    // Ambil data dari Prisma + logs
     const tickets = await prisma.ticket.findMany({
       include: {
         submittedBy: { select: { name: true } },
         detail: true,
+        logs: {
+          orderBy: { timestamp: 'desc' }, // ambil log terbaru
+          take: 1,
+        },
       },
     });
 
@@ -79,7 +84,6 @@ async function main() {
       return;
     }
 
-    // Transform data, pastikan semua field valid
     const rows = tickets.map((t, idx) => {
       const createdAt = t.createdAt ? new Date(t.createdAt) : new Date();
       const updatedAt = t.updatedAt ? new Date(t.updatedAt) : new Date();
@@ -89,6 +93,7 @@ async function main() {
         ticket_id,
         title: t.title ? String(t.title) : "(No Title)",
         description: t.detail?.description ? String(t.detail.description) : "(No Description)",
+        notes: t.logs?.[0]?.notes ? String(t.logs[0].notes) : null,
         submitted_by: t.submittedBy?.name ? String(t.submittedBy.name) : "Unknown",
         type: t.type ? String(t.type) : "Pending",
         status: t.status ? String(t.status) : "Open",
@@ -102,7 +107,6 @@ async function main() {
 
     console.log("Rows ready for BigQuery preview:", rows.slice(0, 3));
 
-    // Insert ke BigQuery, skip row invalid tapi log error
     try {
       await table.insert(rows, { ignoreUnknownValues: true, skipInvalidRows: true });
       console.log(`✅ Sinkronisasi selesai, total rows attempted: ${rows.length}`);
