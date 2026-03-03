@@ -81,12 +81,16 @@ export async function GET(request) {
           },
         },
         logs: {
-          orderBy: { timestamp: 'desc' },
-          take: 1,
-          include: {
-            actor: { select: { name: true } },
-          },
-        },
+  orderBy: { timestamp: 'desc' },
+  take: 1,
+  select: {
+    timestamp: true,
+    notes: true, // ✅ tambahkan ini
+    actor: {
+      select: { name: true },
+    },
+  },
+},
         assignments: {
           where: { status: 'Pending' },
           include: {

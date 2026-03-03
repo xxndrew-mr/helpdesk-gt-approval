@@ -276,6 +276,20 @@ export default function ActionHistoryPage() {
                         {ticket.detail?.description || 'Tidak ada deskripsi tambahan.'}
                       </p>
                     </div>
+                    {/* NOTES TERAKHIR */}
+{ticket.logs?.[0]?.notes && (
+  <div className="bg-amber-50 rounded-xl border border-amber-200 p-4 shadow-sm">
+    <p className="text-[10px] font-bold text-amber-600 uppercase mb-2">
+      Catatan Aksi Terakhir
+    </p>
+    <p className="text-xs text-slate-700 whitespace-pre-line">
+      {ticket.logs[0].notes}
+    </p>
+    <p className="text-[10px] text-slate-400 mt-2">
+      Oleh: {ticket.logs[0]?.actor?.name} • {formatDate(ticket.logs[0]?.timestamp)}
+    </p>
+  </div>
+)}
 
                     {ticket.detail?.attachments_json?.length > 0 && (
                       <div className="space-y-2">
