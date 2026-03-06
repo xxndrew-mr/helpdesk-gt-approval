@@ -43,6 +43,20 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+@keyframes slideBg {
+  0% { opacity: 1; }
+  30% { opacity: 1; }
+  33% { opacity: 0; }
+
+  33.01% { opacity: 0; }
+  63% { opacity: 1; }
+  66% { opacity: 0; }
+
+  66.01% { opacity: 0; }
+  96% { opacity: 1; }
+  100% { opacity: 1; }
+}
+
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -120,3 +134,4 @@
     @apply bg-background text-foreground;
   }
 }
+

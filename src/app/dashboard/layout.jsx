@@ -35,17 +35,30 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from '@/components/ui/navigation-menu';
-import { cn } from "@/lib/utils"; // Pastikan utilitas cn ada (standar shadcn)
+import { cn } from "@/lib/utils";
 
 export default function DashboardLayout({ children }) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Logic untuk mendeteksi scroll
+  const [isScrolled, setIsScrolled] = useState(false);
 
-  const userRole = session?.user?.role;
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 20) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
 
-  // Menangani redirect jika unauthenticated
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
@@ -66,6 +79,8 @@ export default function DashboardLayout({ children }) {
     );
   }
 
+  const userRole = session?.user?.role;
+
   const menuItems = [
     { href: '/dashboard', label: 'Dashboard', icon: HomeIcon, roles: ['Administrator', 'Salesman', 'Agen', 'PIC OMI', 'Sales Manager', 'Acting Manager', 'Acting PIC', 'User Feedback', 'Viewer', 'PIC OMI (SS)'] },
     { href: '/dashboard/submit', label: 'Submit Baru', icon: DocumentPlusIcon, roles: ['Salesman', 'Agen'] },
@@ -85,11 +100,17 @@ export default function DashboardLayout({ children }) {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      {/* --- DESKTOP & MOBILE HEADER --- */}
-      <header className="sticky top-0 z-40 w-full border-b border-blue-700/20 bg-blue-800 text-white shadow-lg shadow-blue-900/10">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      {/* --- NAV BAR DENGAN EFEK TRANSPARAN --- */}
+      <header 
+        className={cn(
+          "sticky top-0 z-40 w-full transition-all duration-300 border-b",
+          isScrolled 
+            ? "bg-blue-900/80 backdrop-blur-md border-blue-700/30 shadow-lg py-1" 
+            : "bg-blue-800 border-blue-700/20 py-2 shadow-blue-900/10"
+        )}
+      >
+        <div className="flex h-16 w-full items-center justify-between px-6 lg:px-10">
           
-          {/* Logo & Mobile Menu Toggle */}
           <div className="flex items-center gap-4">
             <button
               className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-white transition-all hover:bg-white/20 active:scale-95 md:hidden"
@@ -102,20 +123,18 @@ export default function DashboardLayout({ children }) {
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white p-1.5 shadow-inner">
                 <Image src="/logo-login.png" alt="Onda Logo" width={32} height={32} priority />
               </div>
-              <div className="hidden flex-col sm:flex">
+              <div className="hidden flex-col sm:flex text-white">
                 <span className="text-sm font-bold leading-none tracking-tight">Onda Care</span>
                 <span className="mt-1 text-[10px] font-medium uppercase tracking-widest text-blue-200/70">Workspace</span>
               </div>
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
           <div className="hidden md:block">
             <NavDesktop menu={filteredMenu} userRole={userRole} isFeedbackActive={isFeedbackActive} feedbackAllowed={FEEDBACK_ALLOWED} />
           </div>
 
-          {/* User Profile & Logout */}
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 text-white">
             <div className="hidden flex-col items-end sm:flex">
               <span className="text-xs font-semibold">{session?.user?.name}</span>
               <span className="text-[10px] font-medium text-blue-200">{session?.user?.role}</span>
@@ -170,10 +189,10 @@ export default function DashboardLayout({ children }) {
           <div className="fixed inset-0 flex">
             <Transition.Child as={Fragment} enter="transition ease-in-out duration-300 transform" enterFrom="-translate-x-full" enterTo="translate-x-0" leave="transition ease-in-out duration-300 transform" leaveFrom="translate-x-0" leaveTo="-translate-x-full">
               <Dialog.Panel className="relative flex w-full max-w-xs flex-col bg-blue-900 shadow-2xl">
-                <div className="flex h-16 items-center justify-between px-6 border-b border-white/10">
+                <div className="flex h-16 items-center justify-between px-6 border-b border-white/10 text-white">
                   <div className="flex items-center gap-3">
                     <Image src="/logo-login.png" alt="Logo" width={28} height={28} className="brightness-0 invert" />
-                    <span className="font-bold text-white">Onda Care</span>
+                    <span className="font-bold">Onda Care</span>
                   </div>
                   <button onClick={() => setSidebarOpen(false)} className="text-white/70 hover:text-white">
                     <XMarkIcon className="h-6 w-6" />
@@ -195,8 +214,7 @@ export default function DashboardLayout({ children }) {
         </Dialog>
       </Transition.Root>
 
-      {/* --- MAIN CONTENT --- */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="w-full">
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
           {children}
         </div>
@@ -205,7 +223,7 @@ export default function DashboardLayout({ children }) {
   );
 }
 
-// --- SUB-COMPONENTS FOR CLEANER CODE ---
+// --- SUB-COMPONENTS TETAP SAMA ---
 
 function NavDesktop({ menu, userRole, isFeedbackActive, feedbackAllowed }) {
   const pathname = usePathname();
@@ -215,22 +233,21 @@ function NavDesktop({ menu, userRole, isFeedbackActive, feedbackAllowed }) {
       <NavigationMenuList className="gap-1">
         {menu.map((item) => (
           <NavigationMenuItem key={item.href}>
-  <NavigationMenuLink asChild
-    className={cn(
-      navigationMenuTriggerStyle(),
-      "h-9 px-3 text-sm font-medium transition-all bg-transparent",
-      pathname === item.href 
-        ? "bg-white/15 text-white shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)] ring-1 ring-white/20" 
-        : "text-blue-100 hover:bg-white/10 hover:text-white"
-    )}
-  >
-    <Link href={item.href}>
-      <item.icon className="mr-2 h-4 w-4" />
-      {item.label}
-    </Link>
-  </NavigationMenuLink>
-</NavigationMenuItem>
-
+            <NavigationMenuLink asChild
+              className={cn(
+                navigationMenuTriggerStyle(),
+                "h-9 px-3 text-sm font-medium transition-all bg-transparent",
+                pathname === item.href 
+                  ? "bg-white/15 text-white shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)] ring-1 ring-white/20" 
+                  : "text-blue-100 hover:bg-white/10 hover:text-white"
+              )}
+            >
+              <Link href={item.href}>
+                <item.icon className="mr-2 h-4 w-4" />
+                {item.label}
+              </Link>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
         ))}
 
         {feedbackAllowed.includes(userRole) && (
