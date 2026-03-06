@@ -45,7 +45,8 @@ async function main() {
         { name: "ticket_id", type: "STRING" },
         { name: "title", type: "STRING" },
         { name: "description", type: "STRING" },
-        { name: "notes", type: "STRING" }, // ✅ TAMBAHAN SAJA
+        { name: "notes", type: "STRING" },
+        { name: "kode_sales", type: "STRING" }, // ✅ TAMBAHAN SAJA
         { name: "submitted_by", type: "STRING" },
         { name: "type", type: "STRING" },
         { name: "status", type: "STRING" },
@@ -67,15 +68,20 @@ async function main() {
 
     // Ambil data dari Prisma + logs
     const tickets = await prisma.ticket.findMany({
-      include: {
-        submittedBy: { select: { name: true } },
-        detail: true,
-        logs: {
-          orderBy: { timestamp: 'desc' }, // ambil log terbaru
-          take: 1,
-        },
-      },
-    });
+  include: {
+    submittedBy: { 
+      select: { 
+        name: true,
+        username: true
+      } 
+    },
+    detail: true,
+    logs: {
+      orderBy: { timestamp: 'desc' }, // ambil log terbaru
+      take: 1,
+    },
+  },
+});
 
     console.log("Total tickets from DB:", tickets.length);
 
@@ -95,6 +101,7 @@ async function main() {
         description: t.detail?.description ? String(t.detail.description) : "(No Description)",
         notes: t.logs?.[0]?.notes ? String(t.logs[0].notes) : null,
         submitted_by: t.submittedBy?.name ? String(t.submittedBy.name) : "Unknown",
+        kode_sales: t.submittedBy?.username ? String(t.submittedBy.username) : "Unknown",
         type: t.type ? String(t.type) : "Pending",
         status: t.status ? String(t.status) : "Open",
         created_at: createdAt.toISOString(),
