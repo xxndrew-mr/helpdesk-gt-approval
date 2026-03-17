@@ -81,7 +81,7 @@ export default function LoginPage() {
                 ONDA CARE
               </p>
               <p className="text-lg font-bold text-white">
-                PT Onda Mega Integra
+                Onda Grup
               </p>
             </div>
           </div>
@@ -90,7 +90,7 @@ export default function LoginPage() {
             <h1 className="text-4xl font-extrabold tracking-tight text-white leading-tight">
               Aplikasi saran dan masukan{' '}
               <span className="bg-gradient-to-r from-blue-300 to-sky-300 bg-clip-text text-transparent">
-                salesman produk ONDA
+                salesman Onda Grup
               </span>
               .
             </h1>
