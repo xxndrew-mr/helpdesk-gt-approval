@@ -1,43 +1,169 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { 
-  PaperClipIcon, 
-  MagnifyingGlassIcon, 
-  FunnelIcon, 
+import {
+  PaperClipIcon,
+  MagnifyingGlassIcon,
   CalendarIcon,
   ArrowPathIcon,
   ChevronDownIcon,
   UserIcon,
   BuildingStorefrontIcon,
   PhoneIcon,
-  TagIcon
+  TagIcon,
+  XMarkIcon,
+  ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
-import { LayoutDashboard, History, Ticket } from 'lucide-react';
+import { History, Ticket } from 'lucide-react';
 
-const getStatusClass = (status) => {
-  switch (status) {
-    case 'Open':
-      return 'bg-blue-50 text-blue-700 border-blue-200';
-    case 'Pending':
-      return 'bg-amber-50 text-amber-700 border-amber-200';
-    case 'Done':
-      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-    case 'Rejected':
-      return 'bg-rose-50 text-rose-700 border-rose-200';
-    default:
-      return 'bg-slate-50 text-slate-700 border-slate-200';
-  }
+// ─── Status styling ───────────────────────────────────────────────────────────
+const STATUS_STYLES = {
+  Open:     'bg-blue-50   text-blue-700   border-blue-200   ring-blue-600/10',
+  Pending:  'bg-amber-50  text-amber-700  border-amber-200  ring-amber-600/10',
+  Done:     'bg-emerald-50 text-emerald-700 border-emerald-200 ring-emerald-600/10',
+  Rejected: 'bg-rose-50   text-rose-700   border-rose-200   ring-rose-600/10',
 };
 
-export default function MyTicketsPage() {
-  const [tickets, setTickets] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+const STATUS_DOT = {
+  Open:     'bg-blue-500',
+  Pending:  'bg-amber-500',
+  Done:     'bg-emerald-500',
+  Rejected: 'bg-rose-500',
+};
 
-  const [selectedMonth, setSelectedMonth] = useState('');
+const getStatusStyle = (status) =>
+  STATUS_STYLES[status] ?? 'bg-slate-50 text-slate-700 border-slate-200 ring-slate-500/10';
+
+const getStatusDot = (status) =>
+  STATUS_DOT[status] ?? 'bg-slate-400';
+
+// ─── Small reusable components ────────────────────────────────────────────────
+const StatusBadge = ({ status }) => (
+  <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${getStatusStyle(status)}`}>
+    <span className={`h-1.5 w-1.5 rounded-full ${getStatusDot(status)}`} />
+    {status}
+  </span>
+);
+
+const InfoCell = ({ icon: Icon, label, value }) => (
+  <div className="space-y-0.5">
+    <p className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+      <Icon className="h-3 w-3" /> {label}
+    </p>
+    <p className="text-xs font-semibold text-slate-700 truncate">{value || '—'}</p>
+  </div>
+);
+
+const SkeletonCard = () => (
+  <div className="animate-pulse rounded-2xl border border-slate-100 bg-white overflow-hidden">
+    <div className="p-5 space-y-3">
+      <div className="h-5 w-20 rounded-full bg-slate-200" />
+      <div className="h-4 w-3/4 rounded bg-slate-200" />
+      <div className="h-3 w-1/2 rounded bg-slate-100" />
+    </div>
+    <div className="px-5 pb-5 space-y-2">
+      <div className="h-16 w-full rounded-xl bg-slate-100" />
+      <div className="h-10 w-full rounded-xl bg-slate-50" />
+    </div>
+  </div>
+);
+
+// ─── Ticket Card ──────────────────────────────────────────────────────────────
+const TicketCard = ({ ticket }) => (
+  <div className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-900/5">
+
+    {/* Header */}
+    <div className="p-5 border-b border-slate-100">
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-1.5 min-w-0">
+          <StatusBadge status={ticket.status} />
+          <h2 className="text-sm font-bold text-slate-900 line-clamp-2 group-hover:text-blue-700 transition-colors leading-snug">
+            {ticket.title}
+          </h2>
+          <div className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400">
+            <span className="font-bold text-blue-600">{ticket.ticket_id}</span>
+            <span>·</span>
+            <span>
+              {new Date(ticket.createdAt).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Body */}
+    <div className="flex-1 space-y-4 bg-slate-50/40 p-5">
+      <div className="grid grid-cols-3 gap-3">
+        <InfoCell icon={UserIcon}             label="Pelapor"   value={ticket.nama_pengisi} />
+        <InfoCell icon={BuildingStorefrontIcon} label="Toko"    value={ticket.toko} />
+        <InfoCell icon={PhoneIcon}            label="WhatsApp"  value={ticket.no_telepon} />
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Detail Permintaan</p>
+        <p className="text-xs leading-relaxed text-slate-600">
+          {ticket.detail?.description || 'Tidak ada deskripsi tambahan.'}
+        </p>
+
+        {ticket.detail?.attachments_json?.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5 border-t border-slate-100 pt-3">
+            {ticket.detail.attachments_json.map((f, idx) => (
+              <a
+                key={idx}
+                href={f.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700 ring-1 ring-inset ring-blue-600/10 transition-colors hover:bg-blue-100"
+              >
+                <PaperClipIcon className="h-3 w-3 shrink-0" />
+                <span className="max-w-[100px] truncate">{f.name}</span>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+
+    {/* Footer: Activity log */}
+    {ticket.logs?.length > 0 && (
+      <div className="border-t border-slate-100 bg-white px-5 py-3.5">
+        <details className="group/details">
+          <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] font-bold text-blue-600 hover:text-blue-700 transition-colors select-none">
+            <span>Riwayat Aktivitas ({ticket.logs.length})</span>
+            <ChevronDownIcon className="h-3.5 w-3.5 transition-transform group-open/details:rotate-180" />
+          </summary>
+
+          <div className="mt-3 max-h-44 space-y-3 overflow-y-auto pr-1 pb-1">
+            {ticket.logs.map((log) => (
+              <div key={log.log_id} className="relative pl-4 border-l-2 border-slate-100">
+                <span className="absolute -left-[5px] top-1.5 h-2 w-2 rounded-full bg-blue-500 ring-2 ring-white" />
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[11px] font-bold text-slate-800">{log.actor.name}</p>
+                  <span className="rounded-md bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold uppercase text-blue-600 tracking-wide">
+                    {log.action_type}
+                  </span>
+                </div>
+                {log.notes && <p className="mt-0.5 text-[11px] text-slate-500 leading-snug">{log.notes}</p>}
+                <p className="mt-1 text-[9px] font-medium uppercase tracking-wider text-slate-300">
+                  {new Date(log.timestamp).toLocaleString('id-ID')}
+                </p>
+              </div>
+            ))}
+          </div>
+        </details>
+      </div>
+    )}
+  </div>
+);
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+export default function MyTicketsPage() {
+  const [tickets,          setTickets]          = useState([]);
+  const [isLoading,        setIsLoading]        = useState(true);
+  const [error,            setError]            = useState(null);
+  const [selectedMonth,    setSelectedMonth]    = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery,      setSearchQuery]      = useState('');
 
   const loadHistory = async () => {
     setError(null);
@@ -45,8 +171,7 @@ export default function MyTicketsPage() {
     try {
       const res = await fetch('/api/tickets/my-history');
       if (!res.ok) throw new Error('Gagal mengambil data riwayat');
-      const data = await res.json();
-      setTickets(data);
+      setTickets(await res.json());
     } catch (err) {
       setError(err.message);
     } finally {
@@ -54,237 +179,178 @@ export default function MyTicketsPage() {
     }
   };
 
-  useEffect(() => {
-    loadHistory();
-  }, []);
+  useEffect(() => { loadHistory(); }, []);
 
-  const kategoriOptions = useMemo(() => {
-    const setCat = new Set(tickets.map((t) => t.kategori).filter(Boolean));
-    return Array.from(setCat);
-  }, [tickets]);
+  const kategoriOptions = useMemo(
+    () => Array.from(new Set(tickets.map((t) => t.kategori).filter(Boolean))),
+    [tickets]
+  );
 
   const visibleTickets = tickets.filter((ticket) => {
     const d = new Date(ticket.createdAt);
     if (isNaN(d.getTime())) return false;
+
     if (selectedMonth) {
-      const monthStr = d.getFullYear().toString() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+      const monthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       if (monthStr !== selectedMonth) return false;
     }
     if (selectedCategory && ticket.kategori !== selectedCategory) return false;
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const combined = `${ticket.title} ${ticket.detail?.description || ''} ${ticket.nama_pengisi || ''} ${ticket.toko || ''} ${ticket.kategori || ''} ${ticket.status || ''}`.toLowerCase();
-      if (!combined.includes(q)) return false;
+      const q        = searchQuery.toLowerCase();
+      const haystack = `${ticket.title} ${ticket.detail?.description ?? ''} ${ticket.nama_pengisi ?? ''} ${ticket.toko ?? ''} ${ticket.kategori ?? ''} ${ticket.status ?? ''}`.toLowerCase();
+      if (!haystack.includes(q)) return false;
     }
     return true;
   });
 
+  const hasFilters  = selectedMonth || selectedCategory || searchQuery;
+  const clearFilter = () => { setSelectedMonth(''); setSelectedCategory(''); setSearchQuery(''); };
+
+  const doneCount     = tickets.filter((t) => t.status === 'Done').length;
+  const pendingCount  = tickets.filter((t) => t.status === 'Pending' || t.status === 'Open').length;
+
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-4 pb-12 animate-in fade-in duration-700">
-      
-      {/* HEADER HERO */}
-      <section className="relative overflow-hidden rounded-3xl bg-blue-800 p-6 text-white shadow-xl shadow-blue-900/20 sm:p-8">
-        <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-blue-200">
-              <History className="h-4 w-4" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Onda Care Workspace</span>
+    <div className="min-h-screen bg-slate-50/60">
+
+      {/* ── Hero ──────────────────────────────────────────────────────────── */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#0d2444] via-[#133567] to-[#0a3d62] px-6 py-8 text-white">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-blue-400/10 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-0 left-1/3 h-32 w-32 rounded-full bg-sky-300/10 blur-2xl" />
+
+        <div className="relative mx-auto max-w-7xl">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2 text-blue-300/60 mb-1">
+                <ShieldCheckIcon className="h-4 w-4" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Onda Care · Workspace</span>
+              </div>
+              <h1 className="text-2xl font-black tracking-tight">Riwayat Request Saya</h1>
+              <p className="text-sm text-blue-100/60 max-w-md">
+                Pantau status laporan dan tinjau kembali data yang telah Anda kirimkan.
+              </p>
             </div>
-            <h1 className="text-2xl font-extrabold sm:text-3xl">Riwayat Request Saya</h1>
-            <p className="text-sm text-blue-100/80 max-w-xl">
-              Pantau status laporan dan tinjau kembali data yang telah Anda kirimkan sebelumnya.
-            </p>
-          </div>
-          <div className="flex items-center gap-3 rounded-2xl bg-white/10 p-4 backdrop-blur-md ring-1 ring-white/20">
-            <div className="text-right">
-              <p className="text-[10px] font-bold uppercase text-blue-200">Total Laporan</p>
-              <p className="text-2xl font-black">{tickets.length}</p>
+
+            {/* Stat chips */}
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <div className="flex items-center gap-2.5 rounded-xl bg-white/10 border border-white/10 px-4 py-2.5">
+                <Ticket className="h-4 w-4 text-blue-200" />
+                <div>
+                  <p className="text-[10px] text-blue-200/60 font-medium uppercase tracking-wide leading-none">Total</p>
+                  <p className="text-lg font-black leading-tight">{tickets.length}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2.5 rounded-xl bg-emerald-400/10 border border-emerald-400/20 px-4 py-2.5">
+                <div className="h-2 w-2 rounded-full bg-emerald-400" />
+                <div>
+                  <p className="text-[10px] text-emerald-200/60 font-medium uppercase tracking-wide leading-none">Selesai</p>
+                  <p className="text-lg font-black text-emerald-300 leading-tight">{doneCount}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2.5 rounded-xl bg-amber-400/10 border border-amber-400/20 px-4 py-2.5">
+                <div className="h-2 w-2 rounded-full bg-amber-400" />
+                <div>
+                  <p className="text-[10px] text-amber-200/60 font-medium uppercase tracking-wide leading-none">Proses</p>
+                  <p className="text-lg font-black text-amber-300 leading-tight">{pendingCount}</p>
+                </div>
+              </div>
             </div>
-            <div className="h-10 w-px bg-white/20" />
-            <Ticket className="h-8 w-8 text-blue-300 opacity-50" />
           </div>
         </div>
-        <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-blue-400/10 blur-3xl" />
-      </section>
+      </div>
 
-      {/* FILTER BAR */}
-      <section className="sticky top-20 z-30 rounded-2xl border border-slate-200 bg-white/80 p-4 backdrop-blur-md shadow-sm">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-          <div className="relative flex-1">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Cari laporan, toko, atau kata kunci..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
-            />
-          </div>
+      <div className="mx-auto max-w-7xl px-4 py-6 space-y-5 animate-in fade-in duration-500">
 
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative flex items-center">
-              <TagIcon className="absolute left-3 h-4 w-4 text-slate-400 pointer-events-none" />
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="rounded-xl border border-slate-200 bg-white pl-9 pr-8 py-2 text-sm focus:border-blue-500 outline-none transition-all appearance-none"
-              >
-                <option value="">Semua Kategori</option>
-                {kategoriOptions.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
-              </select>
-              <ChevronDownIcon className="absolute right-3 h-3 w-3 text-slate-400 pointer-events-none" />
-            </div>
-
-            <div className="relative flex items-center">
-              <CalendarIcon className="absolute left-3 h-4 w-4 text-slate-400 pointer-events-none" />
+        {/* ── Filter Bar ────────────────────────────────────────────────── */}
+        <div className="sticky top-[60px] z-30 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 backdrop-blur-md shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative flex-1">
+              <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
-                type="month"
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="rounded-xl border border-slate-200 bg-white pl-9 pr-4 py-2 text-sm focus:border-blue-500 outline-none transition-all"
+                type="text"
+                placeholder="Cari laporan, toko, atau kata kunci..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/70 py-2 pl-9 pr-4 text-sm outline-none transition-all focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
               />
             </div>
 
-            {(selectedMonth || selectedCategory || searchQuery) && (
-              <button
-                onClick={() => { setSelectedMonth(''); setSelectedCategory(''); setSearchQuery(''); }}
-                className="text-xs font-bold text-rose-600 hover:text-rose-700 px-2 underline-offset-4 hover:underline"
-              >
-                Reset Filter
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative">
+                <TagIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="appearance-none rounded-xl border border-slate-200 bg-slate-50/70 py-2 pl-9 pr-7 text-sm outline-none transition-all focus:border-blue-400 focus:bg-white cursor-pointer"
+                >
+                  <option value="">Semua Kategori</option>
+                  {kategoriOptions.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+                </select>
+              </div>
+
+              <div className="relative">
+                <CalendarIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="month"
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="rounded-xl border border-slate-200 bg-slate-50/70 py-2 pl-9 pr-3 text-sm outline-none transition-all focus:border-blue-400 focus:bg-white"
+                />
+              </div>
+
+              {hasFilters && (
+                <button
+                  onClick={clearFilter}
+                  className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-500 transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-500"
+                >
+                  <XMarkIcon className="h-3.5 w-3.5" />
+                  Reset
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Error ─────────────────────────────────────────────────────── */}
+        {error && (
+          <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+            {error}
+          </div>
+        )}
+
+        {/* ── Content ───────────────────────────────────────────────────── */}
+        {isLoading ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : visibleTickets.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-white py-20 gap-3">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
+              <Ticket className="h-7 w-7 text-slate-300" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-semibold text-slate-600">Tidak ada request ditemukan</p>
+              <p className="text-xs text-slate-400 mt-0.5">Coba ubah kata kunci atau filter Anda.</p>
+            </div>
+            {hasFilters && (
+              <button onClick={clearFilter} className="text-xs font-bold text-blue-500 hover:underline mt-1">
+                Reset filter
               </button>
             )}
           </div>
-        </div>
-      </section>
-
-      {/* LIST CONTENT */}
-      {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-3">
-          <ArrowPathIcon className="h-8 w-8 animate-spin text-blue-600" />
-          <p className="text-sm font-medium text-slate-500">Menyusun riwayat Anda...</p>
-        </div>
-      ) : visibleTickets.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50">
-          <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-             <Ticket className="h-8 w-8 text-slate-300" />
-          </div>
-          <p className="text-slate-600 font-medium text-sm">Tidak ada request yang ditemukan.</p>
-          <p className="text-slate-400 text-xs">Coba ubah kata kunci atau filter Anda.</p>
-        </div>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-2">
-          {visibleTickets.map((ticket) => (
-            <div
-              key={ticket.ticket_id}
-              className="group flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm transition-all hover:border-blue-300 hover:shadow-xl hover:shadow-blue-900/5 overflow-hidden"
-            >
-              {/* Card Header & Status */}
-              <div className="p-5 sm:p-6 border-b border-slate-100">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-1">
-                    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${getStatusClass(ticket.status)}`}>
-                      {ticket.status}
-                    </span>
-                    <h2 className="text-base font-bold text-slate-900 line-clamp-2 pt-1 group-hover:text-blue-700 transition-colors">
-                      {ticket.title}
-                    </h2>
-                    <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                      <span className="font-bold text-blue-600">{ticket.ticket_id}</span>
-                      <span>•</span>
-                      <span>{new Date(ticket.createdAt).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card Body - Info Grid */}
-              <div className="p-5 sm:p-6 bg-slate-50/50 flex-grow space-y-5">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1"><UserIcon className="h-3 w-3" /> Pelapor</p>
-                    <p className="text-xs font-semibold text-slate-700 truncate">{ticket.nama_pengisi || '-'}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1"><BuildingStorefrontIcon className="h-3 w-3" /> Toko</p>
-                    <p className="text-xs font-semibold text-slate-700 truncate">{ticket.toko || '-'}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1"><PhoneIcon className="h-3 w-3" /> WhatsApp</p>
-                    <p className="text-xs font-semibold text-slate-700 truncate">{ticket.no_telepon || '-'}</p>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl bg-white border border-slate-200 p-4 shadow-sm">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">Detail Permintaan</p>
-                  <p className="text-sm leading-relaxed text-slate-600 italic sm:not-italic">
-                    {ticket.detail?.description || 'Tidak ada deskripsi tambahan.'}
-                  </p>
-                  
-                  {ticket.detail?.attachments_json?.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-slate-100 flex flex-wrap gap-2">
-                      {ticket.detail.attachments_json.map((file, idx) => (
-                        <a
-                          key={idx}
-                          href={file.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/10 hover:bg-blue-100 transition-colors"
-                        >
-                          <PaperClipIcon className="h-3.5 w-3.5" />
-                          <span className="max-w-[120px] truncate">{file.name}</span>
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Card Footer - Timeline & PIC */}
-              <div className="px-5 py-4 bg-white border-t border-slate-100">
-                {/* <div className="flex items-center justify-between mb-4">
-                   <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
-                        <UserIcon className="h-4 w-4 text-slate-500" />
-                      </div>
-                      <div className="text-[11px]">
-                        <p className="text-slate-400 font-medium">PIC Saat Ini</p>
-                        <p className="font-bold text-slate-700">
-                          {ticket.assignments?.length > 0 ? ticket.assignments[0].user.name : 'Permintaan Selesai'}
-                        </p>
-                      </div>
-                   </div>
-                </div> */}
-
-                {ticket.logs?.length > 0 && (
-                  <details className="group border-t border-slate-50 pt-2">
-                    <summary className="flex cursor-pointer list-none items-center justify-between text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors">
-                      <span>Riwayat Aktivitas ({ticket.logs.length})</span>
-                      <ChevronDownIcon className="h-4 w-4 transition-transform group-open:rotate-180" />
-                    </summary>
-                    <div className="mt-3 space-y-4 max-h-48 overflow-y-auto pr-2 pb-2">
-                      {ticket.logs.map((log) => (
-                        <div key={log.log_id} className="relative pl-4 border-l border-slate-200">
-                          <div className="absolute -left-[5px] top-1.5 h-2 w-2 rounded-full bg-blue-500 ring-4 ring-white" />
-                          <div className="flex items-center justify-between gap-2">
-                             <p className="text-[11px] font-bold text-slate-900">{log.actor.name}</p>
-                             <span className="text-[10px] font-medium text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded uppercase leading-none">
-                                {log.action_type}
-                             </span>
-                          </div>
-                          {log.notes && <p className="mt-0.5 text-xs text-slate-500 leading-snug">{log.notes}</p>}
-                          <p className="mt-1 text-[9px] text-slate-400 font-medium uppercase tracking-tighter">
-                            {new Date(log.timestamp).toLocaleString('id-ID')}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </details>
-                )}
-              </div>
+        ) : (
+          <>
+            <p className="text-xs font-medium text-slate-400">
+              Menampilkan <span className="font-bold text-slate-600">{visibleTickets.length}</span> dari{' '}
+              <span className="font-bold text-slate-600">{tickets.length}</span> laporan
+            </p>
+            <div className="grid gap-4 md:grid-cols-2">
+              {visibleTickets.map((ticket) => (
+                <TicketCard key={ticket.ticket_id} ticket={ticket} />
+              ))}
             </div>
-          ))}
-        </div>
-      )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
