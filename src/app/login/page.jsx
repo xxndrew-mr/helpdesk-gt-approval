@@ -4,20 +4,6 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-
-// shadcn/ui components
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-
-// ikon lucide
 import { Eye, EyeOff, User, Lock, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
@@ -29,17 +15,15 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
     setError(null);
     setIsLoading(true);
-
     try {
       const result = await signIn('credentials', {
         username,
         password,
         redirect: false,
       });
-
       if (result?.ok) {
         router.push('/dashboard');
       } else {
@@ -53,187 +37,441 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-white lg:bg-slate-50">
-      {/* 
-          PANEL KIRI: Branding (Hanya muncul di Desktop)
-          Menggunakan Gradient yang konsisten dengan Dashboard Hero
-      */}
-      <div className="relative hidden lg:flex w-1/2 items-center justify-center bg-blue-900 overflow-hidden">
-        {/* Dekorasi Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-700 via-blue-900 to-indigo-950" />
-        <div className="absolute -left-20 -top-20 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl" />
-        <div className="absolute -right-20 -bottom-20 h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl" />
-        
-        {/* Konten Branding */}
-        <div className="relative z-10 w-full max-w-lg px-12">
-          <div className="flex items-center gap-4 mb-10 animate-in fade-in slide-in-from-left-4 duration-700">
-            <div className="relative h-16 w-16 overflow-hidden rounded-2xl bg-white p-2 shadow-2xl ring-4 ring-white/10">
-              <Image
-                src="/logo-login.png"
-                alt="Logo"
-                fill
-                className="object-contain p-2"
-                priority
-              />
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        .lp-page {
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background-image:
+          background-size: cover;
+          background-position: center;
+          padding: 24px;
+          position: relative;
+          font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .lp-page::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: rgba(255,255,255,0.32);
+          backdrop-filter: blur(3px);
+        }
+
+        /* ── OUTER CARD (putih) ── */
+        .lp-card {
+          position: relative;
+          z-index: 1;
+          display: flex;
+          align-items: stretch;
+          width: 100%;
+          max-width: 940px;
+          min-height: 580px;
+          background: #ffffff;
+          border-radius: 28px;
+          box-shadow: 0 24px 80px rgba(0,0,0,0.16), 0 6px 20px rgba(0,0,0,0.07);
+          overflow: hidden;
+          animation: cardIn 0.5s cubic-bezier(0.22,1,0.36,1) both;
+        }
+
+        @keyframes cardIn {
+          from { opacity: 0; transform: translateY(18px) scale(0.98); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* ── LEFT: foto "mengambang" dengan margin di semua sisi ── */
+        /*    Ini kuncinya: margin: 14px → foto punya gap dari tepi card  */
+        /*    sehingga border-radius terlihat di semua sudut (persis Green Valley) */
+        .lp-left {
+          margin: 14px 0 14px 14px;   /* gap dari card putih */
+          width: 42%;
+          flex-shrink: 0;
+          position: relative;
+          border-radius: 18px;        /* semua sudut melengkung */
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: 28px 28px 36px 28px;
+        }
+
+        .lp-left-bg {
+          position: absolute;
+          inset: 0;
+          background-image: url('/bg3.jpg');
+          background-size: cover;
+          background-position: center;
+        }
+
+        .lp-left-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(
+            to bottom,
+            rgba(8,24,58,0.15) 0%,
+            rgba(8,24,58,0.08) 35%,
+            rgba(8,24,58,0.75) 100%
+          );
+        }
+
+        .lp-left-top {
+          position: relative;
+          z-index: 2;
+          display: flex;
+          justify-content: flex-end;
+        }
+
+        .lp-logo-box {
+          width: 50px;
+          height: 50px;
+          border-radius: 12px;
+          background: rgba(255,255,255,0.2);
+          backdrop-filter: blur(14px);
+          border: 1.5px solid rgba(255,255,255,0.38);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+        }
+
+        .lp-left-bottom {
+          position: relative;
+          z-index: 2;
+        }
+
+        .lp-welcome {
+          color: rgba(255,255,255,0.72);
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          margin: 0 0 8px;
+        }
+
+        .lp-brand {
+          color: #fff;
+          font-size: 34px;
+          font-weight: 800;
+          line-height: 1.12;
+          margin: 0 0 10px;
+          letter-spacing: -0.4px;
+        }
+
+        .lp-brand span {
+          display: block;
+          background: linear-gradient(90deg, #93c5fd, #bfdbfe);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .lp-tagline {
+          color: rgba(255,255,255,0.68);
+          font-size: 13px;
+          margin: 0;
+          line-height: 1.5;
+        }
+
+        /* ── RIGHT PANEL ── */
+        .lp-right {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          padding: 52px 52px;
+          animation: slideIn 0.6s cubic-bezier(0.22,1,0.36,1) 0.12s both;
+        }
+
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateX(14px); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+
+        .lp-title {
+          font-size: 25px;
+          font-weight: 800;
+          color: #0f172a;
+          margin: 0 0 6px;
+          text-align: center;
+          letter-spacing: 0.03em;
+        }
+
+        .lp-desc {
+          font-size: 13px;
+          color: #94a3b8;
+          text-align: center;
+          margin: 0 0 30px;
+          line-height: 1.55;
+        }
+
+        .lp-fields {
+          display: flex;
+          flex-direction: column;
+          gap: 15px;
+        }
+
+        .lp-field-label {
+          display: block;
+          font-size: 10.5px;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: #64748b;
+          margin-bottom: 6px;
+        }
+
+        .lp-input-wrap { position: relative; }
+
+        .lp-input-icon {
+          position: absolute;
+          left: 14px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #94a3b8;
+          display: flex;
+          align-items: center;
+          pointer-events: none;
+          transition: color 0.2s;
+        }
+
+        .lp-input-wrap:focus-within .lp-input-icon { color: #2563eb; }
+
+        .lp-input {
+          width: 100%;
+          height: 50px;
+          padding: 0 16px 0 42px;
+          border: 1.5px solid #e2e8f0;
+          border-radius: 12px;
+          font-size: 14px;
+          color: #0f172a;
+          background: #f8fafc;
+          outline: none;
+          transition: all 0.2s;
+          font-family: inherit;
+        }
+
+        .lp-input:focus {
+          border-color: #2563eb;
+          background: #fff;
+          box-shadow: 0 0 0 4px rgba(37,99,235,0.08);
+        }
+
+        .lp-input::placeholder { color: #cbd5e1; }
+        .lp-input.pr { padding-right: 44px; }
+
+        .lp-eye {
+          position: absolute;
+          right: 13px;
+          top: 50%;
+          transform: translateY(-50%);
+          background: none;
+          border: none;
+          cursor: pointer;
+          color: #94a3b8;
+          display: flex;
+          align-items: center;
+          padding: 0;
+          transition: color 0.2s;
+        }
+        .lp-eye:hover { color: #2563eb; }
+
+        .lp-error {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          border-radius: 10px;
+          padding: 11px 14px;
+          font-size: 12.5px;
+          font-weight: 500;
+          color: #dc2626;
+        }
+
+        .lp-error-dot {
+          width: 7px; height: 7px;
+          border-radius: 50%;
+          background: #ef4444;
+          flex-shrink: 0;
+          animation: blink 1.4s infinite;
+        }
+
+        @keyframes blink {
+          0%,100% { opacity: 1; } 50% { opacity: 0.3; }
+        }
+
+        .lp-btn {
+          width: 100%;
+          height: 50px;
+          border-radius: 50px;
+          background: #1d4ed8;
+          color: #fff;
+          font-size: 15px;
+          font-weight: 700;
+          border: none;
+          cursor: pointer;
+          margin-top: 6px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+          box-shadow: 0 4px 20px rgba(29,78,216,0.28);
+          font-family: inherit;
+          letter-spacing: 0.01em;
+        }
+
+        .lp-btn:hover:not(:disabled) {
+          background: #1e40af;
+          box-shadow: 0 6px 24px rgba(29,78,216,0.38);
+        }
+
+        .lp-btn:active:not(:disabled) { transform: scale(0.98); }
+
+        .lp-btn:disabled {
+          background: #cbd5e1;
+          box-shadow: none;
+          cursor: not-allowed;
+        }
+
+        .lp-footer {
+          text-align: center;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.13em;
+          text-transform: uppercase;
+          color: #cbd5e1;
+          margin-top: 28px;
+          font-family: inherit;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spin { animation: spin 1s linear infinite; }
+
+        @media (max-width: 768px) {
+          .lp-left { display: none; }
+          .lp-right { padding: 40px 28px; }
+        }
+      `}</style>
+
+      <div className="lp-page">
+        <div className="lp-card">
+
+          {/* ── LEFT PANEL ── */}
+          <div className="lp-left">
+            <div className="lp-left-bg" />
+            <div className="lp-left-overlay" />
+
+            <div className="lp-left-top">
+              <div className="lp-logo-box">
+                <Image
+                  src="/logo-login.png"
+                  alt="Onda Care"
+                  width={34}
+                  height={34}
+                  style={{ objectFit: 'contain' }}
+                  priority
+                />
+              </div>
             </div>
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.3em] text-blue-300">
-                ONDA CARE
-              </p>
-              <p className="text-lg font-bold text-white">
-                Onda Grup
-              </p>
+
+            <div className="lp-left-bottom">
+              <p className="lp-welcome">SELAMAT DATANG DI</p>
+              <h1 className="lp-brand">
+                Onda Care
+                <span>Onda Grup</span>
+              </h1>
+              <p className="lp-tagline">Aplikasi saran dan masukan salesman Onda Grup.</p>
             </div>
           </div>
 
-          <div className="space-y-6 animate-in fade-in slide-in-from-left-6 duration-1000 delay-100">
-            <h1 className="text-4xl font-extrabold tracking-tight text-white leading-tight">
-              Aplikasi saran dan masukan{' '}
-              <span className="bg-gradient-to-r from-blue-300 to-sky-300 bg-clip-text text-transparent">
-                salesman Onda Grup
-              </span>
-              .
-            </h1>
+          {/* ── RIGHT PANEL ── */}
+          <div className="lp-right">
+            <h2 className="lp-title">Masuk ke Onda Care</h2>
+            <p className="lp-desc">Gunakan kredensial yang diberikan oleh admin.</p>
 
-            <p className="text-lg leading-relaxed text-blue-100/80">
-              Portal resmi bagi salesman untuk menyampaikan saran, kendala, dan ide
-              pengembangan produk agar komunikasi dengan tim internal ONDA lebih cepat,
-              terarah, dan terdokumentasi.
-            </p>
-          </div>
-          
-          <div className="mt-20 pt-10 border-t border-white/10 text-blue-200/50 text-xs">
-            © {new Date().getFullYear()} PT Onda Mega Integra. All rights reserved.
-          </div>
-        </div>
-      </div>
+            <div className="lp-fields">
 
-      {/* 
-          PANEL KANAN: Form Login 
-          Responsif: Full screen di mobile, center card di desktop
-      */}
-      <div className="flex w-full lg:w-1/2 items-center justify-center p-6 sm:p-12 lg:p-20">
-        <div className="w-full max-w-[400px] animate-in fade-in zoom-in-95 duration-500">
-          
-          {/* Header Mobile Only */}
-          <div className="mb-10 flex flex-col items-center text-center lg:hidden">
-            <div className="relative mb-4 h-16 w-16 overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-slate-100">
-              <Image
-                src="/logo-login.png"
-                alt="Logo"
-                fill
-                className="object-contain p-3"
-              />
-            </div>
-            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-blue-600">
-              ONDA CARE
-            </p>
-            <p className="mt-1 text-base font-bold text-slate-900">
-              PT Onda Mega Integra
-            </p>
-          </div>
-
-          <Card className="border-none shadow-2xl shadow-slate-200/60 lg:shadow-none lg:bg-transparent">
-            <CardHeader className="space-y-1 lg:p-0 lg:mb-8">
-              <CardTitle className="text-2xl font-black tracking-tight text-slate-900">
-                Masuk ke Onda Care
-              </CardTitle>
-              <CardDescription className="text-slate-500">
-                Gunakan kredensial yang diberikan oleh admin untuk mengakses dashboard.
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent className="space-y-5 lg:p-0">
-              {/* Alert Error */}
               {error && (
-                <div className="flex items-center gap-3 rounded-xl border border-red-100 bg-red-50 p-4 text-xs font-medium text-red-600 animate-in shake duration-300">
-                  <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                <div className="lp-error">
+                  <div className="lp-error-dot" />
                   {error}
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Username */}
-                <div className="space-y-2">
-                  <Label htmlFor="username" className="text-xs font-bold uppercase tracking-wider text-slate-600 ml-1">
-                    Username
-                  </Label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 group-focus-within:text-blue-600 transition-colors">
-                      <User className="h-4 w-4" />
-                    </div>
-                    <Input
-                      id="username"
-                      type="text"
-                      autoComplete="username"
-                      required
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      className="h-12 pl-11 rounded-xl border-slate-200 bg-slate-50 focus:bg-white transition-all focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none"
-                      placeholder="Masukkan username"
-                    />
-                  </div>
+              {/* Username */}
+              <div>
+                <label className="lp-field-label" htmlFor="username">Username</label>
+                <div className="lp-input-wrap">
+                  <span className="lp-input-icon"><User size={16} /></span>
+                  <input
+                    id="username"
+                    type="text"
+                    autoComplete="username"
+                    required
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="lp-input"
+                    placeholder="Masukkan username"
+                  />
                 </div>
+              </div>
 
-                {/* Password */}
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-slate-600 ml-1">
-                    Password
-                  </Label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 group-focus-within:text-blue-600 transition-colors">
-                      <Lock className="h-4 w-4" />
-                    </div>
-                    <Input
-                      id="password"
-                      type={showPassword ? 'text' : 'password'}
-                      autoComplete="current-password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="h-12 pl-11 pr-12 rounded-xl border-slate-200 bg-slate-50 focus:bg-white transition-all focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none"
-                      placeholder="••••••••"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((s) => !s)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-blue-600 transition-colors"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
+              {/* Password */}
+              <div>
+                <label className="lp-field-label" htmlFor="password">Password</label>
+                <div className="lp-input-wrap">
+                  <span className="lp-input-icon"><Lock size={16} /></span>
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="lp-input pr"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    className="lp-eye"
+                    onClick={() => setShowPassword((s) => !s)}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
                 </div>
+              </div>
 
-                {/* Tombol Login */}
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full h-12 mt-4 rounded-xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-600/20 hover:bg-blue-700 hover:shadow-blue-600/30 active:scale-[0.98] transition-all disabled:bg-slate-300 disabled:shadow-none"
-                >
-                  {isLoading ? (
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Memproses...
-                    </div>
-                  ) : (
-                    'Masuk Sekarang'
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+              {/* Submit */}
+              <button
+                className="lp-btn"
+                disabled={isLoading}
+                onClick={handleSubmit}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 size={16} className="spin" />
+                    Memproses...
+                  </>
+                ) : 'Masuk Sekarang'}
+              </button>
 
-          <footer className="mt-10 text-center">
-             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-300 lg:text-slate-400">
-               © {new Date().getFullYear()} PT Onda Mega Integra · Onda Care 2.0
-             </p>
-          </footer>
+            </div>
+
+            <p className="lp-footer">
+              © {new Date().getFullYear()} PT Onda Mega Integra · By : A
+            </p>
+          </div>
+
         </div>
       </div>
-    </div>
+    </>
   );
 }
