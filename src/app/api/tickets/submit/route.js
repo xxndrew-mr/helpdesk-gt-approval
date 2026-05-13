@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
-import { authOptions } from '@/lib/auth'
-import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth';
+import { getServerSession } from 'next-auth';
 import { sendTicketAssignedEmail } from '@/lib/email';
 import { getRoutingTarget } from '@/lib/smartRouting';
 
@@ -22,21 +22,12 @@ export async function POST(request) {
   }
 
   const user = session.user;
+  const { title, description, kategori, jabatan, toko, attachments, phone } = await request.json();
 
-  const { title, description, kategori, jabatan, toko, attachments, phone } =
-  await request.json();
-
-
-  // ===============================
-  // VALIDASI DASAR
-  // ===============================
   if (!title || !description || !kategori) {
     return NextResponse.json({ message: 'Data tidak lengkap.' }, { status: 400 });
   }
 
-  // ===============================
-  // AMBIL DATA USER
-  // ===============================
   const submitter = await prisma.user.findUnique({
     where: { user_id: user.id },
     select: {
@@ -50,54 +41,35 @@ export async function POST(request) {
     return NextResponse.json({ message: 'User tidak ditemukan.' }, { status: 404 });
   }
 
-  
-
   const nama_pengisi = submitter.name;
-const no_telepon = submitter.phone || phone;
+  // Utamakan input baru dari user jika ada, jika tidak ada baru pakai dari DB
+  const no_telepon = phone || submitter.phone;
 
-if (!no_telepon) {
-  return NextResponse.json(
-    { message: 'Nomor telepon wajib diisi.' },
-    { status: 400 }
-  );
-}
+  if (!no_telepon) {
+    return NextResponse.json({ message: 'Nomor telepon wajib diisi.' }, { status: 400 });
+  }
 
-// ===============================
-// VALIDASI NOMOR TELEPON
-// ===============================
-const cleanPhone = no_telepon.trim();
+  // Pastikan hanya angka dan hapus spasi/strip
+  const cleanPhone = no_telepon.toString().replace(/[^0-9]/g, '');
 
-// hanya angka & minimal 9 digit
-if (!/^[0-9]+$/.test(cleanPhone) || cleanPhone.length < 9) {
-  return NextResponse.json(
-    { message: 'Nomor telepon harus berupa minimal 9 digit angka.' },
-    { status: 400 }
-  );
-}
-
-
-if (!submitter.phone && phone) {
-  await prisma.user.update({
-    where: { user_id: user.id },
-    data: { phone: cleanPhone },
-  });
-}
-
-
-
-  // ===============================
-  // VALIDASI KHUSUS ROLE
-  // ===============================
-  if (user.role === 'Agen' && !jabatan) {
+  if (cleanPhone.length < 9) {
     return NextResponse.json(
-      { message: 'Agen wajib mengisi Jabatan.' },
+      { message: 'Nomor telepon harus berupa minimal 9 digit angka.' },
       { status: 400 }
     );
   }
 
-  // ===============================
-  // VALIDASI LAMPIRAN
-  // ===============================
+  if (!submitter.phone && phone) {
+    await prisma.user.update({
+      where: { user_id: user.id },
+      data: { phone: cleanPhone },
+    });
+  }
+
+  if (user.role === 'Agen' && !jabatan) {
+    return NextResponse.json({ message: 'Agen wajib mengisi Jabatan.' }, { status: 400 });
+  }
+
   const isAttachmentRequired = REQUIRED_ATTACHMENT_RULES.includes(kategori);
 
   if (isAttachmentRequired && (!attachments || attachments.length === 0)) {
@@ -107,9 +79,6 @@ if (!submitter.phone && phone) {
     );
   }
 
-  // ===============================
-  // SMART ROUTING
-  // ===============================
   const routing = getRoutingTarget(kategori);
   if (!routing) {
     return NextResponse.json({ message: 'Routing kategori belum tersedia.' }, { status: 400 });
@@ -117,13 +86,10 @@ if (!submitter.phone && phone) {
 
   const assignedPicOmiId = submitter.pic_omi_id;
   if (!assignedPicOmiId) {
-    return NextResponse.json({ message: 'Akun belum dihubungkan ke PIC OMI. Hubungi Admin.', status: 500 });
+    return NextResponse.json({ message: 'Akun belum dihubungkan ke PIC OMI. Hubungi Admin.' }, { status: 500 });
   }
 
   try {
-    // ===============================
-    // TRANSACTION KECIL: Hanya ticket, detail, log
-    // ===============================
     const ticket = await prisma.$transaction(async (tx) => {
       const t = await tx.ticket.create({
         data: {
@@ -153,27 +119,30 @@ if (!submitter.phone && phone) {
           ticket_id: t.ticket_id,
           actor_user_id: user.id,
           action_type: 'Submit',
-         notes:
-  user.role === 'Salesman'
-    ? `Tiket dibuat oleh Sales ${nama_pengisi} (${cleanPhone}) untuk ${toko}.`
-    : `Tiket dibuat oleh ${nama_pengisi} (${jabatan}) (${cleanPhone}).`,
-
+          notes: user.role === 'Salesman'
+            ? `Tiket dibuat oleh Sales ${nama_pengisi} (${cleanPhone}) untuk ${toko}.`
+            : `Tiket dibuat oleh ${nama_pengisi} (${jabatan}) (${cleanPhone}).`,
         },
       });
 
       return t;
     });
 
-    // ===============================
-    // AMBIL PIC OMI SS & PIC OMI USER di luar transaction
-    // ===============================
     const picOmiSSUsers = await prisma.user.findMany({
-      where: { role: { role_name: 'PIC OMI (SS)' }, status: 'Active' },
+      where: {
+        role: { role_name: 'PIC OMI (SS)' },
+        status: 'Active'
+      },
       select: { user_id: true, email: true, name: true },
     });
 
     const assignments = [
-      { ticket_id: ticket.ticket_id, user_id: assignedPicOmiId, assignment_type: 'Active', status: 'Pending' },
+      {
+        ticket_id: ticket.ticket_id,
+        user_id: assignedPicOmiId,
+        assignment_type: 'Active',
+        status: 'Pending'
+      },
       ...picOmiSSUsers.map((ss) => ({
         ticket_id: ticket.ticket_id,
         user_id: ss.user_id,
@@ -189,9 +158,6 @@ if (!submitter.phone && phone) {
       select: { email: true, name: true },
     });
 
-    // ===============================
-    // EMAIL FIRE-AND-FORGET
-    // ===============================
     if (picOmiUser?.email) {
       void sendTicketAssignedEmail({
         to: picOmiUser.email,

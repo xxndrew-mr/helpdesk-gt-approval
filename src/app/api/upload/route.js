@@ -1,59 +1,39 @@
 import { NextResponse } from 'next/server';
-import { drive, makeFilePublic } from '@/lib/googleDrive';
-import { Readable } from 'stream';
+import { s3Client } from '@/lib/r2';
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 
 export const runtime = 'nodejs';
-
-function bufferToStream(buffer) {
-  return Readable.from(buffer);
-}
 
 export async function POST(request) {
   try {
     const data = await request.formData();
     const file = data.get('file');
 
-    if (!file) {
-      return NextResponse.json({ message: 'File tidak ditemukan' }, { status: 400 });
-    }
+    if (!file) return NextResponse.json({ message: 'File tidak ditemukan' }, { status: 400 });
 
-    if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json({ message: 'Maksimal file 10MB' }, { status: 400 });
-    }
-
-    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ message: 'Format tidak didukung' }, { status: 400 });
-    }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const stream = Readable.from(buffer);
+    const fileName = `${Date.now()}-${file.name}`; // Buat nama unik
 
-    const res = await drive.files.create({
-      supportsAllDrives: true,
-      requestBody: {
-        name: file.name,
-        parents: ['1k2ACUnNGbKEKypw3rLmXRHHKMmrRo80z'],
-      },
-      media: {
-        mimeType: file.type,
-        body: stream,
-      },
-      fields: 'id, webViewLink',
-    });
+    await s3Client.send(
+      new PutObjectCommand({
+        Bucket: "onda-care",
+        Key: fileName,
+        Body: buffer,
+        ContentType: file.type,
+      })
+    );
 
-    await makeFilePublic(res.data.id);
+    // URL publik R2 (jika kamu sudah mengaktifkan Public Bucket atau Custom Domain)
+    const fileUrl = `https://care.ondasystem.work/${fileName}`;
 
     return NextResponse.json({
-      fileId: res.data.id,
-      fileUrl: res.data.webViewLink,
+      success: true,
+      fileUrl: fileUrl,
     });
 
   } catch (err) {
-    console.error('Upload error:', err);
-    return NextResponse.json(
-      { message: err.message || 'Upload gagal' },
-      { status: 500 }
-    );
+    console.error('R2 Upload error:', err);
+    return NextResponse.json({ message: 'Upload gagal' }, { status: 500 });
   }
 }
