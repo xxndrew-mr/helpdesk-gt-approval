@@ -4,7 +4,6 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 
 import {
-  LayoutDashboard,
   Sparkles,
   ListChecks,
   Info,
@@ -12,7 +11,6 @@ import {
   Zap,
   Users,
   BarChart3,
-  Settings,
   UserPlus,
   Inbox,
   ClipboardList,
@@ -20,31 +18,47 @@ import {
   MessageSquare,
   Database,
   ArrowUpRight,
-  Clock,
   CheckCircle2,
+  LockKeyhole,
+  Activity,
 } from "lucide-react";
 
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/components/ui/card";
-
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+function ActivityMascot({ variant = 0 }) {
+  return (
+    <div className={`mascot mascot-${variant % 4}`} aria-hidden="true">
+      <div className="mascot-wire mascot-wire-left" />
+      <div className="mascot-wire mascot-wire-right" />
+      <div className="mascot-body">
+        <span className="mascot-eye mascot-eye-left" />
+        <span className="mascot-eye mascot-eye-right" />
+        <span className="mascot-smile" />
+      </div>
+      <div className="mascot-leg mascot-leg-left" />
+      <div className="mascot-leg mascot-leg-right" />
+      <div className="mascot-ball" />
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const { data: session } = useSession();
 
   if (!session || !session.user) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-        <p className="text-sm font-medium text-slate-500">
-          Memuat data pengguna...
-        </p>
-      </div>
+      <>
+        <style>{loadingStyles}</style>
+        <div className="loading-root">
+          <div className="loading-card">
+            <div className="loading-mark">
+              <span />
+              <span />
+              <span />
+            </div>
+            <p className="loading-title">Onda Care</p>
+            <p className="loading-copy">Memuat data pengguna...</p>
+          </div>
+        </div>
+      </>
     );
   }
 
@@ -69,18 +83,20 @@ export default function DashboardPage() {
           title: "User Management",
           desc: "Kelola akses, role, dan akun karyawan",
           icon: Users,
-          accent: "bg-blue-500",
-          lightAccent: "bg-blue-50",
-          textColor: "text-blue-600",
+          color: "#533E64",
+          bg: "#E7E1F4",
+          border: "#D8CCE8",
+          label: "Admin desk",
         },
         {
           href: "/dashboard/admin/analytics",
           title: "Data Warehouse",
           desc: "Monitoring data BigQuery real-time",
           icon: BarChart3,
-          accent: "bg-indigo-500",
-          lightAccent: "bg-indigo-50",
-          textColor: "text-indigo-600",
+          color: "#070607",
+          bg: "#D8D441",
+          border: "#C7C235",
+          label: "Live data",
         },
       ];
     }
@@ -92,18 +108,20 @@ export default function DashboardPage() {
           title: "Isi Formulir",
           desc: "Laporan barang & kendala toko",
           icon: Sparkles,
-          accent: "bg-blue-500",
-          lightAccent: "bg-blue-50",
-          textColor: "text-blue-600",
+          color: "#533E64",
+          bg: "#C9D1FF",
+          border: "#AEB9F2",
+          label: "Start report",
         },
         {
           href: "/dashboard/my-tickets",
           title: "Status Laporan",
           desc: "Pantau progres secara real-time",
           icon: ListChecks,
-          accent: "bg-emerald-500",
-          lightAccent: "bg-emerald-50",
-          textColor: "text-emerald-600",
+          color: "#070607",
+          bg: "#D8D441",
+          border: "#C7C235",
+          label: "Track work",
         },
       ];
     }
@@ -115,18 +133,20 @@ export default function DashboardPage() {
           title: "Antrian Triase",
           desc: "Tindak lanjuti laporan lapangan",
           icon: ClipboardList,
-          accent: "bg-amber-500",
-          lightAccent: "bg-amber-50",
-          textColor: "text-amber-600",
+          color: "#070607",
+          bg: "#F3C7D7",
+          border: "#E8AFC3",
+          label: "Action queue",
         },
         {
           href: "/dashboard/history",
           title: "Riwayat Saya",
           desc: "Aksi penanganan yang selesai",
           icon: History,
-          accent: "bg-blue-500",
-          lightAccent: "bg-blue-50",
-          textColor: "text-blue-600",
+          color: "#533E64",
+          bg: "#C9D1FF",
+          border: "#AEB9F2",
+          label: "Done list",
         },
       ];
     }
@@ -138,27 +158,30 @@ export default function DashboardPage() {
           title: "Antrian Tugas",
           desc: "Kelola tugas antrian divisi",
           icon: Inbox,
-          accent: "bg-indigo-500",
-          lightAccent: "bg-indigo-50",
-          textColor: "text-indigo-600",
+          color: "#533E64",
+          bg: "#C9D1FF",
+          border: "#AEB9F2",
+          label: "Team queue",
         },
         {
           href: "/dashboard/history",
           title: "Riwayat Penanganan",
           desc: "Tinjau performa tugas selesai",
           icon: History,
-          accent: "bg-blue-500",
-          lightAccent: "bg-blue-50",
-          textColor: "text-blue-600",
+          color: "#070607",
+          bg: "#D8D441",
+          border: "#C7C235",
+          label: "Performance",
         },
         {
           href: "/dashboard/feedback",
           title: "Analisis Feedback",
           desc: "Evaluasi kualitas layanan",
           icon: MessageSquare,
-          accent: "bg-rose-500",
-          lightAccent: "bg-rose-50",
-          textColor: "text-rose-600",
+          color: "#070607",
+          bg: "#F3C7D7",
+          border: "#E8AFC3",
+          label: "Voice check",
         },
       ];
     }
@@ -166,148 +189,1107 @@ export default function DashboardPage() {
   };
 
   const menuCards = getMenuCards();
+  const firstName = user.name?.split(" ")[0] || "User";
+
+  const heroCopy = isAdmin
+    ? {
+        eyebrow: "System playground",
+        lineOne: "Kelola rapi.",
+        lineTwo: "Kontrol aman.",
+        lineThree: "Gerak cepat.",
+        desc: "Pusat kontrol akun, akses, dan data operasional Onda Care dalam satu halaman yang tidak terlihat seperti spreadsheet pensiun.",
+      }
+    : isSalesAgen
+      ? {
+          eyebrow: "Field playground",
+          lineOne: "Lapor cepat.",
+          lineTwo: "Pantau jelas.",
+          lineThree: "Toko aman.",
+          desc: "Buat laporan lapangan dan ikuti statusnya tanpa perlu berburu kabar dari chat yang tenggelam entah di mana.",
+        }
+      : isPIC
+        ? {
+            eyebrow: "Triage playground",
+            lineOne: "Ambil antrian.",
+            lineTwo: "Beresi tugas.",
+            lineThree: "Tutup rapi.",
+            desc: "Antrian masuk, prioritas jelas, dan riwayat kerja tertata supaya operasional tidak jadi tebak-tebakan kolektif.",
+          }
+        : isManagerPlus
+          ? {
+              eyebrow: "Manager playground",
+              lineOne: "Lihat tren.",
+              lineTwo: "Atur beban.",
+              lineThree: "Jaga mutu.",
+              desc: "Pantau antrian, riwayat, dan feedback agar keputusan tim tidak bergantung pada firasat dan kopi sachet.",
+            }
+          : {
+              eyebrow: "Onda playground",
+              lineOne: "Akses siap.",
+              lineTwo: "Modul menunggu.",
+              lineThree: "Tetap tenang.",
+              desc: "Role Anda belum memiliki modul khusus pada dashboard ini. Sistem tetap mengenali sesi Anda.",
+            };
+
+  const tipsText = isSalesAgen
+    ? "Gunakan koneksi internet stabil saat mengirim laporan agar data sinkron sempurna. Teknologi memang canggih, sampai bertemu sinyal dua bar."
+    : isPIC
+      ? "Prioritaskan antrian dengan label Urgent untuk menjaga kualitas layanan dan mengurangi drama operasional yang sebenarnya bisa dicegah."
+      : isManagerPlus
+        ? "Tinjau tren feedback mingguan untuk bahan meeting evaluasi divisi, bukan cuma mengandalkan suasana ruangan."
+        : "Semua akses aktif dan terenkripsi. Silakan lanjutkan pekerjaan tanpa membuat sistem ini ikut menghela napas.";
+
+  const PrimaryIcon = isAdmin ? ShieldCheck : Zap;
 
   return (
-    <div className="w-full space-y-10 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {/* ================= HERO (Sama untuk semua role termasuk Admin) ================= */}
-      <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] h-[300px] overflow-hidden text-white shadow-inner">
-        <div className="absolute inset-0 bg-cover bg-center animate-[slideBg_12s_linear_infinite]" style={{ backgroundImage: "url('/bg3.jpg')" }} />
-        <div className="absolute inset-0 bg-cover bg-center animate-[slideBg_12s_linear_infinite]" style={{ backgroundImage: "url('/bg2.jpg')", animationDelay: "4s" }} />
-        <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[1px]" />
-        <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-12 h-full flex items-center">
-          <div className="space-y-2">
-            <h1 className="text-4xl font-extrabold tracking-tight">
-              Halo, <span className="text-blue-400">{user.name?.split(" ")[0]}</span> 👋
-            </h1>
-            <p className="text-blue-100/70 font-medium tracking-wide flex items-center gap-2">
-              {isAdmin ? <ShieldCheck className="h-4 w-4 fill-blue-400 text-blue-400" /> : <Zap className="h-4 w-4 fill-blue-400 text-blue-400" />}
-              Onda Care — <span className="text-white uppercase text-[10px] tracking-widest">{role}</span>
-            </p>
-          </div>
-        </div>
-      </section>
+    <>
+      <style>{styles}</style>
+      <div className="playground-root">
+        <div className="playground-shell">
+          <div className="shape shape-lime" />
+          <div className="shape shape-lavender" />
+          <div className="shape shape-rose" />
 
-      {/* ================= ASYMMETRIC CONTENT SECTION ================= */}
-      <div className="bg-white -mt-12 pt-16 pb-12 rounded-t-[3.5rem] shadow-[0_-20px_50px_-20px_rgba(0,0,0,0.08)] relative z-20">
-        <div className="mx-auto max-w-7xl px-6 lg:px-12">
-          
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
-            
-            {/* KOLOM KIRI: MENU UTAMA (7/12 Ruang Desktop) */}
-            <div className="lg:col-span-7 space-y-12">
-              <div className="space-y-1">
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-                  {isAdmin ? "Manajemen Sistem" : "Layanan Utama"}
-                </h2>
-                <p className="text-sm text-slate-500 font-medium">
-                  {isAdmin ? "Kontrol penuh infrastruktur dan pengguna" : "Akses cepat modul operasional harian Anda"}
-                </p>
+
+          <main className="hero-layout">
+            <section className="hero-copy" aria-labelledby="dashboard-title">
+              <div className="eyebrow">
+                <PrimaryIcon size={14} />
+                <span>{heroCopy.eyebrow}</span>
               </div>
 
-              <div className="grid grid-cols-1 gap-y-10">
-                {menuCards.map((card, i) => (
-                  <Link key={i} href={card.href} className="group relative flex items-center gap-6 transition-all duration-500">
-                    <div className="relative shrink-0">
-                      <div className={`absolute inset-0 ${card.accent} opacity-0 group-hover:opacity-20 blur-2xl transition-opacity duration-500 rounded-full`} />
-                      <div className={`relative flex items-center justify-center w-16 h-16 rounded-3xl ${card.lightAccent} transition-all duration-500 group-hover:-translate-y-2 group-hover:rotate-6 group-hover:shadow-lg shadow-sm border border-white`}>
-                        <card.icon className={`h-8 w-8 ${card.textColor}`} />
-                      </div>
-                    </div>
-                    
-                    <div className="flex-1 space-y-1">
-                      <h3 className="text-lg font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
-                        {card.title}
-                      </h3>
-                      <p className="text-sm text-slate-500 leading-snug">
-                        {card.desc}
-                      </p>
-                    </div>
+              <h1 id="dashboard-title" className="hero-title">
+                <span>Halo, {firstName}.</span>
+                <span>{heroCopy.lineOne}</span>
+                <span>{heroCopy.lineTwo}</span>
+                <span>{heroCopy.lineThree}</span>
+              </h1>
 
-                    <div className="p-2 rounded-full border border-slate-100 bg-slate-50 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-500">
-                      <ArrowUpRight className="h-5 w-5 text-blue-500" />
-                    </div>
+              <p className="hero-desc">{heroCopy.desc}</p>
 
-                    <div className="absolute -bottom-6 left-20 right-0 h-[1px] bg-slate-50 group-hover:bg-blue-50 transition-colors" />
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {/* KOLOM KANAN: WIDGET & INFO (5/12 Ruang Desktop) */}
-            <div className="lg:col-span-5 space-y-10">
-              <div className="space-y-1">
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Ringkasan</h2>
-                <p className="text-sm text-blue-600 font-medium italic">Status & Aktivitas Sistem</p>
-              </div>
-
-              <div className="space-y-6">
-                {/* Widget: Welcome & Status */}
-                <div className="p-8 rounded-[2.5rem] bg-blue-50/50 border border-blue-100/50 space-y-4 relative group overflow-hidden">
-                  <div className="relative z-10 space-y-6">
-                    <div className="flex items-center justify-between">
-                      <div className="p-3 bg-blue-600 rounded-2xl">
-                        <Clock className="h-5 w-5 text-white" />
-                      </div>
-                      <span className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase">Live Monitor</span>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-xs text-slate-400 uppercase tracking-widest font-bold">Pengguna Aktif</p>
-                      <h4 className="text-xl font-bold tracking-tight">{user.name}</h4>
-                    </div>
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-emerald-400 bg-emerald-400/10 w-fit px-3 py-1.5 rounded-full border border-emerald-400/20">
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      SESI TEROTENTIKASI AMAN
-                    </div>
-                  </div>
-                  <Database className="absolute -bottom-10 -right-10 h-40 w-40 opacity-[0.03] group-hover:rotate-12 transition-transform duration-700" />
-                </div>
-
-                {/* Widget Khusus Admin atau Tips Operasional */}
-                {isAdmin ? (
-                  <Link href="/dashboard/admin/users" className="group block relative p-8 rounded-[2.5rem] bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-xl shadow-blue-600/20 overflow-hidden">
-                    <div className="relative z-10 space-y-6">
-                      <div className="p-4 bg-white/20 backdrop-blur-md rounded-2xl w-fit group-hover:scale-110 transition-transform duration-500">
-                        <UserPlus className="h-7 w-7" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold tracking-tight">Pintasan Admin</h3>
-                        <p className="text-blue-100/70 text-sm mt-1">Registrasi personel baru ke sistem sekarang.</p>
-                      </div>
-                    </div>
-                    <UserPlus className="absolute -bottom-6 -right-6 h-32 w-32 opacity-10 group-hover:rotate-12 transition-transform duration-700" />
+              <div className="hero-actions">
+                {menuCards[0] ? (
+                  <Link href={menuCards[0].href} className="primary-cta">
+                    Buka modul utama
+                    <ArrowUpRight size={15} />
                   </Link>
                 ) : (
-                  <div className="p-8 rounded-[2.5rem] bg-blue-50/50 border border-blue-100/50 space-y-4 relative group overflow-hidden">
-                    <div className="flex items-center gap-3 relative z-10">
-                      <div className="p-2.5 bg-white rounded-xl shadow-sm">
-                        <Info className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <h4 className="font-bold text-slate-900">Tips Operasional</h4>
-                    </div>
-                    <p className="text-sm text-slate-600 leading-relaxed italic relative z-10">
-                      "{isSalesAgen && "Gunakan koneksi internet stabil saat mengirim laporan agar data sinkron sempurna."}
-                      {isPIC && "Prioritaskan antrian dengan label 'Urgent' untuk menjaga kualitas layanan."}
-                      {isManagerPlus && "Tinjau tren feedback mingguan untuk bahan meeting evaluasi divisi."}"
-                    </p>
-                    <Sparkles className="absolute -bottom-4 -right-4 h-24 w-24 text-blue-200/20 group-hover:scale-110 transition-transform duration-500" />
-                  </div>
+                  <span className="primary-cta primary-cta-disabled">
+                    Modul belum tersedia
+                  </span>
                 )}
 
-                <div className="px-4 space-y-4 pt-4 text-slate-400">
-                  <div className="flex items-center gap-3">
-                    <Database className="h-4 w-4" />
-                    <span className="text-[9px] font-bold uppercase tracking-[0.4em]">Onda Cloud Engine v2.4</span>
-                  </div>
-                  <p className="text-[11px] leading-relaxed">
-                    Data Anda terenkripsi dan tersinkronisasi otomatis dengan infrastruktur BigQuery PT. Onda Mega Integra.
-                  </p>
+                <div className="profile-token" title={user.name || "User"}>
+                  <span className="profile-avatar">{firstName.charAt(0)}</span>
+                  <span>
+                    <strong>{user.name}</strong>
+                    <small>{role || "User"}</small>
+                  </span>
                 </div>
               </div>
+            </section>
+
+            <section className="activity-panel" aria-label="Menu dashboard">
+              {menuCards.length > 0 ? (
+                menuCards.map((card, i) => {
+                  const Icon = card.icon;
+
+                  return (
+                    <Link
+                      href={card.href}
+                      key={card.href}
+                      className="activity-card"
+                      style={{
+                        "--card-bg": card.bg,
+                        "--card-border": card.border,
+                        "--card-ink": card.color,
+                        "--card-delay": `${i * 90}ms`,
+                      }}
+                    >
+                      <div className="activity-card-head">
+                        <div className="activity-label">
+                          <Icon size={13} />
+                          {card.label}
+                        </div>
+                        <span className="activity-arrow">
+                          <ArrowUpRight size={15} />
+                        </span>
+                      </div>
+
+                      <div className="activity-copy">
+                        <h2>{card.title}</h2>
+                        <p>{card.desc}</p>
+                      </div>
+
+                      <div className="activity-art">
+                        <div className="playground-line playground-line-left" />
+                        <ActivityMascot variant={i} />
+                        <div className="playground-line playground-line-right" />
+                      </div>
+                    </Link>
+                  );
+                })
+              ) : (
+                <div className="activity-card empty-card">
+                  <div className="activity-card-head">
+                    <div className="activity-label">
+                      <LockKeyhole size={13} />
+                      No module
+                    </div>
+                  </div>
+                  <div className="activity-copy">
+                    <h2>Role belum punya menu</h2>
+                    <p>Hubungi administrator untuk validasi akses dashboard.</p>
+                  </div>
+                  <div className="activity-art">
+                    <ActivityMascot variant={3} />
+                  </div>
+                </div>
+              )}
+            </section>
+          </main>
+
+          <section className="utility-grid" aria-label="Ringkasan sesi">
+            <div className="utility-card status-card">
+              <div className="utility-icon utility-icon-green">
+                <Activity size={18} />
+              </div>
+              <div>
+                <p className="utility-kicker">Live monitor</p>
+                <h3>Status Sesi</h3>
+                <p className="utility-desc">
+                  {user.name} terotentikasi sebagai {role || "User"}.
+                </p>
+              </div>
+              <span className="status-badge">
+                <CheckCircle2 size={12} />
+                Aktif
+              </span>
             </div>
 
-          </div>
+            {isAdmin ? (
+              <Link href="/dashboard/admin/users" className="utility-card admin-card">
+                <div className="admin-card-pattern" />
+                <div className="utility-icon admin-icon">
+                  <UserPlus size={18} />
+                </div>
+                <div>
+                  <p className="utility-kicker">Admin shortcut</p>
+                  <h3>Pintasan Admin</h3>
+                  <p className="utility-desc">
+                    Registrasi personel baru, audit role, dan rapikan akses.
+                  </p>
+                </div>
+                <span className="card-link-icon">
+                  <ArrowUpRight size={15} />
+                </span>
+              </Link>
+            ) : (
+              <div className="utility-card tips-card">
+                <div className="utility-icon utility-icon-blue">
+                  <Info size={18} />
+                </div>
+                <div>
+                  <p className="utility-kicker">Tiny reminder</p>
+                  <h3>Tips Operasional</h3>
+                  <p className="utility-desc">{tipsText}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="utility-card engine-card">
+              <div className="utility-icon utility-icon-purple">
+                <Database size={18} />
+              </div>
+              <div>
+                <p className="utility-kicker">Onda Cloud Engine v2.4</p>
+                <h3>Data Tersinkron</h3>
+                <p className="utility-desc">
+                  Data terenkripsi dan tersinkronisasi otomatis dengan infrastruktur BigQuery PT. Onda Mega Integra.
+                </p>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
-    </div>
+    </>
   );
 }
+
+const loadingStyles = `
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=DM+Sans:wght@400;500;700&display=swap');
+
+  .loading-root {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: #E9E9E9;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .loading-card {
+    width: min(92vw, 360px);
+    padding: 32px;
+    border-radius: 34px;
+    background: #FDFCFC;
+    border: 1px solid rgba(7, 6, 7, 0.08);
+    box-shadow: 0 24px 80px rgba(7, 6, 7, 0.08);
+    text-align: center;
+  }
+
+  .loading-mark {
+    height: 76px;
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .loading-mark span {
+    width: 18px;
+    border-radius: 999px 999px 12px 12px;
+    background: #070607;
+    animation: loadingBounce 0.75s ease-in-out infinite alternate;
+  }
+
+  .loading-mark span:nth-child(1) { height: 38px; background: #8F9FE9; }
+  .loading-mark span:nth-child(2) { height: 58px; background: #D8D441; animation-delay: 0.12s; }
+  .loading-mark span:nth-child(3) { height: 44px; background: #D75067; animation-delay: 0.24s; }
+
+  .loading-title {
+    margin: 0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: #070607;
+  }
+
+  .loading-copy {
+    margin: 6px 0 0;
+    font-size: 13px;
+    color: #777277;
+  }
+
+  @keyframes loadingBounce {
+    to { transform: translateY(-12px); }
+  }
+`;
+
+const styles = `
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap');
+
+  * { box-sizing: border-box; }
+
+  .playground-root {
+    width: 100%;
+    min-height: 100vh;
+    padding: clamp(12px, 2vw, 28px);
+    background:
+      radial-gradient(circle at top left, rgba(143, 159, 233, 0.28), transparent 34%),
+      radial-gradient(circle at bottom right, rgba(216, 212, 65, 0.24), transparent 30%),
+      #E9E9E9;
+    color: #070607;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .playground-shell {
+    position: relative;
+    width: min(1440px, 100%);
+    min-height: calc(100vh - clamp(24px, 4vw, 56px));
+    margin: 0 auto;
+    overflow: hidden;
+    border-radius: clamp(26px, 4vw, 46px);
+    background: #FDFCFC;
+    border: 1px solid rgba(7, 6, 7, 0.08);
+    box-shadow: 0 30px 100px rgba(7, 6, 7, 0.12);
+  }
+
+  .shape {
+    position: absolute;
+    z-index: 0;
+    pointer-events: none;
+    filter: blur(0.2px);
+  }
+
+  .shape-lime {
+    top: 78px;
+    right: 38%;
+    width: 18px;
+    height: 18px;
+    background: #D8D441;
+    transform: rotate(12deg);
+  }
+
+  .shape-lavender {
+    bottom: 90px;
+    left: 6%;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: #8F9FE9;
+  }
+
+  .shape-rose {
+    top: 43%;
+    left: 45%;
+    width: 16px;
+    height: 16px;
+    border-radius: 6px;
+    background: #D75067;
+    transform: rotate(18deg);
+  }
+
+  .topbar {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: clamp(18px, 2.4vw, 32px) clamp(20px, 4vw, 56px) 0;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-width: max-content;
+    color: #070607;
+    text-decoration: none;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+
+  .brand-symbol {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: #070607;
+    color: #FDFCFC;
+    font-size: 15px;
+    font-weight: 800;
+  }
+
+  .topnav {
+    display: flex;
+    align-items: center;
+    gap: clamp(12px, 2vw, 28px);
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: rgba(233, 233, 233, 0.45);
+    border: 1px solid rgba(7, 6, 7, 0.06);
+  }
+
+  .topnav span {
+    font-size: 12px;
+    font-weight: 700;
+    color: #4E4A4E;
+  }
+
+  .session-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: #070607;
+    color: #FDFCFC;
+    font-size: 12px;
+    font-weight: 800;
+    box-shadow: 0 12px 30px rgba(7, 6, 7, 0.16);
+  }
+
+  .hero-layout {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+    gap: clamp(28px, 5vw, 72px);
+    align-items: center;
+    padding: clamp(36px, 7vw, 92px) clamp(20px, 4vw, 56px) clamp(30px, 5vw, 64px);
+  }
+
+  .hero-copy {
+    max-width: 520px;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: #E9E9E9;
+    color: #533E64;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .hero-title {
+    margin: 0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: clamp(42px, 6vw, 86px);
+    line-height: 0.94;
+    letter-spacing: -0.075em;
+    font-weight: 800;
+    color: #070607;
+  }
+
+  .hero-title span {
+    display: block;
+  }
+
+  .hero-desc {
+    width: min(100%, 420px);
+    margin: 24px 0 0;
+    color: #514E51;
+    font-size: clamp(14px, 1.4vw, 16px);
+    line-height: 1.7;
+  }
+
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 30px;
+  }
+
+  .primary-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 0 20px;
+    border-radius: 16px;
+    background: #070607;
+    color: #FDFCFC;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 800;
+    box-shadow: 0 14px 28px rgba(7, 6, 7, 0.18);
+    transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+  }
+
+  .primary-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 34px rgba(7, 6, 7, 0.22);
+    background: #1C1A1C;
+  }
+
+  .primary-cta-disabled {
+    opacity: 0.62;
+    box-shadow: none;
+  }
+
+  .profile-token {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+    max-width: min(100%, 320px);
+    padding: 6px 14px 6px 6px;
+    border: 1px solid rgba(7, 6, 7, 0.09);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.76);
+  }
+
+  .profile-avatar {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 12px;
+    background: #8F9FE9;
+    color: #070607;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .profile-token strong,
+  .profile-token small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .profile-token strong {
+    max-width: 210px;
+    font-size: 12px;
+    color: #070607;
+  }
+
+  .profile-token small {
+    max-width: 210px;
+    margin-top: 1px;
+    font-size: 11px;
+    color: #777277;
+  }
+
+  .activity-panel {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(14px, 2vw, 22px);
+    align-items: stretch;
+  }
+
+  .activity-panel .activity-card:nth-child(3) {
+    grid-column: span 2;
+    min-height: 310px;
+  }
+
+  .activity-card {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    min-height: clamp(330px, 35vw, 430px);
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    padding: clamp(18px, 2vw, 26px);
+    border-radius: clamp(26px, 3vw, 34px);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    color: #070607;
+    text-decoration: none;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38), 0 18px 40px rgba(7, 6, 7, 0.07);
+    animation: cardRise 500ms var(--card-delay) ease both;
+    transition: transform 200ms ease, box-shadow 200ms ease, filter 200ms ease;
+  }
+
+  .activity-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: 0.22;
+    background:
+      linear-gradient(rgba(255,255,255,0.55) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.55) 1px, transparent 1px);
+    background-size: 34px 34px;
+    mask-image: linear-gradient(to bottom, transparent, black 26%, black 82%, transparent);
+  }
+
+  .activity-card:hover {
+    transform: translateY(-8px) rotate(-0.4deg);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.48), 0 30px 70px rgba(7, 6, 7, 0.13);
+    filter: saturate(1.05);
+  }
+
+  .activity-card:hover .activity-arrow {
+    transform: translate(4px, -4px);
+    background: #070607;
+    color: #FDFCFC;
+  }
+
+  .activity-card:hover .mascot-body {
+    transform: translateX(-50%) translateY(-6px) rotate(3deg);
+  }
+
+  .activity-card:hover .mascot-1 .mascot-body {
+    transform: translateX(-50%) translateY(-6px) rotate(48deg);
+  }
+
+  .activity-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .activity-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 10px;
+    border-radius: 999px;
+    background: rgba(253, 252, 252, 0.48);
+    border: 1px solid rgba(7, 6, 7, 0.07);
+    color: var(--card-ink);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    backdrop-filter: blur(8px);
+  }
+
+  .activity-arrow,
+  .card-link-icon {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: rgba(253, 252, 252, 0.62);
+    color: #070607;
+    border: 1px solid rgba(7, 6, 7, 0.08);
+    transition: transform 180ms ease, background 180ms ease, color 180ms ease;
+  }
+
+  .activity-copy {
+    position: relative;
+    z-index: 2;
+    margin-top: 22px;
+  }
+
+  .activity-copy h2 {
+    max-width: 320px;
+    margin: 0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: clamp(28px, 3.1vw, 43px);
+    line-height: 0.98;
+    letter-spacing: -0.065em;
+    font-weight: 800;
+    color: #070607;
+  }
+
+  .activity-copy p {
+    max-width: 260px;
+    margin: 14px 0 0;
+    color: rgba(7, 6, 7, 0.63);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .activity-art {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 166px;
+    margin: 18px -8px -4px;
+    border-radius: 28px;
+    background: rgba(253, 252, 252, 0.35);
+    border: 1px solid rgba(7, 6, 7, 0.06);
+    overflow: hidden;
+  }
+
+  .playground-line {
+    position: absolute;
+    width: 16px;
+    height: 74px;
+    bottom: 42px;
+    border: 3px solid rgba(7, 6, 7, 0.6);
+    border-top: none;
+    border-bottom: none;
+  }
+
+  .playground-line::before,
+  .playground-line::after {
+    content: '';
+    position: absolute;
+    left: -11px;
+    width: 32px;
+    height: 3px;
+    border-radius: 999px;
+    background: rgba(7, 6, 7, 0.6);
+  }
+
+  .playground-line::before { top: 0; }
+  .playground-line::after { bottom: 0; }
+
+  .playground-line-left { left: 18%; }
+  .playground-line-right { right: 18%; }
+
+  .mascot {
+    position: relative;
+    width: 144px;
+    height: 126px;
+  }
+
+  .mascot-body {
+    position: absolute;
+    left: 50%;
+    top: 20px;
+    width: 96px;
+    height: 84px;
+    transform: translateX(-50%);
+    border: 3px solid rgba(7, 6, 7, 0.72);
+    background: #D75067;
+    transition: transform 220ms ease;
+  }
+
+  .mascot-0 .mascot-body {
+    border-radius: 48% 52% 44% 56% / 42% 46% 54% 58%;
+    background: #D75067;
+  }
+
+  .mascot-1 .mascot-body {
+    border-radius: 34px 48px 30px 54px;
+    background: #F09A54;
+    transform: translateX(-50%) rotate(45deg);
+  }
+
+  .mascot-2 .mascot-body {
+    border-radius: 44% 56% 56% 44% / 58% 44% 56% 42%;
+    background: #8F9FE9;
+  }
+
+  .mascot-3 .mascot-body {
+    border-radius: 34px 54px 34px 54px;
+    background: #D8D441;
+  }
+
+  .mascot-eye {
+    position: absolute;
+    top: 32px;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #070607;
+  }
+
+  .mascot-eye-left { left: 29px; }
+  .mascot-eye-right { right: 29px; }
+
+  .mascot-smile {
+    position: absolute;
+    left: 50%;
+    top: 46px;
+    width: 28px;
+    height: 14px;
+    border-bottom: 3px solid #070607;
+    border-radius: 0 0 999px 999px;
+    transform: translateX(-50%);
+  }
+
+  .mascot-wire {
+    position: absolute;
+    top: 48px;
+    width: 42px;
+    height: 3px;
+    background: rgba(7, 6, 7, 0.72);
+  }
+
+  .mascot-wire-left {
+    left: 0;
+    transform: rotate(-20deg);
+  }
+
+  .mascot-wire-right {
+    right: 0;
+    transform: rotate(20deg);
+  }
+
+  .mascot-leg {
+    position: absolute;
+    bottom: 10px;
+    width: 32px;
+    height: 3px;
+    background: rgba(7, 6, 7, 0.72);
+  }
+
+  .mascot-leg-left {
+    left: 38px;
+    transform: rotate(-28deg);
+  }
+
+  .mascot-leg-right {
+    right: 38px;
+    transform: rotate(28deg);
+  }
+
+  .mascot-ball {
+    position: absolute;
+    right: 6px;
+    bottom: 18px;
+    width: 34px;
+    height: 34px;
+    border: 3px solid rgba(7, 6, 7, 0.72);
+    border-radius: 999px;
+    background:
+      linear-gradient(90deg, transparent 46%, rgba(7,6,7,0.72) 47%, rgba(7,6,7,0.72) 53%, transparent 54%),
+      linear-gradient(0deg, transparent 46%, rgba(7,6,7,0.72) 47%, rgba(7,6,7,0.72) 53%, transparent 54%),
+      rgba(253, 252, 252, 0.6);
+  }
+
+  .empty-card {
+    --card-bg: #E9E9E9;
+    --card-border: #D9D9D9;
+    --card-ink: #533E64;
+    grid-column: span 2;
+  }
+
+  .utility-grid {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 1.05fr 1fr 1.1fr;
+    gap: 16px;
+    padding: 0 clamp(20px, 4vw, 56px) clamp(20px, 4vw, 56px);
+  }
+
+  .utility-card {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    min-height: 150px;
+    padding: 22px;
+    border-radius: 28px;
+    background: #F8F7F5;
+    border: 1px solid rgba(7, 6, 7, 0.08);
+    color: #070607;
+    text-decoration: none;
+    overflow: hidden;
+  }
+
+  .utility-card h3 {
+    margin: 4px 0 8px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 21px;
+    line-height: 1;
+    letter-spacing: -0.045em;
+    font-weight: 800;
+  }
+
+  .utility-kicker {
+    margin: 0;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: #777277;
+  }
+
+  .utility-desc {
+    margin: 0;
+    color: #5C585C;
+    font-size: 13px;
+    line-height: 1.62;
+  }
+
+  .utility-icon {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 15px;
+    border: 1px solid rgba(7, 6, 7, 0.08);
+    color: #070607;
+  }
+
+  .utility-icon-green { background: #D8D441; }
+  .utility-icon-blue { background: #C9D1FF; }
+  .utility-icon-purple { background: #E7E1F4; }
+
+  .status-badge {
+    position: absolute;
+    right: 18px;
+    top: 18px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 10px;
+    border-radius: 999px;
+    background: #FDFCFC;
+    border: 1px solid rgba(7, 6, 7, 0.08);
+    color: #2F7D43;
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .admin-card {
+    background: #070607;
+    color: #FDFCFC;
+    transition: transform 180ms ease, box-shadow 180ms ease;
+  }
+
+  .admin-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 24px 60px rgba(7, 6, 7, 0.22);
+  }
+
+  .admin-card .utility-kicker,
+  .admin-card .utility-desc {
+    color: rgba(253, 252, 252, 0.66);
+  }
+
+  .admin-icon {
+    background: #D75067;
+    color: #FDFCFC;
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+
+  .admin-card-pattern {
+    position: absolute;
+    inset: 0;
+    opacity: 0.14;
+    background:
+      radial-gradient(circle at 12% 24%, #8F9FE9 0 10px, transparent 11px),
+      radial-gradient(circle at 82% 18%, #D8D441 0 7px, transparent 8px),
+      radial-gradient(circle at 70% 82%, #D75067 0 12px, transparent 13px);
+  }
+
+  .admin-card > *:not(.admin-card-pattern) {
+    position: relative;
+    z-index: 1;
+  }
+
+  .admin-card .card-link-icon {
+    position: absolute;
+    right: 18px;
+    top: 18px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #FDFCFC;
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+
+  .admin-card:hover .card-link-icon {
+    transform: translate(4px, -4px);
+  }
+
+  .engine-card::after {
+    content: '';
+    position: absolute;
+    right: -40px;
+    bottom: -55px;
+    width: 150px;
+    height: 150px;
+    border-radius: 44% 56% 40% 60%;
+    background: #D75067;
+    opacity: 0.13;
+    transform: rotate(18deg);
+  }
+
+  @keyframes cardRise {
+    from {
+      opacity: 0;
+      transform: translateY(24px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @media (max-width: 1120px) {
+    .hero-layout {
+      grid-template-columns: 1fr;
+      align-items: start;
+    }
+
+    .hero-copy {
+      max-width: 760px;
+    }
+
+    .activity-panel {
+      grid-template-columns: repeat(2, minmax(260px, 1fr));
+    }
+
+    .utility-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .playground-root {
+      padding: 0;
+    }
+
+    .playground-shell {
+      min-height: 100vh;
+      border-radius: 0;
+    }
+
+    .topbar {
+      align-items: flex-start;
+      gap: 14px;
+      flex-wrap: wrap;
+      padding-top: 20px;
+    }
+
+    .topnav {
+      order: 3;
+      width: 100%;
+      justify-content: space-between;
+      border-radius: 18px;
+    }
+
+    .session-pill {
+      margin-left: auto;
+    }
+
+    .hero-layout {
+      padding-top: 38px;
+    }
+
+    .hero-title {
+      font-size: clamp(42px, 15vw, 64px);
+    }
+
+    .hero-actions {
+      align-items: stretch;
+    }
+
+    .primary-cta,
+    .profile-token {
+      width: 100%;
+    }
+
+    .profile-token strong,
+    .profile-token small {
+      max-width: calc(100vw - 140px);
+    }
+
+    .activity-panel {
+      display: flex;
+      gap: 14px;
+      margin-inline: -20px;
+      padding: 0 20px 10px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+    }
+
+    .activity-panel::-webkit-scrollbar {
+      display: none;
+    }
+
+    .activity-card,
+    .activity-panel .activity-card:nth-child(3) {
+      min-width: 82vw;
+      min-height: 360px;
+      grid-column: auto;
+      scroll-snap-align: start;
+    }
+
+    .playground-line-left { left: 13%; }
+    .playground-line-right { right: 13%; }
+
+    .utility-card {
+      min-height: auto;
+      padding: 20px;
+    }
+
+    .status-badge {
+      position: static;
+      margin-left: auto;
+    }
+  }
+
+  @media (max-width: 440px) {
+    .topnav span {
+      font-size: 11px;
+    }
+
+    .activity-copy h2 {
+      font-size: 32px;
+    }
+
+    .activity-art {
+      min-height: 150px;
+    }
+  }
+`;
