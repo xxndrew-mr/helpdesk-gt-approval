@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import { getServerSession } from 'next-auth/next';
 
 export async function GET() {
@@ -11,8 +11,6 @@ export async function GET() {
   }
 
   const isViewer = session.user.role === 'Viewer';
-
-  // Role selain viewer yang boleh akses bookmark
   const allowedRoles = ['PIC OMI', 'Sales Manager', 'User Feedback'];
 
   if (!isViewer && !allowedRoles.includes(session.user.role)) {
@@ -26,8 +24,6 @@ export async function GET() {
           some: {
             status: 'Bookmarked',
             assignment_type: 'Feedback_Review',
-
-            // 🔐 Jika bukan viewer → hanya bookmark milik sendiri
             ...(isViewer
               ? {}
               : { user_id: session.user.id }
@@ -64,7 +60,9 @@ export async function GET() {
           },
         },
       },
-      orderBy: { updatedAt: 'desc' },
+      orderBy: {
+        updatedAt: 'desc'
+      },
     });
 
     return NextResponse.json(tickets);
