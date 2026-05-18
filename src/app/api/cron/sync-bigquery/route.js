@@ -1,7 +1,10 @@
 import { BigQuery } from '@google-cloud/bigquery';
-import prisma from '/src/lib/prisma.js';
+import prisma from '@/lib/prisma';
 
-async function main() {
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
+export async function GET() {
   try {
     console.log("=== SYNC BIGQUERY START ===");
 
@@ -29,65 +32,62 @@ async function main() {
       console.log("✅ Dataset dibuat");
     }
 
-    // Drop table lama
+    // Pastikan table ada, kalau belum baru dibuat
     let table = dataset.table(tableId);
     const [tableExists] = await table.exists();
-    if (tableExists) {
-      console.log("Dropping old table...");
-      await table.delete();
-      console.log("✅ Old table dropped");
+    if (!tableExists) {
+      console.log("Table belum ada, membuat table baru...");
+      await dataset.createTable(tableId, {
+        schema: [
+          { name: "ticket_id", type: "STRING" },
+          { name: "title", type: "STRING" },
+          { name: "description", type: "STRING" },
+          { name: "notes", type: "STRING" },
+          { name: "kode_sales", type: "STRING" },
+          { name: "submitted_by", type: "STRING" },
+          { name: "type", type: "STRING" },
+          { name: "status", type: "STRING" },
+          { name: "created_at", type: "TIMESTAMP" },
+          { name: "updated_at", type: "TIMESTAMP" },
+          { name: "kategori", type: "STRING" },
+          { name: "nama_pengisi", type: "STRING" },
+          { name: "toko", type: "STRING" },
+        ],
+      });
+
+      // Tunggu table siap
+      table = dataset.table(tableId);
+      for (let i = 0; i < 10; i++) {
+        const [exists] = await table.exists();
+        if (exists) break;
+        await new Promise(res => setTimeout(res, 2000));
+      }
+      console.log("Table baru siap");
+    } else {
+      console.log("Table sudah ada, langsung insert");
     }
 
-    // Create table baru (hanya tambah notes)
-    console.log("Creating new table...");
-    await dataset.createTable(tableId, {
-      schema: [
-        { name: "ticket_id", type: "STRING" },
-        { name: "title", type: "STRING" },
-        { name: "description", type: "STRING" },
-        { name: "notes", type: "STRING" },
-        { name: "kode_sales", type: "STRING" }, // ✅ TAMBAHAN SAJA
-        { name: "submitted_by", type: "STRING" },
-        { name: "type", type: "STRING" },
-        { name: "status", type: "STRING" },
-        { name: "created_at", type: "TIMESTAMP" },
-        { name: "updated_at", type: "TIMESTAMP" },
-        { name: "kategori", type: "STRING" },
-        { name: "nama_pengisi", type: "STRING" },
-        { name: "toko", type: "STRING" },
-      ],
-    });
-
-    table = dataset.table(tableId);
-    for (let i = 0; i < 10; i++) {
-      const [exists] = await table.exists();
-      if (exists) break;
-      await new Promise(res => setTimeout(res, 2000));
-    }
-    console.log("✅ Table ready for insert");
-
-    // Ambil data dari Prisma + logs
     const tickets = await prisma.ticket.findMany({
-  include: {
-    submittedBy: { 
-      select: { 
-        name: true,
-        username: true
-      } 
-    },
-    detail: true,
-    logs: {
-      orderBy: { timestamp: 'desc' }, // ambil log terbaru
-      take: 1,
-    },
-  },
-});
+      include: {
+        submittedBy: {
+          select: {
+            name: true,
+            username: true,
+          },
+        },
+        detail: true,
+        logs: {
+          orderBy: { timestamp: 'desc' },
+          take: 1,
+        },
+      },
+    });
 
     console.log("Total tickets from DB:", tickets.length);
 
     if (!tickets.length) {
-      console.log("⚠️ Tidak ada data untuk disinkronisasi");
-      return;
+      console.log("tidak ada data untuk disinkronisasi");
+      return Response.json({ success: true, message: "Tidak ada data", total: 0 });
     }
 
     const rows = tickets.map((t, idx) => {
@@ -112,20 +112,19 @@ async function main() {
       };
     });
 
-    console.log("Rows ready for BigQuery preview:", rows.slice(0, 3));
+    console.log("Rows ready for BigQuery Data preview:", rows.slice(0, 3));
 
     try {
       await table.insert(rows, { ignoreUnknownValues: true, skipInvalidRows: true });
-      console.log(`✅ Sinkronisasi selesai, total rows attempted: ${rows.length}`);
+      console.log(`Sinkronisasi telah selesai di lakukan , total rows attempted: ${rows.length}`);
+      return Response.json({ success: true, total: rows.length });
     } catch (insertErr) {
       console.error("❌ Error saat insert ke BigQuery:", insertErr);
+      return Response.json({ success: false, error: String(insertErr) }, { status: 500 });
     }
 
   } catch (err) {
-    console.error("❌ FULL ETL ERROR:", err);
-  } finally {
-    await prisma.$disconnect();
+    console.error("FULL ETL ERROR:", err);
+    return Response.json({ success: false, error: String(err) }, { status: 500 });
   }
 }
-
-main();
