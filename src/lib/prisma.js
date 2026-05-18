@@ -3,12 +3,12 @@ import { withAccelerate } from '@prisma/extension-accelerate';
 
 const globalForPrisma = globalThis;
 
-// Gunakan ekstensi .withAccelerate()
-const prisma =
-  globalForPrisma.prisma ??
+const createPrismaClient = () =>
   new PrismaClient({
     log: ['error'],
   }).$extends(withAccelerate());
+
+const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma;
