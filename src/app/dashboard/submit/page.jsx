@@ -407,7 +407,7 @@ export default function SubmitTicketPage() {
                   </div>
                   <p className="text-xs font-semibold text-slate-600">Klik untuk upload</p>
                   <p className="text-[10px] text-slate-400 mt-0.5">
-                    PNG, JPG, PDF, Video · Max 100MB
+                    PNG, JPG, PDF, Video · Max 30MB
                   </p>
                   <input
                     type="file"
