@@ -98,8 +98,8 @@ export default function SubmitTicketPage() {
       return;
     }
 
-    if (f.size > 50 * 1024 * 1024) {
-      alert('Ukuran file maksimal 50MB');
+    if (f.size > 100 * 1024 * 1024) {
+      alert('Ukuran file maksimal 100MB');
       return;
     }
 
@@ -126,12 +126,54 @@ export default function SubmitTicketPage() {
     try {
       let attachments = null;
       if (file) {
-        const fd = new FormData();
-        fd.append('file', file);
-        const uploadRes = await fetch('/api/upload', { method: 'POST', body: fd });
-        const uploadData = await uploadRes.json();
-        if (!uploadRes.ok) throw new Error(uploadData.message || 'Gagal mengupload lampiran');
-        attachments = [{ url: uploadData.fileUrl, name: file.name, type: file.type, fileId: uploadData.fileId }];
+        const presignRes = await fetch('/api/upload/presign', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            fileName: file.name,
+            fileType: file.type,
+            fileSize: file.size,
+          }),
+        });
+
+        const presignContentType = presignRes.headers.get('content-type') || '';
+
+        let presignData;
+
+        if (presignContentType.includes('application/json')) {
+          presignData = await presignRes.json();
+        } else {
+          const text = await presignRes.text();
+          throw new Error(text || `Gagal membuat upload URL. Status ${presignRes.status}`);
+        }
+
+        if (!presignRes.ok) {
+          throw new Error(presignData.message || 'Gagal membuat upload URL');
+        }
+
+        const r2UploadRes = await fetch(presignData.uploadUrl, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': file.type,
+          },
+          body: file,
+        });
+
+        if (!r2UploadRes.ok) {
+          const text = await r2UploadRes.text();
+          throw new Error(text || 'Gagal upload file ke R2');
+        }
+
+        attachments = [
+          {
+            url: presignData.fileUrl,
+            name: file.name,
+            type: file.type,
+            fileId: presignData.key,
+          },
+        ];
       }
 
       const res = await fetch('/api/tickets/submit', {
@@ -303,8 +345,8 @@ export default function SubmitTicketPage() {
                         type="button"
                         onClick={() => setSelectedKategori(cat.value)}
                         className={`group relative flex flex-col items-start rounded-xl border p-3 text-left transition-all ${selectedKategori === cat.value
-                            ? 'border-blue-500 bg-blue-50 shadow-sm shadow-blue-100 ring-2 ring-blue-500/20'
-                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                          ? 'border-blue-500 bg-blue-50 shadow-sm shadow-blue-100 ring-2 ring-blue-500/20'
+                          : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                           }`}
                       >
                         <span className={`text-xs font-bold ${selectedKategori === cat.value ? 'text-blue-700' : 'text-slate-700'}`}>
@@ -356,8 +398,8 @@ export default function SubmitTicketPage() {
             >
               {!file ? (
                 <label className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-2xl cursor-pointer transition-all group ${isAttachmentRequired
-                    ? 'border-amber-300 bg-amber-50/50 hover:bg-amber-50 hover:border-amber-400'
-                    : 'border-slate-200 bg-slate-50/50 hover:bg-blue-50 hover:border-blue-300'
+                  ? 'border-amber-300 bg-amber-50/50 hover:bg-amber-50 hover:border-amber-400'
+                  : 'border-slate-200 bg-slate-50/50 hover:bg-blue-50 hover:border-blue-300'
                   }`}>
                   <div className={`flex h-10 w-10 items-center justify-center rounded-xl mb-2 transition-transform group-hover:scale-110 ${isAttachmentRequired ? 'bg-amber-100' : 'bg-white shadow-sm'
                     }`}>
@@ -365,7 +407,7 @@ export default function SubmitTicketPage() {
                   </div>
                   <p className="text-xs font-semibold text-slate-600">Klik untuk upload</p>
                   <p className="text-[10px] text-slate-400 mt-0.5">
-                    PNG, JPG, PDF, Video · Max 50MB
+                    PNG, JPG, PDF, Video · Max 100MB
                   </p>
                   <input
                     type="file"
